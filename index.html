@@ -269,11 +269,61 @@ function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',nu
 
 // Views
 function renderHome(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();
-  app.appendChild(E('div',{className:'hdr'},E('h1',null,'CCAR-F Practice Exam'),E('div',{className:'sub'},'Claude Certified Architect - Foundations · '+aq.length+' Questions')));
+  app.appendChild(E('div',{className:'hdr'},E('h1',null,'CCAR-F Practice Exam'),E('div',{className:'sub'},'Claude Certified Architect - Foundations')));
+  const ct=E('div',{className:'container'});
+
+  // Exam overview card
+  const info=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'1rem 0',boxShadow:'var(--sh)'}});
+  info.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'About the CCAR-F Exam'));
+  info.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.6rem'}},'The Claude Certified Architect - Foundations (CCAR-F) certification validates your ability to design, build, and optimize AI-powered applications using Claude and the Anthropic platform. It covers agentic architectures, tool design with MCP, Claude Code configuration, prompt engineering for structured output, and context management for production reliability.'));
+  const details=E('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.5rem',margin:'.75rem 0',fontSize:'.78rem'}});
+  const dt=(label,value)=>{const d=E('div',{style:{display:'flex',justifyContent:'space-between',padding:'.35rem .6rem',background:'var(--bg)',borderRadius:'6px'}});d.appendChild(E('span',{style:{color:'var(--text-2)'}},label));d.appendChild(E('span',{style:{fontWeight:'600'}},value));return d;};
+  details.appendChild(dt('Format','Multiple choice'));details.appendChild(dt('Questions','60'));details.appendChild(dt('Duration','120 minutes'));details.appendChild(dt('Passing Score','720 / 1000'));details.appendChild(dt('Scoring','Scaled (weighted)'));details.appendChild(dt('Delivery','Online proctored'));
+  info.appendChild(details);ct.appendChild(info);
+
+  // Domain weights card
+  const dw=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+  dw.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.6rem'}},'Exam Domains'));
+  const dwData=[{d:1,n:'Agentic Architecture & Orchestration',w:'27%',c:'var(--d1)'},{d:2,n:'Tool Design & MCP Integration',w:'18%',c:'var(--d2)'},{d:3,n:'Claude Code Configuration & Workflows',w:'20%',c:'var(--d3)'},{d:4,n:'Prompt Engineering & Structured Output',w:'20%',c:'var(--d4)'},{d:5,n:'Context Management & Reliability',w:'15%',c:'var(--d5)'}];
+  dwData.forEach(d=>{const row=E('div',{style:{display:'flex',alignItems:'center',gap:'.5rem',marginBottom:'.4rem',fontSize:'.8rem'}});
+    row.appendChild(E('span',{style:{fontWeight:'700',color:d.c,width:'1.5rem',fontFamily:'"JetBrains Mono",monospace'}},'D'+d.d));
+    row.appendChild(E('span',{style:{flex:'1',color:'var(--text)'}},d.n));
+    const bar=E('div',{style:{width:'80px',height:'6px',background:'var(--bg)',borderRadius:'3px',overflow:'hidden'}});
+    bar.appendChild(E('div',{style:{width:d.w,height:'100%',background:d.c,borderRadius:'3px'}}));
+    row.appendChild(bar);row.appendChild(E('span',{style:{fontWeight:'600',width:'2.5rem',textAlign:'right',fontFamily:'"JetBrains Mono",monospace',fontSize:'.75rem'}},d.w));
+    dw.appendChild(row);});
+  ct.appendChild(dw);
+
+  // About this app
+  const about=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+  about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
+  about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+' scenario-based practice questions covering all 5 domains, aligned with the official exam guide. Each question includes a detailed rationale and a direct link to the relevant Anthropic documentation for deeper learning.'));
+  const features=E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',lineHeight:'1.7'}});
+  const ft=(icon,text)=>{const f=E('div',{style:{display:'flex',gap:'.4rem',marginBottom:'.25rem'}});f.appendChild(E('span',null,icon));f.appendChild(E('span',null,text));return f;};
+  features.appendChild(ft('🎯','Practice Mode - 60 timed questions weighted by domain blueprint'));
+  features.appendChild(ft('📖','Study Mode - browse all questions organized by domain with instant answers'));
+  features.appendChild(ft('📊','Score report with domain breakdown and weak area identification'));
+  features.appendChild(ft('🔗','Reference links to Anthropic documentation for every question'));
+  about.appendChild(features);ct.appendChild(about);
+
+  // Mode selection
   const sel=E('div',{className:'mode-sel'});
-  const pc=E('div',{className:'mode-card',onClick:startPractice});pc.innerHTML=IC.play;pc.appendChild(E('h2',null,'Practice'));pc.appendChild(E('p',null,'Simulate the real exam - 60 questions weighted by domain blueprint, 120-minute timer, percentage-based scoring. Target 80%+ for a confident pass.'));pc.appendChild(E('span',{className:'tag'},'120 min · 60 Qs · Timed'));sel.appendChild(pc);
-  const sc=E('div',{className:'mode-card',onClick:()=>{view='study';st.sel={};st.sub={};st.rev={};render();}});sc.innerHTML=IC.book;sc.appendChild(E('h2',null,'Study'));sc.appendChild(E('p',null,'Browse all '+aq.length+' questions with instant answers, rationales, and links to Anthropic documentation. Filter by scenario.'));sc.appendChild(E('span',{className:'tag'},'All Qs · Self-paced'));sel.appendChild(sc);
-  app.appendChild(sel);app.appendChild(E('div',{className:'foot'},'Practice questions based on Certification Guide by Prakash Sridharan'));if(st.modal)renderModals();}
+  const pc=E('div',{className:'mode-card',onClick:startPractice});pc.innerHTML=IC.play;pc.appendChild(E('h2',null,'Practice'));pc.appendChild(E('p',null,'Simulate the real exam - 60 random questions, domain-weighted, 120-minute timer. Target 80%+ overall and 75%+ in every domain.'));pc.appendChild(E('span',{className:'tag'},'120 min · 60 Qs · Timed'));sel.appendChild(pc);
+  const sc2=E('div',{className:'mode-card',onClick:()=>{view='study';st.sel={};st.sub={};st.rev={};render();}});sc2.innerHTML=IC.book;sc2.appendChild(E('h2',null,'Study'));sc2.appendChild(E('p',null,'Browse all '+aq.length+' questions with answers, rationales, and Anthropic doc links. Filter by domain.'));sc2.appendChild(E('span',{className:'tag'},'All Qs · Self-paced'));sel.appendChild(sc2);
+  ct.appendChild(sel);
+
+  // Tips
+  const tips=E('div',{style:{background:'var(--ac-s)',border:'1px solid var(--ac-l)',borderRadius:'var(--rl)',padding:'1rem 1.25rem',margin:'0 0 1rem'}});
+  tips.appendChild(E('h3',{style:{fontSize:'.88rem',fontWeight:'700',color:'var(--ac-h)',marginBottom:'.4rem'}},'Preparation Tips'));
+  const tipList=E('div',{style:{fontSize:'.78rem',color:'var(--ac-h)',lineHeight:'1.7'}});
+  tipList.appendChild(ft('💡','The real exam uses scaled scoring - questions carry different weights per domain'));
+  tipList.appendChild(ft('💡','Target 80%+ overall and 75%+ in every domain for a confident pass'));
+  tipList.appendChild(ft('💡','Weak domains drag your scaled score down disproportionately'));
+  tipList.appendChild(ft('💡','Study the Anthropic documentation linked in each answer'));
+  tips.appendChild(tipList);ct.appendChild(tips);
+
+  ct.appendChild(E('div',{className:'foot'},'Practice questions based on CCAR-F Certification Guide · ',E('a',{href:'https://docs.anthropic.com',target:'_blank',style:{color:'var(--ac)',textDecoration:'none'}},'Anthropic Documentation')));
+  app.appendChild(ct);if(st.modal)renderModals();}
 
 function renderPractice(){const app=document.getElementById('app');app.innerHTML='';const q=st.pq[st.pi];if(!q)return;const answered=st.pq.filter(q=>(st.sel[q.id]||[]).length>0).length;
   app.appendChild(E('div',{className:'hdr',style:{padding:'1rem 1.5rem'}},E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},E('button',{className:'btn-h',onClick:()=>{if(confirm('Exit practice exam?')){clearInterval(timerInt);view='home';render();}}},E('span',{innerHTML:IC.home}),'Exit'),E('h1',{style:{fontSize:'1.1rem'}},'Practice Exam'),E('button',{className:'btn-h',onClick:()=>{if(confirm('Submit your exam now?'))submitPractice();}},E('span',{innerHTML:IC.flag}),'Submit'))));
@@ -305,7 +355,7 @@ function renderStudy(){const app=document.getElementById('app');app.innerHTML=''
   const ct=E('div',{className:'container'});if(sc.at>0)ct.appendChild(renderDomainScores(sc));
   if(st.as===0){let ld=0;fl.forEach(q=>{if(q.domain!==ld){ld=q.domain;const d=DM[q.domain];ct.appendChild(E('div',{className:'sc-hdr'},E('div',null,E('h2',null,'Domain '+q.domain+': '+d.n),E('p',null,({1:'Agent control loops, stop_reason, task decomposition, subagent orchestration, escalation patterns, handoff protocols',2:'Tool descriptions, MCP servers, error handling, isError flag, tool scoping, Glob/Grep/Read/Write/Edit',3:'CLAUDE.md, .claude/rules/, @import, commands, skills, hooks, plan mode, session management',4:'Few-shot examples, tool_use schemas, tool_choice, precision criteria, batch API, severity classification',5:'Context management, scratchpad files, progressive summarization, lost-in-the-middle, confidence calibration'})[q.domain]||''))));}ct.appendChild(renderQCard(q,{showAdmin:true}));});}else{fl.forEach(q=>ct.appendChild(renderQCard(q,{showAdmin:true})));}
   if(!fl.length)ct.appendChild(E('div',{className:'empty'},'No questions found.'));
-  ct.appendChild(E('div',{className:'foot'},'Practice questions based on Certification Guide by Prakash Sridharan'));app.appendChild(ct);}
+  ct.appendChild(E('div',{className:'foot'},'Practice questions based on CCAR-F Certification Guide'));app.appendChild(ct);}
 
 // Admin modals
 function renderModals(){if(st.modal==='admin')adminModal();else if(st.modal==='q')qModal(null);else if(st.modal==='s')sModal();else if(st.modal==='u')uModal();else if(st.modal&&st.modal.t==='eq')qModal(st.modal.q);}
