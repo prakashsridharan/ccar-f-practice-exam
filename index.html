@@ -270,22 +270,100 @@ function parseUploadRows(rows){if(rows.length<2)return{questions:[],errors:['No 
 
 // Shared question card renderer
 function renderQCard(q,opts){
- const showAns=opts.showAnswer;const allowSel=opts.allowSelect!==false;const showAdmin=opts.showAdmin;
- const card=E('div',{className:'qc'+(q.custom?' cust':'')});const d=DM[q.domain];const tl=q.type==='multi'?'Select '+(q.select||2):'Select one';
- const qh=E('div',{className:'qh'},E('span',{className:'qn'},q.id),E('span',{className:'badge b'+d.c},'D'+q.domain),E('span',{className:'badge b-type'},tl));
- if(q.custom&&showAdmin){qh.appendChild(E('span',{className:'badge b-custom'},'Custom'));const rt=E('div',{className:'qhr'});rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.edit,onClick:()=>{st.modal={t:'eq',q};render();}}));rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.trash,style:{color:'var(--danger)'},onClick:()=>{if(confirm('Delete?')){CQ=CQ.filter(c=>c.id!==q.id);saveData();render();}}}));qh.appendChild(rt);}
- if(opts.flaggable){const isFl=st.pflag[q.id];qh.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.flag,style:isFl?{color:'#C0522A'}:{},onClick:()=>{st.pflag[q.id]=!st.pflag[q.id];render();}}));}
- card.appendChild(qh);const body=E('div',{className:'qb'},E('p',null,q.question));const ol=E('ul',{className:'opts'});
- q.options.forEach(opt=>{const isSub=st.sub[q.id];const sel=st.sel[q.id]||[];const isSel=sel.includes(opt.l);const isCor=q.answer.includes(opt.l);let cls='';if(isSub&&isCor)cls=' ok';else if(isSub&&isSel&&!isCor)cls=' wrong';else if(isSel)cls=' sel';if(!allowSel||isSub)cls+=' disabled';
- ol.appendChild(E('li',{className:cls,onClick:()=>{if(!allowSel||st.sub[q.id])return;if(q.type==='multi'){let s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(x=>x!==opt.l);else if(s.length<(q.select||2))s=[...s,opt.l];st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' '+opt.t));});
- body.appendChild(ol);card.appendChild(body);
- var _showThis=opts.showAnswer===true||st.rev.hasOwnProperty(q.id)&&st.rev[q.id]===true;if(_showThis){const ab=E('div',{className:'ans-b'},E('div',{className:'al'},'Correct Answer'),E('div',{className:'av'},q.answer.join(', ')),E('div',{className:'rat'},q.rationale));if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: '+q.whynot));if(q.ref){const[ru,rl]=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:ru,target:'_blank',style:{fontSize:'.78rem',color:'var(--ac)',textDecoration:'none',fontWeight:'600'}},'📖 '+rl+' →')));}card.appendChild(ab);}
- if(!showAns&&!opts.hideActions){const actions=E('div',{className:'qa'});const sel=st.sel[q.id]||[];
- var _qid=q.id;if(!st.sub[_qid]&&sel.length>0)actions.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.sub[_qid]=true;render();}},'Submit'));
-    if(st.sub[_qid]&&!st.rev[_qid])actions.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.rev[_qid]=true;render();}},'Show Answer'));
-    else if(!st.sub[_qid]&&sel.length===0)actions.appendChild(E('button',{className:'btn btn-g',onClick:()=>{st.rev[_qid]=true;st.sub[_qid]=true;render();}},'Show Answer'));
-    if(st.rev[_qid])actions.appendChild(E('button',{className:'btn btn-g',onClick:()=>{delete st.rev[_qid];render();}},'Hide'));
- card.appendChild(actions);}return card;}
+  var showAns=opts.showAnswer===true;var allowSel=opts.allowSelect!==false;var showAdmin=opts.showAdmin;
+  var card=E('div',{className:'qc'+(q.custom?' cust':'')});var d=DM[q.domain];var tl=q.type==='multi'?'Select '+(q.select||2):'Select one';
+  var qh=E('div',{className:'qh'},E('span',{className:'qn'},q.id),E('span',{className:'badge b'+d.c},'D'+q.domain),E('span',{className:'badge b-type'},tl));
+  if(q.custom&&showAdmin){qh.appendChild(E('span',{className:'badge b-custom'},'Custom'));var rt=E('div',{className:'qhr'});rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.edit,onClick:()=>{st.modal={t:'eq',q};render();}}));rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.trash,style:{color:'var(--danger)'},onClick:()=>{if(confirm('Delete?')){CQ=CQ.filter(c=>c.id!==q.id);saveData();render();}}}));qh.appendChild(rt);}
+  if(opts.flaggable){var isFl=st.pflag[q.id];qh.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.flag,style:isFl?{color:'#C0522A'}:{},onClick:()=>{st.pflag[q.id]=!st.pflag[q.id];render();}}));}
+  card.appendChild(qh);
+  var body=E('div',{className:'qb'},E('p',null,q.question));
+  var ol=E('ul',{className:'opts'});
+  q.options.forEach(function(opt){var isSub=st.sub[q.id];var sel=st.sel[q.id]||[];var isSel=sel.includes(opt.l);var isCor=q.answer.includes(opt.l);
+    var cls='';if(isSub&&isCor)cls=' ok';else if(isSub&&isSel&&!isCor)cls=' wrong';else if(isSel)cls=' sel';if(!allowSel||isSub)cls+=' disabled';
+    ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||st.sub[q.id])return;if(q.type==='multi'){var s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' '+opt.t));
+  });body.appendChild(ol);card.appendChild(body);
+
+  // Build answer block (hidden by default unless showAns)
+  var ab=E('div',{className:'ans-b',style:{display:showAns?'block':'none'}});
+  ab.appendChild(E('div',{className:'al'},'Correct Answer'));
+  ab.appendChild(E('div',{className:'av'},q.answer.join(', ')));
+  ab.appendChild(E('div',{className:'rat'},q.rationale));
+  if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: '+q.whynot));
+  if(q.ref){var parts=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:parts[0],target:'_blank',style:{fontSize:'.78rem',color:'#2E86C1',textDecoration:'none',fontWeight:'600'}},'📖 '+parts[1]+' →')));}
+  card.appendChild(ab);
+
+  // Actions - use DOM toggling, NOT re-render
+  if(!showAns&&!opts.hideActions){
+    var actions=E('div',{className:'qa'});
+    var submitBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:function(){
+      st.sub[q.id]=true;
+      // Highlight correct/wrong options
+      var lis=ol.querySelectorAll('li');
+      lis.forEach(function(li){
+        var label=li.querySelector('.ol').textContent.replace('.','').trim();
+        var isCorrect=q.answer.includes(label);
+        var isSelected=(st.sel[q.id]||[]).includes(label);
+        li.classList.remove('sel');li.classList.add('disabled');
+        if(isCorrect)li.classList.add('ok');
+        else if(isSelected)li.classList.add('wrong');
+      });
+      submitBtn.style.display='none';
+      showAnsBtn.style.display='inline-flex';
+    }},'Submit');
+
+    var showAnsBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:function(){
+      ab.style.display='block';
+      showAnsBtn.style.display='none';
+      hideBtn.style.display='inline-flex';
+      // Also mark correct answers if not already submitted
+      if(!st.sub[q.id]){
+        st.sub[q.id]=true;
+        var lis=ol.querySelectorAll('li');
+        lis.forEach(function(li){
+          var label=li.querySelector('.ol').textContent.replace('.','').trim();
+          if(q.answer.includes(label))li.classList.add('ok');
+          li.classList.add('disabled');
+        });
+      }
+    }},'Show Answer');
+
+    var skipBtn=E('button',{className:'btn btn-g',onClick:function(){
+      ab.style.display='block';
+      skipBtn.style.display='none';
+      hideBtn.style.display='inline-flex';
+      st.sub[q.id]=true;
+      var lis=ol.querySelectorAll('li');
+      lis.forEach(function(li){
+        var label=li.querySelector('.ol').textContent.replace('.','').trim();
+        if(q.answer.includes(label))li.classList.add('ok');
+        li.classList.add('disabled');
+      });
+    }},'Show Answer');
+
+    var hideBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
+      ab.style.display='none';
+      hideBtn.style.display='none';
+      if(st.sub[q.id])showAnsBtn.style.display='inline-flex';
+      else skipBtn.style.display='inline-flex';
+    }},'Hide');
+
+    // Initial button visibility
+    if(st.sub[q.id]&&!showAns){showAnsBtn.style.display='inline-flex';}
+    else if(!st.sub[q.id]){
+      skipBtn.style.display='inline-flex';
+      // Watch for option selections to show Submit
+      var origClick=ol.addEventListener('click',function(){
+        setTimeout(function(){
+          var hasSel=(st.sel[q.id]||[]).length>0;
+          if(hasSel&&!st.sub[q.id]){submitBtn.style.display='inline-flex';skipBtn.style.display='none';}
+          else if(!st.sub[q.id]){submitBtn.style.display='none';skipBtn.style.display='inline-flex';}
+        },10);
+      });
+    }
+    actions.appendChild(submitBtn);actions.appendChild(showAnsBtn);actions.appendChild(skipBtn);actions.appendChild(hideBtn);
+    card.appendChild(actions);
+  }
+  return card;}
 function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',null,'Score by Domain'));const rs=E('div',{className:'ds'});Object.entries(DM).forEach(([d,info])=>{const dd=sc.ds[d];const dp=dd.a?Math.round(dd.c/dd.a*100):0;rs.appendChild(E('div',{className:'dsr'},E('span',{className:'dn'},'D'+d+': '+info.n),E('div',{className:'db'},E('div',{className:'dbf',style:'width:'+dp+'%;background:'+DCOL[info.c]})),E('span',{className:'dp',style:'color:'+DCOL[info.c]},dd.a?dp+'%':'-')));});sm.appendChild(rs);return sm;}
 
 // Views
