@@ -279,12 +279,12 @@ function renderQCard(q,opts){
  q.options.forEach(opt=>{const isSub=st.sub[q.id];const sel=st.sel[q.id]||[];const isSel=sel.includes(opt.l);const isCor=q.answer.includes(opt.l);let cls='';if(isSub&&isCor)cls=' ok';else if(isSub&&isSel&&!isCor)cls=' wrong';else if(isSel)cls=' sel';if(!allowSel||isSub)cls+=' disabled';
  ol.appendChild(E('li',{className:cls,onClick:()=>{if(!allowSel||st.sub[q.id])return;if(q.type==='multi'){let s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(x=>x!==opt.l);else if(s.length<(q.select||2))s=[...s,opt.l];st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' '+opt.t));});
  body.appendChild(ol);card.appendChild(body);
- if((showAns===true)||(st.rev[q.id]===true)){const ab=E('div',{className:'ans-b'},E('div',{className:'al'},'Correct Answer'),E('div',{className:'av'},q.answer.join(', ')),E('div',{className:'rat'},q.rationale));if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: '+q.whynot));if(q.ref){const[ru,rl]=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:ru,target:'_blank',style:{fontSize:'.78rem',color:'var(--ac)',textDecoration:'none',fontWeight:'600'}},'📖 '+rl+' →')));}card.appendChild(ab);}
+ var _showThis=opts.showAnswer===true||st.rev.hasOwnProperty(q.id)&&st.rev[q.id]===true;if(_showThis){const ab=E('div',{className:'ans-b'},E('div',{className:'al'},'Correct Answer'),E('div',{className:'av'},q.answer.join(', ')),E('div',{className:'rat'},q.rationale));if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: '+q.whynot));if(q.ref){const[ru,rl]=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:ru,target:'_blank',style:{fontSize:'.78rem',color:'var(--ac)',textDecoration:'none',fontWeight:'600'}},'📖 '+rl+' →')));}card.appendChild(ab);}
  if(!showAns&&!opts.hideActions){const actions=E('div',{className:'qa'});const sel=st.sel[q.id]||[];
- if(!st.sub[q.id]&&sel.length>0)actions.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.sub[q.id]=true;render();}},'Submit'));
- if(st.sub[q.id]&&!st.rev[q.id])actions.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.rev[q.id]=true;render();}},'Show Answer'));
- else if(!st.sub[q.id]&&sel.length===0)actions.appendChild(E('button',{className:'btn btn-g',onClick:()=>{st.rev[q.id]=true;st.sub[q.id]=true;render();}},'Show Answer'));
- if(st.rev[q.id])actions.appendChild(E('button',{className:'btn btn-g',onClick:()=>{st.rev[q.id]=false;render();}},'Hide'));
+ var _qid=q.id;if(!st.sub[_qid]&&sel.length>0)actions.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.sub[_qid]=true;render();}},'Submit'));
+    if(st.sub[_qid]&&!st.rev[_qid])actions.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.rev[_qid]=true;render();}},'Show Answer'));
+    else if(!st.sub[_qid]&&sel.length===0)actions.appendChild(E('button',{className:'btn btn-g',onClick:()=>{st.rev[_qid]=true;st.sub[_qid]=true;render();}},'Show Answer'));
+    if(st.rev[_qid])actions.appendChild(E('button',{className:'btn btn-g',onClick:()=>{delete st.rev[_qid];render();}},'Hide'));
  card.appendChild(actions);}return card;}
 function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',null,'Score by Domain'));const rs=E('div',{className:'ds'});Object.entries(DM).forEach(([d,info])=>{const dd=sc.ds[d];const dp=dd.a?Math.round(dd.c/dd.a*100):0;rs.appendChild(E('div',{className:'dsr'},E('span',{className:'dn'},'D'+d+': '+info.n),E('div',{className:'db'},E('div',{className:'dbf',style:'width:'+dp+'%;background:'+DCOL[info.c]})),E('span',{className:'dp',style:'color:'+DCOL[info.c]},dd.a?dp+'%':'-')));});sm.appendChild(rs);return sm;}
 
@@ -385,7 +385,16 @@ function adminModal(){const ov=E('div',{className:'modal-ov',onClick:e=>{if(e.ta
  if(hasSupa())bd.appendChild(E('div',{className:'u-st ok'},'Supabase connected'));else bd.appendChild(E('div',{className:'u-st info'},'Supabase not configured - using localStorage. See README.'));
  bd.appendChild(E('div',{className:'fg',style:{marginTop:'1rem'}},E('label',null,'Supabase Service Role Key'),E('input',{type:'password',placeholder:'Enter key for write ops...',value:st.adminKey,onInput:e=>{st.adminKey=e.target.value;localStorage.setItem('ccar-f-admin-key',e.target.value);}}),E('div',{className:'hint'},'Stored in your browser only.')));
  const acts=E('div',{style:{display:'grid',gap:'.5rem',marginTop:'1rem'}});
- acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='q';render();}},E('span',{innerHTML:IC.plus}),'Add Question'));
+ // Database sync
+  const dbSection=E('div',{style:{marginTop:'1rem',padding:'.85rem',background:'var(--bg)',borderRadius:'8px',border:'1px solid var(--border)'}});
+  dbSection.appendChild(E('div',{style:{fontWeight:'700',marginBottom:'.4rem',fontSize:'.88rem'}},'Database Sync'));
+  dbSection.appendChild(E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',marginBottom:'.5rem',lineHeight:'1.5'}},'Push all '+BQ.length+' built-in questions to Supabase so they load dynamically. After seeding, edit questions directly in the Supabase Dashboard.'));
+  dbSection.appendChild(E('div',{style:{fontSize:'.78rem',color:dbLoaded?'#065f46':'var(--text-m)',marginBottom:'.5rem',fontWeight:'600'}},dbLoaded?'Loaded from Supabase ('+allQ().length+' questions)':'Using built-in questions from index.html'));
+  const seedRow=E('div',{style:{display:'flex',alignItems:'center',gap:'.5rem',flexWrap:'wrap'}});
+  seedRow.appendChild(E('button',{className:'btn btn-p',style:{padding:'.5rem 1.2rem',fontSize:'.82rem'},onClick:()=>{seedDB();}},dbLoaded?'Re-seed Database':'Seed All Questions to Database'));
+  seedRow.appendChild(E('span',{id:'seed-status',style:{fontSize:'.78rem',color:'var(--text-2)'}},''));
+  dbSection.appendChild(seedRow);bd.appendChild(dbSection);
+  acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='q';render();}},E('span',{innerHTML:IC.plus}),'Add Question'));
  acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='s';render();}},E('span',{innerHTML:IC.plus}),'Add Scenario'));
  acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='u';render();}},E('span',{innerHTML:IC.upload}),'Upload CSV'));
  acts.appendChild(E('button',{className:'btn btn-g',onClick:()=>{const d={customQuestions:CQ,customScenarios:CS};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='ccar-f-backup.json';document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}},E('span',{innerHTML:IC.download}),'Export JSON'));
