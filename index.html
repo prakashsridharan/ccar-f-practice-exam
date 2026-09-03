@@ -227,13 +227,31 @@ let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:7200,pflag:{},pdone
 
 function hasSupa(){return SUPABASE_URL&&SUPABASE_ANON;}
 async function supaFetch(path,opts={}){const key=opts.admin?st.adminKey:SUPABASE_ANON;const r=await fetch(SUPABASE_URL+'/rest/v1/'+path,{headers:{'apikey':key,'Authorization':'Bearer '+key,'Content-Type':'application/json','Prefer':opts.prefer||''},method:opts.method||'GET',body:opts.body?JSON.stringify(opts.body):undefined});if(!r.ok)throw new Error(await r.text());const text=await r.text();return text?JSON.parse(text):null;}
-async function loadData(){if(hasSupa()){try{const sq=await supaFetch('questions?is_builtin=eq.false&select=*');const ss=await supaFetch('scenarios?is_builtin=eq.false&select=*');if(sq)CQ=sq.map(r=>({id:r.question_id,scenario:r.scenario_num,domain:r.domain,type:r.question_type,select:r.select_count,question:r.question_text,options:r.options,answer:r.correct_answers,rationale:r.rationale||'',whynot:r.why_not||'',ref:r.ref_url||'',custom:true}));if(ss)ss.forEach(r=>CS[r.scenario_num]={t:r.title,d:r.description});return;}catch(e){console.warn('Supabase unavailable:',e.message);}}try{CQ=JSON.parse(localStorage.getItem('ccar-f-cq')||'[]');}catch(e){CQ=[];}try{CS=JSON.parse(localStorage.getItem('ccar-f-cs')||'{}');}catch(e){CS={};}}
+let dbLoaded=false;
+async function loadData(){if(hasSupa()){try{const aq=await supaFetch('questions?select=*&order=question_id');const ss=await supaFetch('scenarios?select=*');if(aq&&aq.length>0){BUILTIN.length=0;aq.forEach(r=>{const q={id:r.question_id,scenario:r.scenario_num,domain:r.domain,type:r.question_type,select:r.select_count,question:r.question_text,options:r.options,answer:r.correct_answers,rationale:r.rationale||'',whynot:r.why_not||'',ref:r.ref_url||REFS[r.question_id]||'',custom:!r.is_builtin};if(r.is_builtin)BUILTIN.push(q);else CQ.push(q);});BUILTIN.sort((a,b)=>a.domain-b.domain||a.id.localeCompare(b.id));dbLoaded=true;console.log('Loaded '+aq.length+' questions from Supabase');}if(ss)ss.forEach(r=>{if(!r.is_builtin)CS[r.scenario_num]={t:r.title,d:r.description};});return;}catch(e){console.warn('Supabase unavailable, using built-in:',e.message);}}try{CQ=JSON.parse(localStorage.getItem('ccar-f-cq')||'[]');}catch(e){CQ=[];}try{CS=JSON.parse(localStorage.getItem('ccar-f-cs')||'{}');}catch(e){CS={};}}
 async function saveData(){localStorage.setItem('ccar-f-cq',JSON.stringify(CQ));localStorage.setItem('ccar-f-cs',JSON.stringify(CS));}
 
 // Visit tracking
 async function trackVisit(){if(!hasSupa())return;try{const r=await fetch(SUPABASE_URL+'/rest/v1/visits',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({page:'home',ua:navigator.userAgent.substring(0,200)})});if(!r.ok)console.warn('Visit tracking:',r.status,await r.text());}catch(e){console.warn('Visit tracking error:',e);}}
 async function getVisitCount(){if(!hasSupa())return{total:0,today:0,unique:0};try{const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/visit_stats',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'}});if(r.ok){const d=await r.json();return d;}else{console.warn('Visit stats:',r.status,await r.text());}return{total:0,today:0,unique:0};}catch(e){console.warn('Visit stats error:',e);return{total:0,today:0,unique:0};}}
-function allQ(){return[...BUILTIN,...CQ];}function allS(){return{...BS,...CS};}
+function allQ(){return[...BUILTIN,...CQ];}
+async function seedDB(){if(!hasSupa()||!st.adminKey){alert('Set your Supabase service role key first.');return;}
+  const total=BQ.length;let done=0;let errors=0;
+  const status=document.getElementById('seed-status');
+  if(status)status.textContent='Seeding 0/'+total+'...';
+  // Seed scenarios first
+  const scenarios=Object.entries(BS);
+  for(const[num,s]of scenarios){
+    try{await fetch(SUPABASE_URL+'/rest/v1/scenarios',{method:'POST',headers:{'apikey':st.adminKey,'Authorization':'Bearer '+st.adminKey,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({scenario_num:Number(num),title:s.t||s.title,description:s.d||s.desc||'',is_builtin:true})});}catch(e){}}
+  // Seed questions
+  for(const q of BQ){
+    try{const body={question_id:q.id,scenario_num:q.s,domain:q.d,question_type:q.ty||'single',select_count:q.se||1,question_text:q.q,options:q.o,correct_answers:q.a,rationale:q.r||'',why_not:q.w||'',ref_url:REFS[q.id]||'',is_builtin:true};
+      const r=await fetch(SUPABASE_URL+'/rest/v1/questions',{method:'POST',headers:{'apikey':st.adminKey,'Authorization':'Bearer '+st.adminKey,'Content-Type':'application/json','Prefer':'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)});
+      if(!r.ok){const t=await r.text();console.warn('Seed '+q.id+':',t);errors++;}
+      done++;if(status)status.textContent='Seeding '+done+'/'+total+(errors?' ('+errors+' errors)':'')+'...';}catch(e){errors++;done++;}}
+  if(status)status.textContent=done+' questions seeded'+(errors?' ('+errors+' errors)':' successfully')+'!';
+  console.log('Seed complete:',done,'done,',errors,'errors');
+  setTimeout(()=>{location.reload();},1500);}function allS(){return{...BS,...CS};}
 function nextId(sn){const p='C'+sn+'.';const ex=CQ.filter(q=>q.id.startsWith(p)).map(q=>parseInt(q.id.split('.')[1])||0);return p+((ex.length?Math.max(...ex):0)+1);}
 
 function selectPracticeQuestions(){const pool=allQ();const selected=[];const byD={};pool.forEach(q=>{if(!byD[q.domain])byD[q.domain]=[];byD[q.domain].push(q);});Object.entries(WEIGHTS).forEach(([d,count])=>{const avail=byD[d]||[];const sh=[...avail].sort(()=>Math.random()-.5);selected.push(...sh.slice(0,count));});return selected.sort(()=>Math.random()-.5);}
