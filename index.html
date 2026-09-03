@@ -228,8 +228,8 @@ async function loadData(){if(hasSupa()){try{const sq=await supaFetch('questions?
 async function saveData(){localStorage.setItem('ccar-f-cq',JSON.stringify(CQ));localStorage.setItem('ccar-f-cs',JSON.stringify(CS));}
 
 // Visit tracking
-async function trackVisit(){if(!hasSupa())return;try{await fetch(SUPABASE_URL+'/rest/v1/visits',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({page:'home',ua:navigator.userAgent.substring(0,200)})});}catch(e){}}
-async function getVisitCount(){if(!hasSupa())return{total:0,today:0,unique:0};try{const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/visit_stats',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'}});if(r.ok){const d=await r.json();return d;}return{total:0,today:0,unique:0};}catch(e){return{total:0,today:0,unique:0};}}
+async function trackVisit(){if(!hasSupa())return;try{const r=await fetch(SUPABASE_URL+'/rest/v1/visits',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({page:'home',ua:navigator.userAgent.substring(0,200)})});if(!r.ok)console.warn('Visit tracking:',r.status,await r.text());}catch(e){console.warn('Visit tracking error:',e);}}
+async function getVisitCount(){if(!hasSupa())return{total:0,today:0,unique:0};try{const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/visit_stats',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'}});if(r.ok){const d=await r.json();return d;}else{console.warn('Visit stats:',r.status,await r.text());}return{total:0,today:0,unique:0};}catch(e){console.warn('Visit stats error:',e);return{total:0,today:0,unique:0};}}
 function allQ(){return[...BUILTIN,...CQ];}function allS(){return{...BS,...CS};}
 function nextId(sn){const p='C'+sn+'.';const ex=CQ.filter(q=>q.id.startsWith(p)).map(q=>parseInt(q.id.split('.')[1])||0);return p+((ex.length?Math.max(...ex):0)+1);}
 
