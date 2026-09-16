@@ -8,12 +8,12 @@ Build a single-file HTML practice exam app for the Claude Certified Architect - 
 - **6 scenarios** matching the exam guide (Customer Support, Claude Code, Multi-Agent Research, Developer Productivity, CI/CD, Structured Data Extraction)
 - **5 domains** with exam blueprint weights (D1:27%, D2:18%, D3:20%, D4:20%, D5:15%)
 - **Practice Mode** - 60 random questions, domain-weighted, 120-min timer, percentage scoring, three-tier verdict (80%+ STRONG PASS, 70-79% BORDERLINE, <70% NEEDS MORE STUDY)
-- **Study Mode** - all questions, scenario filter tabs, submit-then-reveal flow, running score
+- **Study Mode** - all questions grouped by domain with domain filter tabs (deliberately by domain, not scenario, to match how the official score report breaks results down), submit-then-reveal flow, running score
 - **Admin Panel** via #admin URL hash (not visible to regular users) - add/edit/delete questions, CSV upload with template, JSON export/import
 - **Reference links** - every answer links to relevant Anthropic documentation
-- **Supabase integration** - optional shared storage with localStorage fallback
+- **Supabase integration** - optional shared storage, falling back to the built-in question array if unreachable
 - **No em dashes** - use regular hyphens throughout
-- **Credits** - "Practice questions based on Certification Guide by Prakash Sridharan"
+- **Credits** - "Practice questions based on CCAR-F Certification Guide" - no personal byline and no PraTech Labs branding in public-facing copy
 
 ## Key documentation references
 
@@ -28,16 +28,18 @@ Build a single-file HTML practice exam app for the Claude Certified Architect - 
 
 ## Deliverables
 
-1. `index.html` - complete app (~195 KB)
-2. `supabase/schema.sql` - database schema
+1. `index.html` - complete app (~210 KB)
+2. `schema.sql` - database schema, at the repo root
 3. `README.md` - setup and deployment guide
 4. `CNAME` - custom domain (ccar-f.pratechlabs.com)
 5. `PROMPT.md` - this rebuild prompt
 
 ## Design
 
-- Fonts: Inter + JetBrains Mono
-- Primary: Teal (#0f766e), domain colors: D1 purple, D2 blue, D3 amber, D4 pink, D5 emerald
+- Fonts: Inter (body), JetBrains Mono (question IDs, timer, scores)
+- Primary: Navy `#1B4F8A`, dark navy `#1A2E45` for headers and hover states
+- Domain colors: D1 teal `#0097A7`, D2 blue `#2E86C1`, D3 purple `#5B38B6`, D4 rust `#C0522A`, D5 navy `#1B4F8A`
+- Rust `#C0522A` for warnings, errors and borderline states (not red)
 - Mobile responsive, single-column below 500px
 - Compact JS data format: {id, s, d, ty, se, q, o:[{l,t}], a:[], r, w, ref}
 

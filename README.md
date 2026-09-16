@@ -2,16 +2,16 @@
 
 Interactive practice exam for the **Claude Certified Architect - Foundations (CCAR-F)** certification.
 
-Practice questions based on the Certification Guide by Prakash Sridharan.
+Practice questions based on the CCAR-F Certification Guide.
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
 | **Practice Mode** | 60 randomly selected questions weighted by exam blueprint, 120-minute timer, percentage-based scoring with domain breakdown |
-| **Study Mode** | Browse all 100 scenario-based questions with instant answer reveal, rationale, and reference links to Anthropic docs |
+| **Study Mode** | Browse all 100 questions grouped by domain (D1-D5), with submit-then-reveal answers, rationale, and reference links to Anthropic docs |
 | **Admin Panel** | Accessible via `#admin` URL - add questions, bulk CSV upload, edit/delete, JSON export/import |
-| **Persistent Storage** | Supabase (PostgreSQL) for shared questions; localStorage fallback for standalone use |
+| **Persistent Storage** | Supabase (PostgreSQL) for shared questions; falls back to the 100 built-in questions if Supabase is unreachable, with localStorage holding admin-added custom content |
 | **Reference Links** | Every answer includes a direct link to relevant Anthropic documentation |
 | **Zero Backend** | Static HTML on GitHub Pages - no server to maintain |
 
@@ -55,15 +55,17 @@ The real exam uses scaled scoring (100-1000, pass at 720) where questions carry 
 ```
 GitHub Pages (static hosting, free)
     |
-    +-- index.html       <- single-file app (70 built-in questions)
+    +-- index.html       <- single-file app (100 built-in questions)
+    +-- schema.sql       <- Supabase schema, run by hand in the SQL Editor
     +-- CNAME            <- custom domain
     +-- README.md
     |
-    v fetches additional questions at runtime (optional)
+    v fetches questions at runtime (optional)
     |
 Supabase (PostgreSQL, free tier)
     +-- scenarios table
     +-- questions table
+    +-- visits table + visit_stats() RPC
     +-- RLS: public reads, admin writes
 ```
 
@@ -78,7 +80,9 @@ Supabase (PostgreSQL, free tier)
 ### Step 2: Run the database schema
 
 1. Supabase Dashboard > **SQL Editor** > **New Query**
-2. Paste contents of `supabase/schema.sql` and click **Run**
+2. Paste contents of `schema.sql` (repo root) and click **Run**
+
+The schema is idempotent, so it is safe to re-run after edits.
 
 ### Step 3: Configure the app
 
@@ -94,7 +98,7 @@ The **service_role** key is entered at runtime via the Admin panel, stored only 
 
 ```bash
 git init && git add . && git commit -m "CCAR-F Practice Exam v1.0"
-gh repo create pratechlabs/ccar-f-practice-exam --public --push
+gh repo create prakashsridharan/ccar-f-practice-exam --public --push
 ```
 
 Enable Pages: repo Settings > Pages > main branch > / (root) > Save.
@@ -103,7 +107,7 @@ Enable Pages: repo Settings > Pages > main branch > / (root) > Save.
 
 ```
 Type    Name      Value                       TTL
-CNAME   ccar-f    pratechlabs.github.io       600
+CNAME   ccar-f    prakashsridharan.github.io   600
 ```
 
 Then in GitHub: Settings > Pages > Custom domain: `ccar-f.pratechlabs.com` > Enforce HTTPS.
@@ -135,7 +139,7 @@ Access at `https://your-site.com/#admin`
 
 ## Credits
 
-- Practice questions based on the Certification Guide by Prakash Sridharan
+- Practice questions based on the CCAR-F Certification Guide
 - Reference links to [Anthropic documentation](https://docs.anthropic.com)
 
 ## License
