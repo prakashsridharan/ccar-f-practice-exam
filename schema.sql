@@ -130,3 +130,12 @@ ON CONFLICT (scenario_num) DO UPDATE SET
   title = EXCLUDED.title,
   description = EXCLUDED.description,
   is_builtin = EXCLUDED.is_builtin;
+
+
+-- Grants for admin seeding (service_role has bypass by default,
+-- but explicit grants ensure compatibility)
+GRANT ALL ON scenarios TO authenticated;
+GRANT ALL ON questions TO authenticated;
+GRANT ALL ON visits TO authenticated;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon;
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
