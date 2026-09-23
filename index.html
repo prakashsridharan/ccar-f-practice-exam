@@ -276,18 +276,30 @@ function renderQCard(q,opts){
   if(q.custom&&showAdmin){qh.appendChild(E('span',{className:'badge b-custom'},'Custom'));var rt=E('div',{className:'qhr'});rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.edit,onClick:()=>{st.modal={t:'eq',q};render();}}));rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.trash,style:{color:'var(--danger)'},onClick:()=>{if(confirm('Delete?')){CQ=CQ.filter(c=>c.id!==q.id);saveData();render();}}}));qh.appendChild(rt);}
   if(opts.flaggable){var isFl=st.pflag[q.id];qh.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.flag,style:isFl?{color:'#C0522A'}:{},onClick:()=>{st.pflag[q.id]=!st.pflag[q.id];render();}}));}
   card.appendChild(qh);
+
+  // Two independent states, deliberately kept apart:
+  //   graded (st.sub)  - set ONLY by Submit. Permanent: it is the user's
+  //                      result, counts in calcScore, and survives Hide.
+  //   revealed (st.rev)- set by Show Answer. A peek, not an attempt. It is
+  //                      fully undone by Hide and never reaches calcScore.
+  // Keyed strictly by this card's own q.id, so one card can never affect
+  // another. Merging these two was what made Hide leave the correct answer
+  // highlighted and made peeking silently score a question as wrong.
+  var graded=st.sub[q.id]===true;
+  var revealed=showAns||(!!q.id&&st.rev[q.id]===true);
+  var locked=graded||revealed;
+
   var body=E('div',{className:'qb'},E('p',null,q.question));
   var ol=E('ul',{className:'opts'});
-  q.options.forEach(function(opt){var isSub=st.sub[q.id];var sel=st.sel[q.id]||[];var isSel=sel.includes(opt.l);var isCor=q.answer.includes(opt.l);
-    var cls='';if(isSub&&isCor)cls=' ok';else if(isSub&&isSel&&!isCor)cls=' wrong';else if(isSel)cls=' sel';if(!allowSel||isSub)cls+=' disabled';
-    ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||st.sub[q.id])return;if(q.type==='multi'){var s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' '+opt.t));
+  q.options.forEach(function(opt){var sel=st.sel[q.id]||[];var isSel=sel.includes(opt.l);var isCor=q.answer.includes(opt.l);
+    var cls='';
+    if(graded&&isCor)cls=' ok';else if(graded&&isSel&&!isCor)cls=' wrong';
+    else if(revealed&&isCor)cls=' ok'+(isSel?' sel':'');
+    else if(isSel)cls=' sel';
+    if(!allowSel||locked)cls+=' disabled';
+    ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||st.sub[q.id]||(!!q.id&&st.rev[q.id]===true))return;if(q.type==='multi'){var s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' '+opt.t));
   });body.appendChild(ol);card.appendChild(body);
 
-  // Build answer block. Reveal state is remembered per question id in st.rev
-  // so a re-render (triggered by interacting with any other card) does not
-  // collapse an answer the user already opened. Keyed strictly by this card's
-  // own q.id, so one card can never reveal another.
-  var revealed=showAns||(!!q.id&&st.rev[q.id]===true);
   var ab=E('div',{className:'ans-b',style:{display:revealed?'block':'none'}});
   ab.appendChild(E('div',{className:'al'},'Correct Answer'));
   ab.appendChild(E('div',{className:'av'},q.answer.join(', ')));
@@ -312,61 +324,64 @@ function renderQCard(q,opts){
         else if(isSelected)li.classList.add('wrong');
       });
       submitBtn.style.display='none';
+      skipBtn.style.display='none';
       showAnsBtn.style.display='inline-flex';
     }},'Submit');
 
-    var showAnsBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:function(){
-      ab.style.display='block';
-      if(q.id)st.rev[q.id]=true;
-      showAnsBtn.style.display='none';
-      hideBtn.style.display='inline-flex';
-      // Also mark correct answers if not already submitted
-      if(!st.sub[q.id]){
-        st.sub[q.id]=true;
-        var lis=ol.querySelectorAll('li');
-        lis.forEach(function(li){
-          var label=li.querySelector('.ol').textContent.replace('.','').trim();
-          if(q.answer.includes(label))li.classList.add('ok');
-          li.classList.add('disabled');
-        });
-      }
-    }},'Show Answer');
-
-    var skipBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
-      ab.style.display='block';
-      if(q.id)st.rev[q.id]=true;
-      skipBtn.style.display='none';
-      hideBtn.style.display='inline-flex';
-      st.sub[q.id]=true;
-      var lis=ol.querySelectorAll('li');
-      lis.forEach(function(li){
+    // Peeking marks the correct option and locks the list, but never sets
+    // st.sub, so it is not an attempt and never reaches calcScore.
+    function applyPeek(){
+      ol.querySelectorAll('li').forEach(function(li){
         var label=li.querySelector('.ol').textContent.replace('.','').trim();
         if(q.answer.includes(label))li.classList.add('ok');
         li.classList.add('disabled');
       });
-    }},'Show Answer');
+    }
+    // Undo of applyPeek. Only ever called for an ungraded question, so it
+    // cannot wipe real Submit feedback: the user's own 'sel' is left intact.
+    function clearPeek(){
+      ol.querySelectorAll('li').forEach(function(li){
+        li.classList.remove('ok');li.classList.remove('disabled');
+      });
+    }
+    function reveal(){
+      ab.style.display='block';
+      if(q.id)st.rev[q.id]=true;
+      submitBtn.style.display='none';showAnsBtn.style.display='none';skipBtn.style.display='none';
+      hideBtn.style.display='inline-flex';
+      if(!st.sub[q.id])applyPeek();
+    }
+
+    var showAnsBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:reveal},'Show Answer');
+    var skipBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:reveal},'Show Answer');
 
     var hideBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
       ab.style.display='none';
       if(q.id)delete st.rev[q.id];
       hideBtn.style.display='none';
-      if(st.sub[q.id])showAnsBtn.style.display='inline-flex';
-      else skipBtn.style.display='inline-flex';
+      if(st.sub[q.id]){
+        // Graded: Submit's ok/wrong marking is the user's result, so it stays.
+        showAnsBtn.style.display='inline-flex';
+      }else{
+        // Only peeked: undo the reveal completely, back to the user's own
+        // selection, and let them still answer the question properly.
+        clearPeek();
+        if((st.sel[q.id]||[]).length>0)submitBtn.style.display='inline-flex';
+        skipBtn.style.display='inline-flex';
+      }
     }},'Hide');
 
-    // Initial button visibility. Exactly one of these is ever shown.
-    if(revealed){hideBtn.style.display='inline-flex';}
-    else if(st.sub[q.id]){showAnsBtn.style.display='inline-flex';}
-    else{
+    // Initial button visibility. Selection state is read directly here rather
+    // than via a click listener: clicking an option calls render(), which
+    // rebuilds the card, so a listener on the old node could never show
+    // Submit. That is why Submit was previously unreachable.
+    if(revealed){
+      hideBtn.style.display='inline-flex';
+    }else if(st.sub[q.id]){
+      showAnsBtn.style.display='inline-flex';
+    }else{
+      if((st.sel[q.id]||[]).length>0)submitBtn.style.display='inline-flex';
       skipBtn.style.display='inline-flex';
-      // Watch for option selections to show Submit
-      var origClick=ol.addEventListener('click',function(){
-        setTimeout(function(){
-          var hasSel=(st.sel[q.id]||[]).length>0;
-          if(hasSel&&!st.sub[q.id]){submitBtn.style.display='inline-flex';skipBtn.style.display='none';}
-          else if(!st.sub[q.id]){submitBtn.style.display='none';skipBtn.style.display='inline-flex';}
-        },10);
-      });
     }
     actions.appendChild(submitBtn);actions.appendChild(showAnsBtn);actions.appendChild(skipBtn);actions.appendChild(hideBtn);
     card.appendChild(actions);
