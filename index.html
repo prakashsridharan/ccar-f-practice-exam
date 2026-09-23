@@ -283,8 +283,12 @@ function renderQCard(q,opts){
     ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||st.sub[q.id])return;if(q.type==='multi'){var s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' '+opt.t));
   });body.appendChild(ol);card.appendChild(body);
 
-  // Build answer block (hidden by default unless showAns)
-  var ab=E('div',{className:'ans-b',style:{display:showAns?'block':'none'}});
+  // Build answer block. Reveal state is remembered per question id in st.rev
+  // so a re-render (triggered by interacting with any other card) does not
+  // collapse an answer the user already opened. Keyed strictly by this card's
+  // own q.id, so one card can never reveal another.
+  var revealed=showAns||(!!q.id&&st.rev[q.id]===true);
+  var ab=E('div',{className:'ans-b',style:{display:revealed?'block':'none'}});
   ab.appendChild(E('div',{className:'al'},'Correct Answer'));
   ab.appendChild(E('div',{className:'av'},q.answer.join(', ')));
   ab.appendChild(E('div',{className:'rat'},q.rationale));
@@ -313,6 +317,7 @@ function renderQCard(q,opts){
 
     var showAnsBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:function(){
       ab.style.display='block';
+      if(q.id)st.rev[q.id]=true;
       showAnsBtn.style.display='none';
       hideBtn.style.display='inline-flex';
       // Also mark correct answers if not already submitted
@@ -329,6 +334,7 @@ function renderQCard(q,opts){
 
     var skipBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
       ab.style.display='block';
+      if(q.id)st.rev[q.id]=true;
       skipBtn.style.display='none';
       hideBtn.style.display='inline-flex';
       st.sub[q.id]=true;
@@ -342,14 +348,16 @@ function renderQCard(q,opts){
 
     var hideBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
       ab.style.display='none';
+      if(q.id)delete st.rev[q.id];
       hideBtn.style.display='none';
       if(st.sub[q.id])showAnsBtn.style.display='inline-flex';
       else skipBtn.style.display='inline-flex';
     }},'Hide');
 
-    // Initial button visibility
-    if(st.sub[q.id]&&!showAns){showAnsBtn.style.display='inline-flex';}
-    else if(!st.sub[q.id]){
+    // Initial button visibility. Exactly one of these is ever shown.
+    if(revealed){hideBtn.style.display='inline-flex';}
+    else if(st.sub[q.id]){showAnsBtn.style.display='inline-flex';}
+    else{
       skipBtn.style.display='inline-flex';
       // Watch for option selections to show Submit
       var origClick=ol.addEventListener('click',function(){
@@ -445,7 +453,7 @@ function renderReport(){const app=document.getElementById('app');app.innerHTML='
 
 function renderReview(){const app=document.getElementById('app');app.innerHTML='';app.appendChild(E('div',{className:'hdr',style:{padding:'1rem 1.5rem'}},E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},E('button',{className:'btn-h',onClick:()=>{view='report';render();}},E('span',{innerHTML:IC.home}),'Back'),E('h1',{style:{fontSize:'1.1rem'}},'Review Answers'),E('span',null,''))));const ct=E('div',{className:'container'});st.pq.forEach(q=>ct.appendChild(renderQCard(q,{showAnswer:true,allowSelect:false})));app.appendChild(ct);}
 
-function renderStudy(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();if(st.rev[undefined])delete st.rev[undefined];const as=allS();const sc=calcScore(aq);
+function renderStudy(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();const as=allS();const sc=calcScore(aq);
  app.appendChild(E('div',{className:'hdr'},E('h1',null,'Study Mode'),E('div',{className:'sub'},aq.length+' Questions - 5 Domains'),E('div',{className:'hdr-actions'},E('button',{className:'btn-h',onClick:()=>{view='home';render();}},E('span',{innerHTML:IC.home}),'Home'),E('button',{className:'btn-h',onClick:()=>{st.rev={};st.sel={};st.sub={};render();}},E('span',{innerHTML:IC.reset}),'Reset'))));
  const nav=E('div',{className:'nav'});nav.appendChild(E('button',{className:'nav-t'+(st.as===0?' on':''),onClick:()=>{st.as=0;render();}},'All',E('span',{className:'tc'},String(aq.length))));
  Object.entries(DM).forEach(([id,d])=>{const cnt=aq.filter(q=>q.domain===Number(id)).length;nav.appendChild(E('button',{className:'nav-t'+(st.as===Number(id)?' on':''),onClick:()=>{st.as=Number(id);render();}},'D'+id+': '+d.n.split(' ')[0],E('span',{className:'tc'},String(cnt))));});app.appendChild(nav);
