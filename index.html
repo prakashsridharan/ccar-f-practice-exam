@@ -327,7 +327,7 @@ function renderQCard(q,opts){
       }
     }},'Show Answer');
 
-    var skipBtn=E('button',{className:'btn btn-g',onClick:function(){
+    var skipBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
       ab.style.display='block';
       skipBtn.style.display='none';
       hideBtn.style.display='inline-flex';
