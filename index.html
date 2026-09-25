@@ -185,6 +185,9 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--border-f
    <li><strong>Study Mode</strong>: browse all 100 questions grouped by domain, reveal answers and rationales as you go, and filter to the areas you are weakest in.</li>
   </ul>
 
+  <h2>Also preparing for the Professional exam?</h2>
+  <p><a href="/ccar-p/">CCAR-P Practice Exam</a> covers the Claude Certified Architect - Professional certification: 63 items, 120 minutes, seven weighted domains. The full blueprint is available now and practice questions are coming soon.</p>
+
   <noscript><p><strong>This practice exam needs JavaScript enabled to run.</strong> Please turn on JavaScript and reload the page.</p></noscript>
   <p class="foot">Practice questions based on CCAR-F Certification Guide. Independent study aid, not affiliated with or endorsed by Anthropic.</p>
  </div>
@@ -303,6 +306,9 @@ const EXAMS={
    format:'Multiple choice',delivery:'Online proctored',scoring:'Scaled (weighted)',
    tiers:{pass:80,border:70},domainThreshold:75},
   exportNames:{backup:'ccar-f-backup.json',template:'ccar-f-question-template.csv'},
+  crossLink:{href:'/ccar-p/',label:'Also preparing for the Professional exam?',
+   title:'CCAR-P Practice Exam',
+   blurb:'Claude Certified Architect - Professional. 63 items, 120 minutes, seven domains. Full blueprint available now, practice questions coming soon.'},
   copy:{
    footer:'Practice questions based on CCAR-F Certification Guide',
    tipsIntro:'How to read your results and where to spend study time.',
@@ -600,6 +606,11 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  
  EX.copy.tips.forEach(t=>tipList.appendChild(ft(t[0],t[1])));
  tips.appendChild(tipList);ct.appendChild(tips);
+ if(EX.crossLink){const xl=E('a',{href:EX.crossLink.href,style:{display:'block',textDecoration:'none',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1rem 1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+  xl.appendChild(E('div',{style:{fontSize:'.72rem',color:'var(--text-m)',marginBottom:'.2rem'}},EX.crossLink.label));
+  xl.appendChild(E('div',{style:{fontSize:'.95rem',fontWeight:'700',color:'var(--ac)',marginBottom:'.25rem'}},EX.crossLink.title+' \u2192'));
+  xl.appendChild(E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',lineHeight:'1.6'}},EX.crossLink.blurb));
+  ct.appendChild(xl);}
 
  ct.appendChild(E('div',{className:'foot'},EX.copy.footer+' · ',E('a',{href:'https://docs.anthropic.com',target:'_blank',style:{color:'var(--ac)',textDecoration:'none'}},'Anthropic Documentation')));
  app.appendChild(ct);if(st.modal)renderModals();}
