@@ -569,8 +569,8 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
  about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
  const features=E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',lineHeight:'1.7'}});
- EX.copy.features.forEach(f=>features.appendChild(ft(f[0],f[1])));
  const ft=(icon,text)=>{const f=E('div',{style:{display:'flex',gap:'.4rem',marginBottom:'.25rem'}});f.appendChild(E('span',null,icon));f.appendChild(E('span',null,text));return f;};
+ EX.copy.features.forEach(f=>features.appendChild(ft(f[0],f[1])));
  
  
  
