@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Repo files GitHub Pages also serves from the root. They are not part of the
+# app and should not compete with it in search results.
+Disallow: /README.md
+Disallow: /PROMPT.md
+Disallow: /schema.sql
+
+Sitemap: https://ccar-f.pratechlabs.com/sitemap.xml

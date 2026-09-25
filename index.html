@@ -6,7 +6,47 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<title>CCAR-F Practice Exam</title>
+
+<title>CCAR-F Practice Exam - Claude Certified Architect Foundations</title>
+<meta name="description" content="Free CCAR-F practice exam: 100 scenario-based questions with full rationales, a timed 60-question mock exam, and per-domain scoring. No sign-up required.">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<meta name="author" content="PraTech Labs">
+<link rel="canonical" href="https://ccar-f.pratechlabs.com/">
+
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ccar-f.pratechlabs.com/">
+<meta property="og:site_name" content="CCAR-F Practice Exam">
+<meta property="og:title" content="CCAR-F Practice Exam - Claude Certified Architect Foundations">
+<meta property="og:description" content="100 free scenario-based practice questions for the Claude Certified Architect - Foundations certification, with rationales, doc links and a timed mock exam.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CCAR-F Practice Exam - Claude Certified Architect Foundations">
+<meta name="twitter:description" content="100 free scenario-based practice questions for the Claude Certified Architect - Foundations certification, with rationales, doc links and a timed mock exam.">
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "CCAR-F Practice Exam",
+  "url": "https://ccar-f.pratechlabs.com/",
+  "applicationCategory": "EducationalApplication",
+  "operatingSystem": "Any modern web browser",
+  "description": "A free practice exam for the Claude Certified Architect - Foundations (CCAR-F) certification, with 100 scenario-based questions, detailed rationales, reference links to Anthropic documentation, a timed 60-question mock exam and per-domain score reporting.",
+  "inLanguage": "en",
+  "isAccessibleForFree": true,
+  "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+  "about": {
+    "@type": "Thing",
+    "name": "Claude Certified Architect - Foundations (CCAR-F) certification"
+  },
+  "featureList": [
+    "100 scenario-based practice questions across 5 exam domains",
+    "Timed 60-question mock exam weighted to the official blueprint",
+    "Study mode with instant answers and rationales",
+    "Per-domain score breakdown and weak area identification",
+    "Reference links to Anthropic documentation"
+  ]
+}
+</script>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
@@ -115,7 +155,40 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--border-f
 </style>
 </head>
 <body>
-<div id="app"></div>
+<!--
+  The app renders client side, so #app is seeded with a static summary of the
+  same content the home page shows. Crawlers that do not execute JavaScript
+  index this; renderHome() clears it via app.innerHTML='' the moment the app
+  boots. Keep this text in step with renderHome() - it must describe what the
+  page really offers, never more.
+-->
+<div id="app">
+ <div class="hdr"><h1>CCAR-F Practice Exam</h1><div class="sub">Claude Certified Architect - Foundations</div></div>
+ <div class="container">
+  <p>A free practice exam for the <strong>Claude Certified Architect - Foundations (CCAR-F)</strong> certification. 100 original scenario-based questions, each with a detailed rationale, an explanation of why the other options are wrong, and a reference link to the relevant Anthropic documentation. No sign-up and nothing to install.</p>
+
+  <h2>About the CCAR-F exam</h2>
+  <p>The CCAR-F certification validates your ability to design, build and optimize AI-powered applications using Claude and the Anthropic platform. The real exam is 60 multiple choice questions in 120 minutes, delivered online proctored, and uses scaled scoring with a pass mark of 720 out of 1000.</p>
+
+  <h2>Exam domains</h2>
+  <ul>
+   <li><strong>D1 - Agentic Architecture &amp; Orchestration (27%)</strong>: the agent loop, stop_reason handling, task decomposition, subagent delegation and multi-agent coordination.</li>
+   <li><strong>D2 - Tool Design &amp; MCP Integration (18%)</strong>: tool schemas, precise descriptions, actionable error messages, right-sized tool catalogs and exposing tools over MCP.</li>
+   <li><strong>D3 - Claude Code Configuration &amp; Workflows (20%)</strong>: CLAUDE.md memory, custom slash commands, hooks, permission scoping, sessions and CI/CD integration.</li>
+   <li><strong>D4 - Prompt Engineering &amp; Structured Output (20%)</strong>: JSON schemas via tool_use, required versus optional fields, validation and repair loops, and batching for cost.</li>
+   <li><strong>D5 - Context Management &amp; Reliability (15%)</strong>: context window budgeting, compaction, preserving citations through summarization and recovering state after failure.</li>
+  </ul>
+
+  <h2>Two ways to practice</h2>
+  <ul>
+   <li><strong>Practice Mode</strong>: 60 questions drawn in the same proportions as the official blueprint, on a 120-minute timer, with flag-for-review and a score report broken down by domain.</li>
+   <li><strong>Study Mode</strong>: browse all 100 questions grouped by domain, reveal answers and rationales as you go, and filter to the areas you are weakest in.</li>
+  </ul>
+
+  <noscript><p><strong>This practice exam needs JavaScript enabled to run.</strong> Please turn on JavaScript and reload the page.</p></noscript>
+  <p class="foot">Practice questions based on CCAR-F Certification Guide. Independent study aid, not affiliated with or endorsed by Anthropic.</p>
+ </div>
+</div>
 <script>
 const BQ=[{id:"Q1",s:1,d:1,ty:"single",q:"You are implementing the core agentic loop for your customer support agent. After sending each request to Claude, your harness code needs to decide whether to execute the tools Claude requested or present Claude's text response to the customer. During testing, you notice the loop sometimes terminates prematurely when Claude provides a status update to the customer mid-conversation while also requesting a tool call in the same response. Which signal should your harness inspect to make the continue-or-stop decision?",o:[{l:"A",t:"Check whether the response contains any text content - if it does, the agent is addressing the customer and the loop should stop"},{l:"B",t:"Inspect the stop_reason field: continue executing tools when it is \"tool_use\" and terminate the loop when it is \"end_turn\""},{l:"C",t:"Count the number of tool calls made so far and stop after a configurable maximum (e.g., 10 iterations)"},{l:"D",t:"Parse the assistant's text for phrases like \"I have resolved\" or \"your issue is complete\" to detect when the agent considers itself done"}],a:["B"],r:"The stop_reason field is the designed, deterministic signal for loop control. \"tool_use\" means Claude wants tools executed; \"end_turn\" means it has finished. Responses can contain both text and tool_use blocks simultaneously, so checking for text content (A) causes premature termination. Parsing natural language (D) is a documented anti-pattern.",w:"A fails because responses legitimately contain text alongside tool calls; C uses an arbitrary cap as the primary mechanism; D relies on unreliable NL parsing."},
 {id:"Q2",s:1,d:1,ty:"single",q:"Your support agent calls lookup_order to retrieve order details. Your harness code successfully executes the tool against your backend and receives the order data. A junior developer asks how the model actually sees this data so it can decide what to do next. What is the correct explanation?",o:[{l:"A",t:"The Claude API automatically executes tools registered in the system and incorporates results into the model's context - no additional code is needed"},{l:"B",t:"Your code must append a tool_result block (referencing the original tool call's ID) to the conversation history array, then send the updated messages back to Claude in the next API request"},{l:"C",t:"The MCP server pushes the result directly into the model's working memory via a callback URL"},{l:"D",t:"The model re-reads the tool's description on each turn, and you should update the description to include the latest result"}],a:["B"],r:"The API is stateless - tool execution happens in your code, and results reach the model only by appending them to the conversation history and re-invoking the API. There is no automatic execution, no push mechanism, and tool descriptions are static definitions, not result containers.",w:"A and C describe automatic mechanisms that don't exist; D confuses static definitions with runtime data."},
@@ -401,19 +474,31 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const details=E('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.5rem',margin:'.75rem 0',fontSize:'.78rem'}});
  const dt=(label,value)=>{const d=E('div',{style:{display:'flex',justifyContent:'space-between',padding:'.35rem .6rem',background:'var(--bg)',borderRadius:'6px'}});d.appendChild(E('span',{style:{color:'var(--text-2)'}},label));d.appendChild(E('span',{style:{fontWeight:'600'}},value));return d;};
  details.appendChild(dt('Format','Multiple choice'));details.appendChild(dt('Questions','60'));details.appendChild(dt('Duration','120 minutes'));details.appendChild(dt('Passing Score','720 / 1000'));details.appendChild(dt('Scoring','Scaled (weighted)'));details.appendChild(dt('Delivery','Online proctored'));
- info.appendChild(details);ct.appendChild(info);
+ info.appendChild(details);
+ info.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},'Scaled scoring means questions are not all worth the same. A raw percentage is not the same as the 720 you need, and Anthropic does not publish the conversion, so treat the scores in this app as a guide rather than a prediction.'));
+ ct.appendChild(info);
 
  // Domain weights card
  const dw=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
- dw.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.6rem'}},'Exam Domains'));
- const dwData=[{d:1,n:'Agentic Architecture & Orchestration',w:'27%',c:'#0097A7'},{d:2,n:'Tool Design & MCP Integration',w:'18%',c:'#2E86C1'},{d:3,n:'Claude Code Configuration & Workflows',w:'20%',c:'#5B38B6'},{d:4,n:'Prompt Engineering & Structured Output',w:'20%',c:'#C0522A'},{d:5,n:'Context Management & Reliability',w:'15%',c:'#1B4F8A'}];
- dwData.forEach(d=>{const row=E('div',{style:{display:'flex',alignItems:'center',gap:'.5rem',marginBottom:'.4rem',fontSize:'.8rem'}});
+ dw.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.4rem'}},'Exam Domains'));
+ dw.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.85rem'}},'The exam is divided into five domains. The percentage is that domain\'s share of your scaled score, so the heavier domains are worth studying first. Practice Mode draws its 60 questions in these same proportions.'));
+ const dwData=[
+  {d:1,n:'Agentic Architecture & Orchestration',w:'27%',c:'#0097A7',desc:'Building the agent loop: reading stop_reason to decide continue-or-stop, decomposing tasks, delegating to subagents, and coordinating multi-agent systems without deadlock or drift.'},
+  {d:2,n:'Tool Design & MCP Integration',w:'18%',c:'#2E86C1',desc:'Designing tools Claude can actually use well: clear schemas, precise descriptions, actionable error messages, right-sized tool catalogs, and exposing them over MCP.'},
+  {d:3,n:'Claude Code Configuration & Workflows',w:'20%',c:'#5B38B6',desc:'Configuring Claude Code for a team: CLAUDE.md memory, custom slash commands, hooks, permission scoping, session management, and wiring it into CI/CD.'},
+  {d:4,n:'Prompt Engineering & Structured Output',w:'20%',c:'#C0522A',desc:'Getting reliable, machine-readable results: JSON schemas via tool_use, required versus optional fields, validation and repair loops, and controlling cost with batching.'},
+  {d:5,n:'Context Management & Reliability',w:'15%',c:'#1B4F8A',desc:'Keeping long-running agents accurate: context window budgeting, compaction, preserving citations through summarization, and recovering state after a failure.'}
+ ];
+ dwData.forEach(d=>{const wrap=E('div',{style:{marginBottom:'.7rem'}});
+ const row=E('div',{style:{display:'flex',alignItems:'center',gap:'.5rem',fontSize:'.8rem'}});
  row.appendChild(E('span',{style:{fontWeight:'700',color:d.c,width:'1.5rem',fontFamily:'"JetBrains Mono",monospace'}},'D'+d.d));
- row.appendChild(E('span',{style:{flex:'1',color:'var(--text)'}},d.n));
+ row.appendChild(E('span',{style:{flex:'1',color:'var(--text)',fontWeight:'600'}},d.n));
  const bar=E('div',{style:{width:'80px',height:'6px',background:'var(--bg)',borderRadius:'3px',overflow:'hidden'}});
  bar.appendChild(E('div',{style:{width:d.w,height:'100%',background:d.c,borderRadius:'3px'}}));
  row.appendChild(bar);row.appendChild(E('span',{style:{fontWeight:'600',width:'2.5rem',textAlign:'right',fontFamily:'"JetBrains Mono",monospace',fontSize:'.75rem'}},d.w));
- dw.appendChild(row);});
+ wrap.appendChild(row);
+ wrap.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-2)',lineHeight:'1.6',margin:'.2rem 0 0 2rem'}},d.desc));
+ dw.appendChild(wrap);});
  ct.appendChild(dw);
 
  // About this app
@@ -426,9 +511,15 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  features.appendChild(ft('📖','Study Mode - browse all questions organized by domain with instant answers'));
  features.appendChild(ft('📊','Score report with domain breakdown and weak area identification'));
  features.appendChild(ft('🔗','Reference links to Anthropic documentation for every question'));
- about.appendChild(features);ct.appendChild(about);
+ about.appendChild(features);
+ about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6',marginTop:'.6rem'}},'Free, no sign-up, and nothing to install. This is an independent study aid and is not affiliated with or endorsed by Anthropic.'));
+ ct.appendChild(about);
 
  // Mode selection
+ const modeHdr=E('div',{style:{margin:'0 0 .6rem'}});
+ modeHdr.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.3rem'}},'Choose How to Practice'));
+ modeHdr.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65'}},'Two modes, same question bank. Use Study to learn the material and Practice to find out whether it has stuck under exam conditions. Your progress is not saved between visits, so finish a run in one sitting.'));
+ ct.appendChild(modeHdr);
  const sel=E('div',{className:'mode-sel'});
  const pc=E('div',{className:'mode-card',onClick:startPractice});pc.innerHTML=IC.play;pc.appendChild(E('h2',null,'Practice'));pc.appendChild(E('p',null,'Simulate the real exam - 60 random questions, domain-weighted, 120-minute timer. Target 80%+ overall and 75%+ in every domain.'));pc.appendChild(E('span',{className:'tag'},'120 min · 60 Qs · Timed'));sel.appendChild(pc);
  const sc2=E('div',{className:'mode-card',onClick:()=>{view='study';st.sel={};st.sub={};st.rev={};render();}});sc2.innerHTML=IC.book;sc2.appendChild(E('h2',null,'Study'));sc2.appendChild(E('p',null,'Browse all '+aq.length+' questions with answers, rationales, and Anthropic doc links. Filter by domain.'));sc2.appendChild(E('span',{className:'tag'},'All Qs · Self-paced'));sel.appendChild(sc2);
@@ -436,7 +527,8 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
 
  // Tips
  const tips=E('div',{style:{background:'#EEF5FB',border:'1px solid #D6EAF8',borderRadius:'var(--rl)',padding:'1rem 1.25rem',margin:'0 0 1rem'}});
- tips.appendChild(E('h3',{style:{fontSize:'.88rem',fontWeight:'700',color:'#1A2E45',marginBottom:'.4rem'}},'Preparation Tips'));
+ tips.appendChild(E('h3',{style:{fontSize:'.88rem',fontWeight:'700',color:'#1A2E45',marginBottom:'.3rem'}},'Preparation Tips'));
+ tips.appendChild(E('p',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.65',marginBottom:'.5rem',opacity:'.9'}},'How to read your results and where to spend study time.'));
  const tipList=E('div',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.7'}});
  tipList.appendChild(ft('💡','The real exam uses scaled scoring - questions carry different weights per domain'));
  tipList.appendChild(ft('💡','Target 80%+ overall and 75%+ in every domain for a confident pass'));
