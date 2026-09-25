@@ -303,6 +303,20 @@ const EXAMS={
    format:'Multiple choice',delivery:'Online proctored',scoring:'Scaled (weighted)',
    tiers:{pass:80,border:70},domainThreshold:75},
   exportNames:{backup:'ccar-f-backup.json',template:'ccar-f-question-template.csv'},
+  copy:{
+   footer:'Practice questions based on CCAR-F Certification Guide',
+   tipsIntro:'How to read your results and where to spend study time.',
+   studyCard:' questions with answers, rationales, and Anthropic doc links. Filter by domain.',
+   practiceCard:'Simulate the real exam - 60 random questions, domain-weighted, 120-minute timer. Target 80%+ overall and 75%+ in every domain.',
+   modeIntro:'Two modes, same question bank. Use Study to learn the material and Practice to find out whether it has stuck under exam conditions. Your progress is not saved between visits, so finish a run in one sitting.',
+   disclaimer:'Free, no sign-up, and nothing to install. This is an independent study aid and is not affiliated with or endorsed by Anthropic.',
+   appOffers:' scenario-based practice questions covering all 5 domains, aligned with the official exam guide. Each question includes a detailed rationale and a direct link to the relevant Anthropic documentation for deeper learning.',
+   domainsIntro:'The exam is divided into five domains. The percentage is that domain\'s share of your scaled score, so the heavier domains are worth studying first. Practice Mode draws its 60 questions in these same proportions.',
+   scoringNote:'Scaled scoring means questions are not all worth the same. A raw percentage is not the same as the 720 you need, and Anthropic does not publish the conversion, so treat the scores in this app as a guide rather than a prediction.',
+   aboutExam:'The Claude Certified Architect - Foundations (CCAR-F) certification validates your ability to design, build, and optimize AI-powered applications using Claude and the Anthropic platform. It covers agentic architectures, tool design with MCP, Claude Code configuration, prompt engineering for structured output, and context management for production reliability.',
+   features:[['🎯',"Practice Mode - 60 timed questions weighted by domain blueprint"],['📖',"Study Mode - browse all questions organized by domain with instant answers"],['📊',"Score report with domain breakdown and weak area identification"],['🔗',"Reference links to Anthropic documentation for every question"]],
+   tips:[['💡',"The real exam uses scaled scoring - questions carry different weights per domain"],['💡',"Target 80%+ overall and 75%+ in every domain for a confident pass"],['💡',"Weak domains drag your scaled score down disproportionately"],['💡',"Study the Anthropic documentation linked in each answer"]]
+  },
   domains:{
    1:{n:'Agentic Architecture & Orchestration',short:'Agentic',weightPct:27,pick:16,color:'#0097A7',tint:'#E8F6F8',
       blurb:'Building the agent loop: reading stop_reason to decide continue-or-stop, decomposing tasks, delegating to subagents, and coordinating multi-agent systems without deadlock or drift.',
@@ -519,24 +533,24 @@ function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',nu
 
 // Views
 function renderHome(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();
- app.appendChild(E('div',{className:'hdr'},E('h1',null,'CCAR-F Practice Exam'),E('div',{className:'sub'},'Claude Certified Architect - Foundations')));
+ app.appendChild(E('div',{className:'hdr'},E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
 
  // Exam overview card
  const info=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'1rem 0',boxShadow:'var(--sh)'}});
- info.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'About the CCAR-F Exam'));
- info.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.6rem'}},'The Claude Certified Architect - Foundations (CCAR-F) certification validates your ability to design, build, and optimize AI-powered applications using Claude and the Anthropic platform. It covers agentic architectures, tool design with MCP, Claude Code configuration, prompt engineering for structured output, and context management for production reliability.'));
+ info.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'About the '+EX.code+' Exam'));
+ info.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.6rem'}},EX.copy.aboutExam));
  const details=E('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.5rem',margin:'.75rem 0',fontSize:'.78rem'}});
  const dt=(label,value)=>{const d=E('div',{style:{display:'flex',justifyContent:'space-between',padding:'.35rem .6rem',background:'var(--bg)',borderRadius:'6px'}});d.appendChild(E('span',{style:{color:'var(--text-2)'}},label));d.appendChild(E('span',{style:{fontWeight:'600'}},value));return d;};
- details.appendChild(dt('Format','Multiple choice'));details.appendChild(dt('Questions','60'));details.appendChild(dt('Duration','120 minutes'));details.appendChild(dt('Passing Score','720 / 1000'));details.appendChild(dt('Scoring','Scaled (weighted)'));details.appendChild(dt('Delivery','Online proctored'));
+ details.appendChild(dt('Format',EX.blueprint.format));details.appendChild(dt('Questions',String(EX.blueprint.questionCount)));details.appendChild(dt('Duration',Math.round(EX.blueprint.durationSec/60)+' minutes'));details.appendChild(dt('Passing Score',EX.blueprint.passScaled+' / '+EX.blueprint.scaledMax));details.appendChild(dt('Scoring',EX.blueprint.scoring));details.appendChild(dt('Delivery',EX.blueprint.delivery));
  info.appendChild(details);
- info.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},'Scaled scoring means questions are not all worth the same. A raw percentage is not the same as the 720 you need, and Anthropic does not publish the conversion, so treat the scores in this app as a guide rather than a prediction.'));
+ info.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.scoringNote));
  ct.appendChild(info);
 
  // Domain weights card
  const dw=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
  dw.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.4rem'}},'Exam Domains'));
- dw.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.85rem'}},'The exam is divided into five domains. The percentage is that domain\'s share of your scaled score, so the heavier domains are worth studying first. Practice Mode draws its 60 questions in these same proportions.'));
+ dw.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.85rem'}},EX.copy.domainsIntro));
  const dwData=Object.keys(EX.domains).map((k,i)=>({d:Number(k),n:EX.domains[k].n,w:EX.domains[k].weightPct+'%',c:domainColor(k,i),desc:EX.domains[k].blurb}));
  dwData.forEach(d=>{const wrap=E('div',{style:{marginBottom:'.7rem'}});
  const row=E('div',{style:{display:'flex',alignItems:'center',gap:'.5rem',fontSize:'.8rem'}});
@@ -553,39 +567,41 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  // About this app
  const about=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
  about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
- about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+' scenario-based practice questions covering all 5 domains, aligned with the official exam guide. Each question includes a detailed rationale and a direct link to the relevant Anthropic documentation for deeper learning.'));
+ about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
  const features=E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',lineHeight:'1.7'}});
+ EX.copy.features.forEach(f=>features.appendChild(ft(f[0],f[1])));
  const ft=(icon,text)=>{const f=E('div',{style:{display:'flex',gap:'.4rem',marginBottom:'.25rem'}});f.appendChild(E('span',null,icon));f.appendChild(E('span',null,text));return f;};
- features.appendChild(ft('🎯','Practice Mode - 60 timed questions weighted by domain blueprint'));
- features.appendChild(ft('📖','Study Mode - browse all questions organized by domain with instant answers'));
- features.appendChild(ft('📊','Score report with domain breakdown and weak area identification'));
- features.appendChild(ft('🔗','Reference links to Anthropic documentation for every question'));
+ 
+ 
+ 
+ 
  about.appendChild(features);
- about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6',marginTop:'.6rem'}},'Free, no sign-up, and nothing to install. This is an independent study aid and is not affiliated with or endorsed by Anthropic.'));
+ about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6',marginTop:'.6rem'}},EX.copy.disclaimer));
  ct.appendChild(about);
 
  // Mode selection
  const modeHdr=E('div',{style:{margin:'0 0 .6rem'}});
  modeHdr.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.3rem'}},'Choose How to Practice'));
- modeHdr.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65'}},'Two modes, same question bank. Use Study to learn the material and Practice to find out whether it has stuck under exam conditions. Your progress is not saved between visits, so finish a run in one sitting.'));
+ modeHdr.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65'}},EX.copy.modeIntro));
  ct.appendChild(modeHdr);
  const sel=E('div',{className:'mode-sel'});
- const pc=E('div',{className:'mode-card',onClick:startPractice});pc.innerHTML=IC.play;pc.appendChild(E('h2',null,'Practice'));pc.appendChild(E('p',null,'Simulate the real exam - 60 random questions, domain-weighted, 120-minute timer. Target 80%+ overall and 75%+ in every domain.'));pc.appendChild(E('span',{className:'tag'},'120 min · 60 Qs · Timed'));sel.appendChild(pc);
- const sc2=E('div',{className:'mode-card',onClick:()=>{view='study';st.sel={};st.sub={};st.rev={};render();}});sc2.innerHTML=IC.book;sc2.appendChild(E('h2',null,'Study'));sc2.appendChild(E('p',null,'Browse all '+aq.length+' questions with answers, rationales, and Anthropic doc links. Filter by domain.'));sc2.appendChild(E('span',{className:'tag'},'All Qs · Self-paced'));sel.appendChild(sc2);
+ const pc=E('div',{className:'mode-card',onClick:startPractice});pc.innerHTML=IC.play;pc.appendChild(E('h2',null,'Practice'));pc.appendChild(E('p',null,EX.copy.practiceCard));pc.appendChild(E('span',{className:'tag'},Math.round(EX.blueprint.durationSec/60)+' min · '+EX.blueprint.questionCount+' Qs · Timed'));sel.appendChild(pc);
+ const sc2=E('div',{className:'mode-card',onClick:()=>{view='study';st.sel={};st.sub={};st.rev={};render();}});sc2.innerHTML=IC.book;sc2.appendChild(E('h2',null,'Study'));sc2.appendChild(E('p',null,'Browse all '+aq.length+EX.copy.studyCard));sc2.appendChild(E('span',{className:'tag'},'All Qs · Self-paced'));sel.appendChild(sc2);
  ct.appendChild(sel);
 
  // Tips
  const tips=E('div',{style:{background:'#EEF5FB',border:'1px solid #D6EAF8',borderRadius:'var(--rl)',padding:'1rem 1.25rem',margin:'0 0 1rem'}});
  tips.appendChild(E('h3',{style:{fontSize:'.88rem',fontWeight:'700',color:'#1A2E45',marginBottom:'.3rem'}},'Preparation Tips'));
- tips.appendChild(E('p',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.65',marginBottom:'.5rem',opacity:'.9'}},'How to read your results and where to spend study time.'));
+ tips.appendChild(E('p',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.65',marginBottom:'.5rem',opacity:'.9'}},EX.copy.tipsIntro));
  const tipList=E('div',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.7'}});
- tipList.appendChild(ft('💡','The real exam uses scaled scoring - questions carry different weights per domain'));
- tipList.appendChild(ft('💡','Target 80%+ overall and 75%+ in every domain for a confident pass'));
- tipList.appendChild(ft('💡','Weak domains drag your scaled score down disproportionately'));
- tipList.appendChild(ft('💡','Study the Anthropic documentation linked in each answer'));
+ 
+ 
+ 
+ 
+ EX.copy.tips.forEach(t=>tipList.appendChild(ft(t[0],t[1])));
  tips.appendChild(tipList);ct.appendChild(tips);
 
- ct.appendChild(E('div',{className:'foot'},'Practice questions based on CCAR-F Certification Guide · ',E('a',{href:'https://docs.anthropic.com',target:'_blank',style:{color:'var(--ac)',textDecoration:'none'}},'Anthropic Documentation')));
+ ct.appendChild(E('div',{className:'foot'},EX.copy.footer+' · ',E('a',{href:'https://docs.anthropic.com',target:'_blank',style:{color:'var(--ac)',textDecoration:'none'}},'Anthropic Documentation')));
  app.appendChild(ct);if(st.modal)renderModals();}
 
 function renderPractice(){const app=document.getElementById('app');app.innerHTML='';const q=st.pq[st.pi];if(!q)return;const answered=st.pq.filter(q=>(st.sel[q.id]||[]).length>0).length;
@@ -618,7 +634,7 @@ function renderStudy(){const app=document.getElementById('app');app.innerHTML=''
  const ct=E('div',{className:'container'});if(sc.at>0)ct.appendChild(renderDomainScores(sc));
  if(st.as===0){let ld=0;fl.forEach(q=>{if(q.domain!==ld){ld=q.domain;const d=DM[q.domain];ct.appendChild(E('div',{className:'sc-hdr'},E('div',null,E('h2',null,'Domain '+q.domain+': '+d.n),E('p',null,(EX.domains[q.domain]||{}).keywords||''))));}ct.appendChild(renderQCard(q,{showAdmin:true}));});}else{fl.forEach(q=>ct.appendChild(renderQCard(q,{showAdmin:true})));}
  if(!fl.length)ct.appendChild(E('div',{className:'empty'},'No questions found.'));
- ct.appendChild(E('div',{className:'foot'},'Practice questions based on CCAR-F Certification Guide'));app.appendChild(ct);}
+ ct.appendChild(E('div',{className:'foot'},EX.copy.footer));app.appendChild(ct);}
 
 // Admin modals
 function renderModals(){if(st.modal==='admin')adminModal();else if(st.modal==='q')qModal(null);else if(st.modal==='s')sModal();else if(st.modal==='u')uModal();else if(st.modal&&st.modal.t==='eq')qModal(st.modal.q);}
