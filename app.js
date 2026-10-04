@@ -269,6 +269,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
  about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
  about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.disclaimer));
+ if(EX.copy.contentNotice)about.appendChild(E('div',{className:'notice'},E('strong',null,'About these questions'),E('p',null,EX.copy.contentNotice)));
  ct.appendChild(about);
 
  // Tips, collapsed by default.

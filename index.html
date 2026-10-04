@@ -63,9 +63,10 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tex
 .hdr{background:linear-gradient(135deg,#1B4F8A,#1A2E45);color:#fff;padding:2.5rem 1.5rem 2rem;text-align:center;box-shadow:0 4px 20px rgba(27,79,138,.35)}
 .hdr h1{font-size:1.6rem;font-weight:800;letter-spacing:-.03em}
 .hdr .sub{font-size:.88rem;opacity:.85;margin-top:.4rem;max-width:34rem;margin-left:auto;margin-right:auto;line-height:1.55}
-.container{max-width:720px;margin:0 auto;padding:0 1rem 2rem}
+.container{max-width:960px;margin:0 auto;padding:0 1rem 2rem}
 .intro{font-size:.85rem;color:var(--text-2);line-height:1.7;margin:1.25rem 0 .5rem}
-.exam{display:block;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin:0 0 1rem;box-shadow:var(--sh);transition:border-color .15s,box-shadow .15s,transform .15s}
+.exams{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:0 0 1rem}
+.exam{display:flex;flex-direction:column;text-decoration:none;color:inherit;background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin:0;box-shadow:var(--sh);transition:border-color .15s,box-shadow .15s,transform .15s}
 .exam:hover{border-color:var(--ac);box-shadow:var(--sh-m);transform:translateY(-2px)}
 .exam .top{display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem;flex-wrap:wrap}
 .exam .code{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:.72rem;color:var(--ac);background:#EEF5FB;padding:.15rem .5rem;border-radius:20px}
@@ -77,12 +78,16 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tex
 .exam p{font-size:.82rem;color:var(--text-2);line-height:1.65;margin-bottom:.6rem}
 .facts{display:flex;gap:.4rem;flex-wrap:wrap}
 .fact{font-size:.72rem;color:var(--text-2);background:var(--bg);border-radius:6px;padding:.22rem .5rem}
-.go{margin-top:.7rem;font-size:.85rem;font-weight:600;color:var(--ac)}
+.go{margin-top:auto;padding-top:.7rem;font-size:.85rem;font-weight:600;color:var(--ac)}
 .more{background:var(--surface);border:1px dashed var(--border);border-radius:var(--rl);padding:1rem 1.25rem;margin:0 0 1rem;text-align:center}
 .more h3{font-size:.85rem;font-weight:700;margin-bottom:.2rem}
 .more p{font-size:.78rem;color:var(--text-2);line-height:1.6}
 .foot{text-align:center;padding:1.5rem 1rem;font-size:.72rem;color:var(--text-m);line-height:1.7}
 .foot a{color:#2E86C1;text-decoration:none}
+.notice{margin:0 0 1rem;padding:.8rem 1rem;border-left:3px solid var(--ac);background:#EEF5FB;border-radius:0 8px 8px 0}
+.notice strong{display:block;font-size:.82rem;color:#1A2E45;margin-bottom:.2rem}
+.notice p{font-size:.78rem;color:var(--text-2);line-height:1.65}
+@media(max-width:720px){.exams{grid-template-columns:1fr}}
 @media(max-width:500px){.hdr h1{font-size:1.35rem}}
 </style>
 </head>
@@ -97,6 +102,7 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tex
 
   <p class="intro">Pick the certification you are preparing for. Each practice exam mirrors its official blueprint: questions are drawn in the same domain proportions as the real exam, every answer carries a full rationale explaining why the other options are wrong, and each links to the relevant Anthropic documentation.</p>
 
+  <div class="exams">
   <a class="exam" href="/ccar-f/">
     <div class="top"><span class="code">CCAR-F</span><span class="pill live">Live</span></div>
     <h2>Foundations Practice Exam</h2>
@@ -124,6 +130,13 @@ body{font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--tex
           </div>
     <div class="go">Start practising &rarr;</div>
   </a>
+
+  </div>
+
+  <div class="notice">
+    <strong>About these questions</strong>
+    <p>Every question is original, written from the public exam guides and their blueprint objectives. None comes from a real exam or recreates a question seen in a test sitting, since live exam content is confidential. A high score here does not guarantee a pass: pair it with hands-on work and Anthropic's official documentation.</p>
+  </div>
 
   <div class="more">
     <h3>More certifications to come</h3>
