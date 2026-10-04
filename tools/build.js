@@ -9,7 +9,7 @@
 //   questions.md    question bank in the format below
 //   refs.json       {"<id>":"<url>|<label>"}  one documentation link per question
 //   scenarios.json  optional {"1":{"t":"title","d":"description"}}
-//   tests.json      optional fixed practice tests [{"n":1,"title":"...","ids":[...]}],
+//   tests.json      optional fixed practice tests [{"n":1,"title":"...","ids":[...],"secs"?:N}],
 //                   made once by tools/make-tests.js; compiled to TESTS
 //
 // questions.md format (the format the CCAR-P bank was written in):
@@ -119,7 +119,10 @@ function buildExam(dir){
   TESTS.forEach((t,i)=>{const at='tests.json test '+(t.n||'?');
     if(t.n!==i+1)errs.push(at+': tests must be numbered 1..N in order');
     if(!t.title)errs.push(at+': no title');
-    if(!Array.isArray(t.ids)||t.ids.length!==EXAM.blueprint.questionCount)errs.push(at+': needs exactly '+EXAM.blueprint.questionCount+' ids');
+    // A test may be shorter than the real exam (e.g. the leftover questions while
+    // a bank grows); its timer then scales, or is set explicitly with "secs".
+    if(!Array.isArray(t.ids)||!t.ids.length||t.ids.length>EXAM.blueprint.questionCount)errs.push(at+': needs 1 to '+EXAM.blueprint.questionCount+' ids');
+    if(t.secs!==undefined&&!(Number.isInteger(t.secs)&&t.secs>0))errs.push(at+': secs must be a positive whole number');
     (t.ids||[]).forEach(id=>{if(!seen.has(id))errs.push(at+': unknown id '+id);if(inTest.has(id))errs.push(at+': '+id+' is already in another test');inTest.add(id);});});
   if(errs.length)throw new Error(dir+': '+errs.length+' problem(s)\n  '+errs.join('\n  '));
   const out=[

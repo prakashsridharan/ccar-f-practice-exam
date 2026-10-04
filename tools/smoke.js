@@ -52,7 +52,9 @@ ok('every question well-formed with a reference',()=>{const bad=run(`allQ().filt
 ok('never reads questions from Supabase',()=>{if(fetched.some(u=>/\/rest\/v1\/(questions|scenarios)/.test(u)))throw new Error(fetched.join(' '))});
 ok('fixed tests: each draws exactly its ids, no overlap',()=>{const T=run('FIXED');const seen=new Set();
  T.forEach(t=>{run('PROG.cur=null;startPractice('+t.n+')');const ids=run('st.pq.map(q=>q.id)');
-  if(ids.length!==run('EX.blueprint.questionCount'))throw new Error(t.title+' drew '+ids.length);
+  if(ids.length!==t.ids.length||ids.length>run('EX.blueprint.questionCount'))throw new Error(t.title+' drew '+ids.length);
+  const want=t.secs||Math.round(run('EX.blueprint.durationSec')*t.ids.length/run('EX.blueprint.questionCount')/60)*60;
+  if(run('st.psec')!==want)throw new Error(t.title+' timer '+run('st.psec')+' not '+want);
   if([...ids].sort().join()!==[...t.ids].sort().join())throw new Error(t.title+' drew other ids');
   t.ids.forEach(id=>{if(seen.has(id))throw new Error(id+' in two tests');seen.add(id);});});
  if(!T.length)console.log('  (no fixed tests in this exam)');});

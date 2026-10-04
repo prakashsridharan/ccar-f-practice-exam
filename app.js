@@ -61,6 +61,9 @@ function freshProgress(){return{v:1,attempts:[],cur:null};}
 function loadProgress(){try{const p=JSON.parse(localStorage.getItem(PKEY)||'null');if(p&&p.v===1&&Array.isArray(p.attempts))return p;}catch(e){}return freshProgress();}
 function saveProgress(){try{localStorage.setItem(PKEY,JSON.stringify(PROG));}catch(e){}}
 let PROG=loadProgress();
+// A test's time limit: its own secs, else the blueprint's scaled to its length
+// (a 40-question test of a 60-question, 120-minute exam gets 80 minutes).
+function testSecs(t){const T=t&&FIXED[t-1];if(!T)return EX.blueprint.durationSec;return T.secs||Math.round(EX.blueprint.durationSec*T.ids.length/EX.blueprint.questionCount/60)*60;}
 function testLabel(t){return t&&FIXED[t-1]?FIXED[t-1].title:'Random Mix';}
 function attemptsFor(t){return PROG.attempts.filter(a=>a.t===t);}
 function pctOf(a){return a.n?Math.round(a.c/a.n*100):0;}
@@ -112,7 +115,7 @@ function startPractice(t){t=typeof t==='number'?t:0;
  if(PROG.cur&&!confirm(testLabel(PROG.cur.t)+' is still in progress. Discard it and start '+testLabel(t)+'?'))return;
  if(t&&FIXED[t-1]){const by=new Map(allQ().map(q=>[q.id,q]));st.pq=shuffled(FIXED[t-1].ids.map(id=>by.get(id)).filter(Boolean));}
  else{t=0;st.pq=selectPracticeQuestions();}
- st.ptest=t;st.pi=0;st.psec=EX.blueprint.durationSec;st.pflag={};st.pdone=false;st.sel={};st.sub={};st.rev={};st.rf='all';
+ st.ptest=t;st.pi=0;st.psec=testSecs(t);st.pflag={};st.pdone=false;st.sel={};st.sub={};st.rev={};st.rf='all';
  saveCur();startTimer();go('practice');}
 let timerInt=null;
 function startTimer(){clearInterval(timerInt);timerInt=setInterval(()=>{if(st.psec>0){st.psec--;if(st.psec%15===0)saveCur();const el=document.getElementById('timer');if(el){el.textContent=fmtTime(st.psec);el.className=st.psec<=600?'timer warn':'timer';}}else{clearInterval(timerInt);submitPractice();}},1000);}
@@ -122,7 +125,7 @@ function startTimer(){clearInterval(timerInt);timerInt=setInterval(()=>{if(st.ps
 function pausePractice(){saveCur();clearInterval(timerInt);st.pq=[];}
 function submitPractice(){if(st.pdone)return;clearInterval(timerInt);st.pdone=true;st.pq.forEach(q=>{st.sub[q.id]=true;});
  const sc=calcScore(st.pq),ds={};Object.entries(sc.ds).forEach(([d,x])=>{if(x.t)ds[d]=[x.c,x.t];});
- PROG.attempts.push({t:st.ptest,d:new Date().toISOString(),c:sc.c,n:sc.tot,ds,wrong:st.pq.filter(q=>!isCorrect(q)).map(q=>q.id),flag:Object.keys(st.pflag).filter(k=>st.pflag[k]),secs:EX.blueprint.durationSec-st.psec});
+ PROG.attempts.push({t:st.ptest,d:new Date().toISOString(),c:sc.c,n:sc.tot,ds,wrong:st.pq.filter(q=>!isCorrect(q)).map(q=>q.id),flag:Object.keys(st.pflag).filter(k=>st.pflag[k]),secs:testSecs(st.ptest)-st.psec});
  if(PROG.attempts.length>300)PROG.attempts=PROG.attempts.slice(-300);
  PROG.cur=null;saveProgress();go('report');}
 function calcScore(questions){let c=0,at=0;const ds={};Object.keys(DM).forEach(d=>ds[d]={c:0,t:0,a:0});questions.forEach(q=>{if(ds[q.domain])ds[q.domain].t++;if(st.sub[q.id]){at++;if(ds[q.domain])ds[q.domain].a++;const s=(st.sel[q.id]||[]).slice().sort().join(',');if(s===q.answer.slice().sort().join(',')){c++;if(ds[q.domain])ds[q.domain].c++;}}});return{c,at,tot:questions.length,ds};}
@@ -294,7 +297,8 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const T=FIXED[cur-1];
  main.appendChild(E('div',{className:'tm-k'},T?'Test '+T.n+' of '+FIXED.length:isMix?'Exam mode only':'Question bank'));
  main.appendChild(E('h3',{className:'tm-h'},T?T.title:isMix?'Random Mix':'All Questions'));
- main.appendChild(E('p',{className:'tm-p'},T?'A fixed set of '+T.ids.length+' questions in the exam\'s domain proportions'+(FIXED.length>1?', with no question shared with the other tests':'')+'. Take it as many times as you like, in either mode.':isMix?EX.copy.practiceCard:'Every question in the bank, grouped by domain.'));
+ const shortT=T&&T.ids.length<qn;
+ main.appendChild(E('p',{className:'tm-p'},T?(shortT?'A shorter test: the '+T.ids.length+' questions that are not in the other tests, so its domain mix differs from the real exam. The timer is scaled to match.':'A fixed set of '+T.ids.length+' questions in the exam\'s domain proportions'+(FIXED.length>1?', with no question shared with the other tests':'')+'.')+' Take it as many times as you like, in either mode.':isMix?EX.copy.practiceCard:'Every question in the bank, grouped by domain.'));
  main.appendChild(E('h4',{className:'tm-h2'},'Choose a mode to begin'));
  const modes=E('div',{className:'mode2-grid'});
  const fact=(icon,label,value)=>E('div',{className:'m2f'},E('span',{className:'m2f-l'},icon+' '+label),E('span',{className:'m2f-v'},value));
@@ -308,7 +312,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
   [fact('\u2630','Questions',String(nq)),fact('\u23F1','Duration','None'),fact('\u2691','Target','None')],'',()=>startStudy(cur),'study'));
  if(T||cur===0){const at=attemptsFor(cur),last=at[at.length-1],best=at.reduce((m,a)=>Math.max(m,pctOf(a)),0),live=PROG.cur&&PROG.cur.t===cur;
   modes.appendChild(mcard('Exam mode','Simulate the real exam: finish within the time limit, then get your score by domain.',
-   [fact('\u2630','Questions',String(qn)),fact('\u23F1','Duration',hm(mins)),fact('\u2691','Target',EX.blueprint.tiers.pass+'%')],
+   [fact('\u2630','Questions',String(T?T.ids.length:qn)),fact('\u23F1','Duration',hm(Math.round(testSecs(cur)/60))),fact('\u2691','Target',EX.blueprint.tiers.pass+'%')],
    live?'In progress: select to resume':at.length?'Best '+best+'% · Last '+pctOf(last)+'% · '+at.length+(at.length===1?' attempt':' attempts'):'Not taken yet',
    ()=>live?resumePractice():startPractice(cur),'exam'));}
  main.appendChild(modes);
