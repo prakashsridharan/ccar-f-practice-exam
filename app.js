@@ -312,7 +312,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
    live?'In progress: select to resume':at.length?'Best '+best+'% · Last '+pctOf(last)+'% · '+at.length+(at.length===1?' attempt':' attempts'):'Not taken yet',
    ()=>live?resumePractice():startPractice(cur),'exam'));}
  main.appendChild(modes);
- layout.appendChild(main);layout.appendChild(side);ct.appendChild(layout);
+ layout.appendChild(side);layout.appendChild(main);ct.appendChild(layout);
 
  // Progress is per browser; export/import moves it between devices.
  const pl=E('div',{className:'prog-links'});
