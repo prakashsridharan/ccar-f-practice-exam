@@ -55,6 +55,7 @@
 body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
 .hdr{background:linear-gradient(135deg,#1B4F8A,#1A2E45);color:#fff;padding:2rem 1.5rem 1.5rem;text-align:center;box-shadow:0 4px 20px rgba(27,79,138,.35)}
 .hdr h1{font-size:1.5rem;font-weight:800;letter-spacing:-.03em}.hdr .sub{font-size:.8rem;opacity:.75;margin-top:.15rem}
+.hub-nav{text-align:left;margin:-1rem 0 .9rem}.hub-link{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;font-weight:600;color:#fff;opacity:.8;text-decoration:none;padding:.2rem .1rem}.hub-link:hover{opacity:1;text-decoration:underline}
 .hdr-actions{display:flex;justify-content:center;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
 .btn-h{font-family:inherit;font-size:.78rem;font-weight:600;padding:.45rem 1rem;border-radius:8px;cursor:pointer;border:1.5px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;transition:all .15s;display:flex;align-items:center;gap:.35rem}
 .btn-h:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.5)}.btn-h svg{width:15px;height:15px}
@@ -163,7 +164,7 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--border-f
   page really offers, never more.
 -->
 <div id="app">
- <div class="hdr"><h1>CCAR-F Practice Exam</h1><div class="sub">Claude Certified Architect - Foundations</div></div>
+ <div class="hdr"><div class="hub-nav"><a class="hub-link" href="/">&larr; All practice exams</a></div><h1>CCAR-F Practice Exam</h1><div class="sub">Claude Certified Architect - Foundations</div></div>
  <div class="container">
   <p>A free practice exam for the <strong>Claude Certified Architect - Foundations (CCAR-F)</strong> certification. 100 original scenario-based questions, each with a detailed rationale, an explanation of why the other options are wrong, and a reference link to the relevant Anthropic documentation. No sign-up and nothing to install.</p>
 
@@ -541,7 +542,7 @@ function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',nu
 
 // Views
 function renderHome(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();
- app.appendChild(E('div',{className:'hdr'},E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
+ app.appendChild(E('div',{className:'hdr'},E('div',{className:'hub-nav'},E('a',{className:'hub-link',href:'/'},'← All practice exams')),E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
 
  // Exam overview card
