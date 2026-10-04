@@ -3,16 +3,18 @@
 Free, scenario-based practice exams for cloud and AI certifications, live at
 https://certprep.pratechlabs.com. Currently:
 
-| Exam | Path | Questions | Mock exam |
+| Exam | Path | Questions | Practice tests |
 |---|---|---|---|
-| Claude Certified Architect - Foundations (CCAR-F) | `/claude/ccar-f/` | 100 | 60 questions, 120 min |
-| Claude Certified Architect - Professional (CCAR-P) | `/claude/ccar-p/` | 110 | 63 questions, 120 min |
+| Claude Certified Architect - Foundations (CCAR-F) | `/claude/ccar-f/` | 100 | 1 fixed test of 60 questions, 120 min |
+| Claude Certified Architect - Professional (CCAR-P) | `/claude/ccar-p/` | 315 | 5 fixed tests of 63 questions, 120 min |
 
 ## Features
 
 | Feature | Description |
 |---------|-------------|
-| **Practice Mode** | A timed mock exam drawn in the official blueprint's domain proportions, with flag-for-review and a per-domain score report |
+| **Practice tests** | Fixed, numbered tests in the official blueprint's domain proportions (no question shared between tests), timed, with flag-for-review and a per-domain score report |
+| **Random Mix** | A fresh blueprint-weighted draw from the whole bank each time |
+| **Progress** | Best and latest score per test, comparison with the previous attempt, resume an unfinished test, review incorrect or flagged answers. Saved in the browser; export/import moves it between devices |
 | **Study Mode** | Every question grouped by domain, with submit-then-reveal answers, rationale, exam objective and a link to the official documentation |
 | **Multiple response** | "Select N" items are supported and scored all-or-nothing |
 | **Shareable views** | Each view has its own URL (`#/study`, `#/practice`, ...), so Back and Forward work |
@@ -47,6 +49,7 @@ schema.sql                     Supabase schema (visits table + visit_stats RPC)
 Question banks are authored in Markdown in a separate, private content repository and compiled into `exams/<exam>.js`. Never edit the generated files by hand.
 
 ```bash
+node tools/make-tests.js <exam-dir> <count>    # once per exam: split the bank into fixed tests (tests.json)
 node tools/build.js <content-dir>              # regenerate exams/*.js
 node tools/smoke.js claude/ccar-f/index.html   # run before every deploy, for every exam
 node tools/check-links.js                      # every documentation link resolves to a real page

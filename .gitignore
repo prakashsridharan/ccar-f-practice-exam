@@ -5,4 +5,4 @@ CLAUDE.md
 
 # CCAR-P question source. Its answer key cites internal course notes, and the
 # app already ships the questions (exams/ccar-p.js) without those citations.
-ccar-p_practice_questions.md
+ccar-p_practice_questions*.md

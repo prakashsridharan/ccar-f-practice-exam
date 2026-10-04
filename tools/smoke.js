@@ -50,6 +50,45 @@ ok('multi-select card renders and reveals',()=>{const id=run("(allQ().find(q=>q.
 ok('weights sum to questionCount and fit the pool',()=>{const w=run('WEIGHTS'),N=run('EX.blueprint.questionCount');const s=Object.values(w).reduce((a,b)=>a+b,0);if(s!==N)throw new Error('sum '+s);const pool=run('(()=>{const p={};allQ().forEach(q=>p[q.domain]=(p[q.domain]||0)+1);return p})()');for(const d in w)if(w[d]>(pool[d]||0))throw new Error('D'+d+' needs '+w[d]+' has '+pool[d]);});
 ok('every question well-formed with a reference',()=>{const bad=run(`allQ().filter(q=>!q.ref||!/^https:\\/\\//.test(q.ref)||q.ref.split('|').length!==2||!q.answer.length||q.answer.some(a=>!q.options.some(o=>o.l===a))||(q.type==='multi'&&q.answer.length!==q.select)||!EX.domains[q.domain]).map(q=>q.id)`);if(bad.length)throw new Error('bad: '+bad.join(','));});
 ok('never reads questions from Supabase',()=>{if(fetched.some(u=>/\/rest\/v1\/(questions|scenarios)/.test(u)))throw new Error(fetched.join(' '))});
+ok('fixed tests: each draws exactly its ids, no overlap',()=>{const T=run('FIXED');const seen=new Set();
+ T.forEach(t=>{run('PROG.cur=null;startPractice('+t.n+')');const ids=run('st.pq.map(q=>q.id)');
+  if(ids.length!==run('EX.blueprint.questionCount'))throw new Error(t.title+' drew '+ids.length);
+  if([...ids].sort().join()!==[...t.ids].sort().join())throw new Error(t.title+' drew other ids');
+  t.ids.forEach(id=>{if(seen.has(id))throw new Error(id+' in two tests');seen.add(id);});});
+ if(!T.length)console.log('  (no fixed tests in this exam)');});
+ok('attempt saved on submit; report compares with previous',()=>{const T=run('FIXED.length?1:0');
+ run('PROG=freshProgress();startPractice('+T+');st.sel[st.pq[0].id]=st.pq[0].answer.slice();submitPractice()');
+ run('startPractice('+T+');submitPractice();renderReport()');
+ const a=run('attemptsFor('+T+')');if(a.length!==2)throw new Error(a.length+' attempts saved');if(a[0].c!==1||a[1].c!==0)throw new Error('scores '+a[0].c+','+a[1].c);
+ if(run('PROG.cur')!==null)throw new Error('cur not cleared on submit');
+ if(!find(byId.app,n=>/from your previous attempt/.test(n.textContent||'')))throw new Error('no comparison line');
+ run('renderHome()');if(T&&!find(byId.app,n=>/Best \d+% · Last \d+% · 2 attempts/.test(n.textContent||'')))throw new Error('test card shows no history');});
+ok('review filters',()=>{// the last run above answered nothing, then one correctly
+ run("st.sel[st.pq[0].id]=st.pq[0].answer.slice();st.rf='wrong';renderReview()");const n=run('st.pq.filter(q=>!isCorrect(q)).length');
+ if(n!==run('st.pq.length')-1)throw new Error('wrong count '+n);
+ if(!find(byId.app,n=>/^Incorrect/.test(n.textContent||'')))throw new Error('no Incorrect tab');run("st.rf='all'");});
+ok('resume: exit saves, reload and Forward restore, discard clears',()=>{const T=run('FIXED.length?FIXED.length:0');
+ run("PROG.cur=null;startPractice("+T+");st.pi=3;st.sel[st.pq[2].id]=['A'];st.pflag[st.pq[1].id]=true;st.psec=4000;renderPractice()");
+ const ids=run('st.pq.map(q=>q.id)');
+ ctx.location.hash='#/';run('routeFromHash()');
+ if(run('view')!=='home'||run('st.pq.length'))throw new Error('leaving did not pause');
+ run('renderHome()');if(!find(byId.app,n=>/in progress/.test(n.textContent||'')))throw new Error('no resume bar');
+ run('PROG=loadProgress()');// as after a reload
+ ctx.location.hash='#/practice';run('routeFromHash()');
+ if(run('view')!=='practice')throw new Error('#/practice did not resume, view '+run('view'));
+ if(run('st.pq.map(q=>q.id)').join()!==ids.join())throw new Error('order changed');
+ if(run('st.pi')!==3||run('st.psec')!==4000||run('st.ptest')!==T)throw new Error('pi/psec/ptest not restored');
+ if(run("(st.sel[st.pq[2].id]||[]).join()")!=='A'||!run('st.pflag[st.pq[1].id]'))throw new Error('answers/flags not restored');
+ ctx.location.hash='#/';run('routeFromHash()');run('discardCur()');ctx.location.hash='#/practice';run('routeFromHash()');
+ if(run('view')!=='home')throw new Error('discarded run came back');});
+ok('export/import progress merges and rejects other exams',()=>{
+ const d=run("({app:'certprep',exam:EX.id,progress:JSON.parse(JSON.stringify(PROG))})");const before=run('PROG.attempts.length');
+ if(run('mergeProgress('+JSON.stringify(d)+')')!==0)throw new Error('re-import duplicated attempts');
+ d.progress.attempts.push({t:0,d:'2026-01-01T00:00:00.000Z',c:5,n:10,ds:{}});
+ if(run('mergeProgress('+JSON.stringify(d)+')')!==1||run('PROG.attempts.length')!==before+1)throw new Error('new attempt not merged');
+ if(run('PROG.attempts[0].d')!=='2026-01-01T00:00:00.000Z')throw new Error('not sorted by date');
+ let threw=false;try{run("mergeProgress({app:'certprep',exam:'other',progress:{attempts:[]}})");}catch(e){threw=true;}if(!threw)throw new Error('accepted another exam');
+ run('PROG=freshProgress();saveProgress()');});
 ok('router: go(), Back-style routing, guarded routes, #admin',()=>{
  const H=()=>ctx.location.hash,V=()=>run('view');
  run("st.pq=[];st.pdone=false;go('study')");if(H()!=='#/study'||V()!=='study')throw new Error('go(study) -> '+H()+' '+V());
