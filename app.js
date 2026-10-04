@@ -320,7 +320,8 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const mcard=(title,text,facts,status,onGo,cls)=>{const c=E('button',{type:'button',className:'mode2'+(cls?' '+cls:''),onClick:onGo});
   c.appendChild(E('div',{className:'m2-top'},E('span',{className:'m2-ic',innerHTML:cls==='exam'?IC.play:IC.book}),E('div',null,E('span',{className:'m2-t'},title),E('span',{className:'m2-d'},text))));
   const fr=E('div',{className:'m2-facts'});facts.forEach(x=>fr.appendChild(x));c.appendChild(fr);
-  if(status)c.appendChild(E('div',{className:'m2-s'},status));return c;};
+  // Always present (empty if no status) so both cards line up row for row.
+  c.appendChild(E('div',{className:'m2-s'},status||''));return c;};
  const nq=T?T.ids.length:isMix?qn:allQ().length;
  if(!isMix)modes.appendChild(mcard('Study mode','Self-paced, with the answer and rationale after each question.',
   [fact('\u2630','Questions',String(nq)),fact('\u23F1','Duration','None'),fact('\u2691','Target','None')],(ss=>ss?'Answered '+ss.done+' of '+nq+' \u00b7 '+ss.c+' correct':'')(studyStats(cur)),()=>startStudy(cur),'study'));
