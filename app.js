@@ -322,10 +322,10 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
   const fr=E('div',{className:'m2-facts'});facts.forEach(x=>fr.appendChild(x));c.appendChild(fr);
   if(status)c.appendChild(E('div',{className:'m2-s'},status));return c;};
  const nq=T?T.ids.length:isMix?qn:allQ().length;
- if(!isMix)modes.appendChild(mcard('Study mode','Practise at your own pace and see the answer, rationale and a documentation link after each question.',
-  [fact('\u2630','Questions',String(nq)),fact('\u23F1','Duration','None'),fact('\u2691','Target','None')],(ss=>ss?'Answered '+ss.done+' of '+nq+' \u00b7 '+ss.c+' correct \u00b7 continue where you left off':'')(studyStats(cur)),()=>startStudy(cur),'study'));
+ if(!isMix)modes.appendChild(mcard('Study mode','Self-paced, with the answer and rationale after each question.',
+  [fact('\u2630','Questions',String(nq)),fact('\u23F1','Duration','None'),fact('\u2691','Target','None')],(ss=>ss?'Answered '+ss.done+' of '+nq+' \u00b7 '+ss.c+' correct':'')(studyStats(cur)),()=>startStudy(cur),'study'));
  if(T||cur===0){const at=attemptsFor(cur),last=at[at.length-1],best=at.reduce((m,a)=>Math.max(m,pctOf(a)),0),live=PROG.cur&&PROG.cur.t===cur;
-  modes.appendChild(mcard('Exam mode','Simulate the real exam: finish within the time limit, then get your score by domain.',
+  modes.appendChild(mcard('Exam mode','Timed like the real exam, scored by domain at the end.',
    [fact('\u2630','Questions',String(T?T.ids.length:qn)),fact('\u23F1','Duration',hm(Math.round(testSecs(cur)/60))),fact('\u2691','Target',EX.blueprint.tiers.pass+'%')],
    live?'In progress: select to resume':at.length?'Best '+best+'% · Last '+pctOf(last)+'% · '+at.length+(at.length===1?' attempt':' attempts'):'Not taken yet',
    ()=>live?resumePractice():startPractice(cur),'exam'));}
