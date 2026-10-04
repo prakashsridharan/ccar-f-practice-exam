@@ -110,6 +110,21 @@ ok('study opens exactly one test, with its own URL',()=>{const T=run('FIXED');if
  ctx.location.hash='#/study/1';run('routeFromHash()');if(run('st.stest')!==1||run('view')!=='study')throw new Error('#/study/1 -> '+run('st.stest'));
  ctx.location.hash='#/study/99';run('routeFromHash()');if(run('st.stest')!==0)throw new Error('bad test number kept');
  run('startStudy(0)');if(run('studySet(0).length')!==run('allQ().length'))throw new Error('study 0 is not the whole bank');});
+ok('study state is saved per test and restored (leave, other test, reload, Back)',()=>{const T=run('FIXED');if(!T.length)return;const two=T.length>1;
+ run('PROG=freshProgress();saveProgress();st.pq=[];st.pdone=false;startStudy(1)');
+ const q=run('studySet(1).slice(0,3).map(q=>({id:q.id,a:q.answer}))');
+ run("st.sel['"+q[0].id+"']=['A'];render()");// an option click re-renders
+ run("st.sel['"+q[1].id+"']="+JSON.stringify(q[1].a)+";st.sub['"+q[1].id+"']=true;saveStudy()");// Submit
+ run("st.rev['"+q[2].id+"']=true;saveStudy();st.as=2;render()");// Show Answer, domain tab
+ const check=w=>{if(run("(st.sel['"+q[0].id+"']||[]).join()")!=='A')throw new Error(w+': selection lost');if(!run("st.sub['"+q[1].id+"']"))throw new Error(w+': submit lost');if(!run("st.rev['"+q[2].id+"']"))throw new Error(w+': reveal lost');if(run('st.as')!==2)throw new Error(w+': domain tab lost');};
+ run("go('home')");if(two){run('startStudy(2)');if(run('Object.keys(st.sub).length'))throw new Error('test 2 shows test 1 answers');}
+ run('startStudy(1)');check('return');
+ run("go('home')");run('PROG=loadProgress();st.sel={};st.sub={};st.rev={};st.as=0');// as after a reload
+ ctx.location.hash='#/study/1';run('routeFromHash()');check('reload');
+ if(two){ctx.location.hash='#/study/2';run('routeFromHash()');ctx.location.hash='#/study/1';run('routeFromHash()');check('Back');}
+ const ss=run('studyStats(1)');if(!ss||ss.done!==1||ss.c!==1)throw new Error('studyStats '+JSON.stringify(ss));
+ run("go('home');homeTest=1;renderHome()");if(!find(byId.app,n=>/Answered 1 of \d+ · 1 correct/.test(n.textContent||'')))throw new Error('home does not show study progress');
+ run('PROG=freshProgress();saveProgress();st.sel={};st.sub={};st.rev={};st.as=0;st.stest=0;homeTest=null');});
 ok('router: go(), Back-style routing, guarded routes, #admin',()=>{
  const H=()=>ctx.location.hash,V=()=>run('view');
  run("st.pq=[];st.pdone=false;go('study')");if(H()!=='#/study'||V()!=='study')throw new Error('go(study) -> '+H()+' '+V());

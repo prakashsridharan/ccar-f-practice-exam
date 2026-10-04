@@ -79,6 +79,18 @@ function restoreCur(){const c=PROG.cur;if(!c)return false;const by=new Map(allQ(
 const EXIT_MSG='Leave this exam? Your answers are saved and the timer pauses. You can resume from the home page.';
 function resumePractice(){if(restoreCur())go('practice');else render();}
 function discardCur(){PROG.cur=null;saveProgress();}
+// Study mode state per test, kept in PROG.study[n] = {sel, sub:[ids], rev:[ids], as, y}.
+// Saved on every change (renderStudy runs on each option click; Submit, Show
+// Answer and Hide call saveStudy themselves), never "on leave": by then st may
+// already hold a practice run. Only the scroll position is saved on leave.
+function saveStudy(){if(view!=='study')return;const ids=new Set(studySet(st.stest).map(q=>q.id)),pick=o=>Object.keys(o).filter(k=>ids.has(k)&&o[k]);
+ const sel={};Object.keys(st.sel).forEach(k=>{if(ids.has(k)&&st.sel[k]&&st.sel[k].length)sel[k]=st.sel[k];});
+ PROG.study=PROG.study||{};const prev=PROG.study[st.stest]||{};
+ PROG.study[st.stest]={sel,sub:pick(st.sub),rev:pick(st.rev),as:st.as,y:prev.y||0};saveProgress();}
+function saveStudyScroll(){if(view!=='study'||!PROG.study||!PROG.study[st.stest])return;PROG.study[st.stest].y=Math.round(window.scrollY||0);saveProgress();}
+function loadStudy(n){const s=(PROG.study||{})[n]||{};st.sel={...(s.sel||{})};st.sub={};st.rev={};(s.sub||[]).forEach(id=>st.sub[id]=true);(s.rev||[]).forEach(id=>st.rev[id]=true);st.as=s.as||0;return s.y||0;}
+function studyStats(n){const s=(PROG.study||{})[n];if(!s||!s.sub||!s.sub.length)return null;const by=new Map(allQ().map(q=>[q.id,q]));let c=0;
+ s.sub.forEach(id=>{const q=by.get(id);if(q&&((s.sel||{})[id]||[]).slice().sort().join()===q.answer.slice().sort().join())c++;});return{done:s.sub.length,c};}
 // Export/import is how progress moves between browsers without an account.
 // Import merges: attempts already present (same test and date) are skipped.
 function exportProgress(){const d={app:'certprep',exam:EX.id,exported:new Date().toISOString(),progress:PROG};
@@ -90,6 +102,8 @@ function mergeProgress(d){
  d.progress.attempts.forEach(a=>{if(a&&typeof a.t==='number'&&typeof a.c==='number'&&typeof a.n==='number'&&a.d&&!have.has(a.t+'|'+a.d)){PROG.attempts.push(a);have.add(a.t+'|'+a.d);added++;}});
  PROG.attempts.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);
  if(!PROG.cur&&d.progress.cur&&Array.isArray(d.progress.cur.ids))PROG.cur=d.progress.cur;
+ // Study state: take the imported one only for tests with nothing saved here.
+ if(d.progress.study&&typeof d.progress.study==='object'){PROG.study=PROG.study||{};Object.keys(d.progress.study).forEach(k=>{const s=d.progress.study[k];if(!PROG.study[k]&&s&&typeof s==='object')PROG.study[k]=s;});}
  saveProgress();return added;}
 function importProgress(){const inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';
  inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const n=mergeProgress(JSON.parse(ev.target.result));alert(n?'Imported '+n+(n===1?' attempt.':' attempts.'):'Nothing new to import.');render();}catch(e){alert(e instanceof SyntaxError?'That file is not valid JSON.':e.message);}};r.readAsText(f);};inp.click();}
@@ -183,7 +197,7 @@ function renderQCard(q,opts){
   if(!showAns&&!opts.hideActions){
     var actions=E('div',{className:'qa'});
     var submitBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:function(){
-      st.sub[q.id]=true;
+      st.sub[q.id]=true;saveStudy();
       // Highlight correct/wrong options
       var lis=ol.querySelectorAll('li');
       lis.forEach(function(li){
@@ -217,7 +231,7 @@ function renderQCard(q,opts){
     }
     function reveal(){
       ab.style.display='block';
-      if(q.id)st.rev[q.id]=true;
+      if(q.id)st.rev[q.id]=true;saveStudy();
       submitBtn.style.display='none';showAnsBtn.style.display='none';skipBtn.style.display='none';
       hideBtn.style.display='inline-flex';
       if(!st.sub[q.id])applyPeek();
@@ -228,7 +242,7 @@ function renderQCard(q,opts){
 
     var hideBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
       ab.style.display='none';
-      if(q.id)delete st.rev[q.id];
+      if(q.id)delete st.rev[q.id];saveStudy();
       hideBtn.style.display='none';
       if(st.sub[q.id]){
         // Graded: Submit's ok/wrong marking is the user's result, so it stays.
@@ -309,7 +323,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
   if(status)c.appendChild(E('div',{className:'m2-s'},status));return c;};
  const nq=T?T.ids.length:isMix?qn:allQ().length;
  if(!isMix)modes.appendChild(mcard('Study mode','Practise at your own pace and see the answer, rationale and a documentation link after each question.',
-  [fact('\u2630','Questions',String(nq)),fact('\u23F1','Duration','None'),fact('\u2691','Target','None')],'',()=>startStudy(cur),'study'));
+  [fact('\u2630','Questions',String(nq)),fact('\u23F1','Duration','None'),fact('\u2691','Target','None')],(ss=>ss?'Answered '+ss.done+' of '+nq+' \u00b7 '+ss.c+' correct \u00b7 continue where you left off':'')(studyStats(cur)),()=>startStudy(cur),'study'));
  if(T||cur===0){const at=attemptsFor(cur),last=at[at.length-1],best=at.reduce((m,a)=>Math.max(m,pctOf(a)),0),live=PROG.cur&&PROG.cur.t===cur;
   modes.appendChild(mcard('Exam mode','Simulate the real exam: finish within the time limit, then get your score by domain.',
    [fact('\u2630','Questions',String(T?T.ids.length:qn)),fact('\u23F1','Duration',hm(Math.round(testSecs(cur)/60))),fact('\u2691','Target',EX.blueprint.tiers.pass+'%')],
@@ -320,10 +334,11 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
 
  // Progress is per browser; export/import moves it between devices.
  const pl=E('div',{className:'prog-links'});
- pl.appendChild(E('span',null,PROG.attempts.length?'Your scores are saved in this browser ('+PROG.attempts.length+(PROG.attempts.length===1?' attempt':' attempts')+').':'Your scores are saved in this browser.'));
+ const hasStudy=PROG.study&&Object.keys(PROG.study).length>0;
+ pl.appendChild(E('span',null,'Your scores and study progress are saved in this browser'+(PROG.attempts.length?' ('+PROG.attempts.length+(PROG.attempts.length===1?' exam attempt':' exam attempts')+').':'.')));
  pl.appendChild(E('button',{type:'button',onClick:exportProgress},'Export'));
  pl.appendChild(E('button',{type:'button',onClick:importProgress},'Import'));
- if(PROG.attempts.length||PROG.cur)pl.appendChild(E('button',{type:'button',onClick:()=>{if(confirm('Delete all saved scores and any unfinished run for '+EX.code+' in this browser?')){PROG=freshProgress();saveProgress();render();}}},'Reset'));
+ if(PROG.attempts.length||PROG.cur||hasStudy)pl.appendChild(E('button',{type:'button',onClick:()=>{if(confirm('Delete all saved scores, study progress and any unfinished exam for '+EX.code+' in this browser?')){PROG=freshProgress();saveProgress();render();}}},'Reset'));
  ct.appendChild(pl);
 
  // Exam overview card
@@ -431,9 +446,9 @@ function studySet(n){if(n&&FIXED[n-1]){const ids=new Set(FIXED[n-1].ids);return 
 function studyTitle(n){return n&&FIXED[n-1]?FIXED[n-1].title+': Study':'All Questions: Study';}
 function startStudy(n){n=typeof n==='number'&&FIXED[n-1]?n:0;
  if(st.pdone)st.pq=[];// a finished run's review is replaced by the study session
- st.stest=n;st.as=0;st.sel={};st.sub={};st.rev={};go('study');}
-function renderStudy(){const app=document.getElementById('app');app.innerHTML='';const aq=studySet(st.stest);const as=allS();const sc=calcScore(aq);
- app.appendChild(E('div',{className:'hdr'},E('h1',null,studyTitle(st.stest)),E('div',{className:'sub'},aq.length+' Questions - Self-paced'),E('div',{className:'hdr-actions'},E('button',{className:'btn-h',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home'),E('button',{className:'btn-h',onClick:()=>{st.rev={};st.sel={};st.sub={};render();}},E('span',{innerHTML:IC.reset}),'Reset'))));
+ st.stest=n;const y=loadStudy(n);go('study');if(y)window.scrollTo(0,y);}
+function renderStudy(){saveStudy();const app=document.getElementById('app');app.innerHTML='';const aq=studySet(st.stest);const as=allS();const sc=calcScore(aq);
+ app.appendChild(E('div',{className:'hdr'},E('h1',null,studyTitle(st.stest)),E('div',{className:'sub'},aq.length+' Questions - Self-paced'),E('div',{className:'hdr-actions'},E('button',{className:'btn-h',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home'),E('button',{className:'btn-h',onClick:()=>{if(!confirm('Clear your saved answers for '+studyTitle(st.stest).replace(': Study','')+' and start studying it again?'))return;st.rev={};st.sel={};st.sub={};st.as=0;render();window.scrollTo(0,0);}},E('span',{innerHTML:IC.reset}),'Reset'))));
  const nav=E('div',{className:'nav'});nav.appendChild(E('button',{className:'nav-t'+(st.as===0?' on':''),onClick:()=>{st.as=0;render();}},'All',E('span',{className:'tc'},String(aq.length))));
  Object.entries(DM).forEach(([id,d])=>{const cnt=aq.filter(q=>q.domain===Number(id)).length;nav.appendChild(E('button',{className:'nav-t'+(st.as===Number(id)?' on':''),onClick:()=>{st.as=Number(id);render();}},'D'+id+': '+(EX.domains[id].short||d.n.split(' ')[0]),E('span',{className:'tc'},String(cnt))));});app.appendChild(nav);
  const fl=st.as===0?aq:aq.filter(q=>q.domain===st.as);const pct=Math.round(sc.at/Math.max(sc.tot,1)*100);
@@ -503,7 +518,7 @@ const ROUTES=['home','study','practice','report','review'];
 // Study carries its test number (#/study/2), so Back, reload and bookmarks
 // land on the same test. Plain #/study is the whole bank (admin only).
 function hashFor(v){return v==='home'?'#/':v==='study'&&st.stest?'#/study/'+st.stest:'#/'+v;}
-function go(v){view=v;if(location.hash!==hashFor(v))history.pushState(null,'',hashFor(v));render();}
+function go(v){if(view==='study'&&v!=='study')saveStudyScroll();view=v;if(location.hash!==hashFor(v))history.pushState(null,'',hashFor(v));render();}
 function routeFromHash(force){
  if(location.hash==='#admin'){if(view!=='home'||st.modal!=='admin'||force){view='home';st.modal='admin';render();}return;}
  const m=location.hash.match(/^#\/([a-z]*)(?:\/(\d+))?/);let v=m&&m[1]||'home';if(!ROUTES.includes(v))v='home';
@@ -514,16 +529,18 @@ function routeFromHash(force){
  if(v==='practice'&&!st.pq.length&&PROG.cur)restoreCur();
  if((v==='practice'||v==='report'||v==='review')&&!st.pq.length)v='home';
  const studySwitch=v==='study'&&stest!==st.stest;
+ if(view==='study'&&(v!=='study'||studySwitch))saveStudyScroll();
  if(v==='study')st.stest=stest;
  if(location.hash&&hashFor(v)!==location.hash)history.replaceState(null,'',hashFor(v));
  if(v===view&&!studySwitch&&!force)return;
  if(view==='practice'&&!st.pdone&&v!=='practice'){if(!confirm(EXIT_MSG)){history.pushState(null,'',hashFor('practice'));return;}pausePractice();}
  if(st.modal==='admin')st.modal=null;
- if(studySwitch){st.as=0;st.sel={};st.sub={};st.rev={};}
- view=v;render();}
+ // Entering study (Back/Forward, reload, typed URL) restores that test's saved state.
+ let studyY=0;if(v==='study'&&(studySwitch||view!=='study'))studyY=loadStudy(st.stest);
+ view=v;render();if(studyY)window.scrollTo(0,studyY);}
 // Custom questions come from localStorage (synchronous), so load them before the
 // first route: a resumed run may include them.
 (async()=>{applyDomainTheme();await loadData();routeFromHash(true);
  window.addEventListener('hashchange',()=>routeFromHash());window.addEventListener('popstate',()=>routeFromHash());
- window.addEventListener('pagehide',()=>{if(view==='practice')saveCur();});
+ window.addEventListener('pagehide',()=>{if(view==='practice')saveCur();if(view==='study')saveStudyScroll();});
  trackVisit();})();
