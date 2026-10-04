@@ -40,7 +40,7 @@ const WEIGHTS=weightsFor(EX);
 // Numeric id order, so Q2 sorts before Q10.
 function byDomainThenId(a,b){return a.domain-b.domain||a.id.localeCompare(b.id,undefined,{numeric:true});}
 const BUILTIN=BQ.map(q=>({id:q.id,scenario:q.s,domain:q.d,type:q.ty,select:q.se,question:q.q,options:q.o,answer:q.a,rationale:q.r,whynot:q.w,difficulty:q.df||'',objective:q.ob||'',ref:REFS[q.id]||''})).sort(byDomainThenId);
-let CQ=[],CS={};let view='home';
+let CQ=[],CS={};let view='home';const homeOpen=new Set();
 let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durationSec,pflag:{},pdone:false,adminKey:(localStorage.getItem('ccar-admin-key')||localStorage.getItem('ccar-f-admin-key')||'')};
 
 function hasSupa(){return SUPABASE_URL&&SUPABASE_ANON;}
@@ -214,51 +214,9 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  app.appendChild(E('div',{className:'hdr'},E('div',{className:'hub-nav'},E('a',{className:'hub-link',href:'/'},'← All practice exams')),E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
 
- // Exam overview card
- const info=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'1rem 0',boxShadow:'var(--sh)'}});
- info.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'About the '+EX.code+' Exam'));
- info.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.6rem'}},EX.copy.aboutExam));
- const details=E('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'.5rem',margin:'.75rem 0',fontSize:'.78rem'}});
- const dt=(label,value)=>{const d=E('div',{style:{display:'flex',justifyContent:'space-between',padding:'.35rem .6rem',background:'var(--bg)',borderRadius:'6px'}});d.appendChild(E('span',{style:{color:'var(--text-2)'}},label));d.appendChild(E('span',{style:{fontWeight:'600'}},value));return d;};
- details.appendChild(dt('Format',EX.blueprint.format));details.appendChild(dt('Questions',String(EX.blueprint.questionCount)));details.appendChild(dt('Duration',Math.round(EX.blueprint.durationSec/60)+' minutes'));details.appendChild(dt('Passing Score',EX.blueprint.passScaled+' / '+EX.blueprint.scaledMax));details.appendChild(dt('Scoring',EX.blueprint.scoring));details.appendChild(dt('Delivery',EX.blueprint.delivery));
- info.appendChild(details);
- info.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.scoringNote));
- ct.appendChild(info);
-
- // Domain weights card
- const dw=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
- dw.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.4rem'}},'Exam Domains'));
- dw.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.85rem'}},EX.copy.domainsIntro));
- const dwData=Object.keys(EX.domains).map((k,i)=>({d:Number(k),n:EX.domains[k].n,w:EX.domains[k].weightPct+'%',c:domainColor(k,i),desc:EX.domains[k].blurb}));
- dwData.forEach(d=>{const wrap=E('div',{style:{marginBottom:'.7rem'}});
- const row=E('div',{style:{display:'flex',alignItems:'center',gap:'.5rem',fontSize:'.8rem'}});
- row.appendChild(E('span',{style:{fontWeight:'700',color:d.c,width:'1.5rem',fontFamily:'"JetBrains Mono",monospace'}},'D'+d.d));
- row.appendChild(E('span',{style:{flex:'1',color:'var(--text)',fontWeight:'600'}},d.n));
- const bar=E('div',{style:{width:'80px',height:'6px',background:'var(--bg)',borderRadius:'3px',overflow:'hidden'}});
- bar.appendChild(E('div',{style:{width:d.w,height:'100%',background:d.c,borderRadius:'3px'}}));
- row.appendChild(bar);row.appendChild(E('span',{style:{fontWeight:'600',width:'2.5rem',textAlign:'right',fontFamily:'"JetBrains Mono",monospace',fontSize:'.75rem'}},d.w));
- wrap.appendChild(row);
- wrap.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-2)',lineHeight:'1.6',margin:'.2rem 0 0 2rem'}},d.desc));
- dw.appendChild(wrap);});
- ct.appendChild(dw);
-
- // About this app
- const about=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
- about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
- about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
- const features=E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',lineHeight:'1.7'}});
- const ft=(icon,text)=>{const f=E('div',{style:{display:'flex',gap:'.4rem',marginBottom:'.25rem'}});f.appendChild(E('span',null,icon));f.appendChild(E('span',null,text));return f;};
- EX.copy.features.forEach(f=>features.appendChild(ft(f[0],f[1])));
- 
- 
- 
- 
- about.appendChild(features);
- about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6',marginTop:'.6rem'}},EX.copy.disclaimer));
- ct.appendChild(about);
-
- // Mode selection
- const modeHdr=E('div',{style:{margin:'0 0 .6rem'}});
+ // Mode selection comes first so a returning user can start without scrolling;
+ // the exam reference material follows for anyone who wants it.
+ const modeHdr=E('div',{style:{margin:'1rem 0 .6rem'}});
  modeHdr.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.3rem'}},'Choose How to Practice'));
  modeHdr.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65'}},EX.copy.modeIntro));
  ct.appendChild(modeHdr);
@@ -267,17 +225,63 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const sc2=E('div',{className:'mode-card',onClick:()=>{view='study';st.sel={};st.sub={};st.rev={};render();}});sc2.innerHTML=IC.book;sc2.appendChild(E('h2',null,'Study'));sc2.appendChild(E('p',null,'Browse all '+aq.length+EX.copy.studyCard));sc2.appendChild(E('span',{className:'tag'},'All Qs · Self-paced'));sel.appendChild(sc2);
  ct.appendChild(sel);
 
- // Tips
- const tips=E('div',{style:{background:'#EEF5FB',border:'1px solid #D6EAF8',borderRadius:'var(--rl)',padding:'1rem 1.25rem',margin:'0 0 1rem'}});
- tips.appendChild(E('h3',{style:{fontSize:'.88rem',fontWeight:'700',color:'#1A2E45',marginBottom:'.3rem'}},'Preparation Tips'));
- tips.appendChild(E('p',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.65',marginBottom:'.5rem',opacity:'.9'}},EX.copy.tipsIntro));
+ // Exam overview card
+ const info=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'1rem 0',boxShadow:'var(--sh)'}});
+ info.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'About the '+EX.code+' Exam'));
+ info.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.6rem'}},EX.copy.aboutExam));
+ // Columns live in app.css (.exam-facts) so they can drop to one on phones.
+ const details=E('div',{className:'exam-facts'});
+ const dt=(label,value)=>{const d=E('div',{className:'exam-fact'});d.appendChild(E('span',{style:{color:'var(--text-2)'}},label));d.appendChild(E('span',{style:{fontWeight:'600'}},value));return d;};
+ details.appendChild(dt('Format',EX.blueprint.format));details.appendChild(dt('Questions',String(EX.blueprint.questionCount)));details.appendChild(dt('Duration',Math.round(EX.blueprint.durationSec/60)+' minutes'));details.appendChild(dt('Passing Score',EX.blueprint.passScaled+' / '+EX.blueprint.scaledMax));details.appendChild(dt('Scoring',EX.blueprint.scoring));details.appendChild(dt('Delivery',EX.blueprint.delivery));
+ info.appendChild(details);
+ info.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.scoringNote));
+ ct.appendChild(info);
+
+ // Collapsible section: a button row that shows and hides `body` by direct DOM
+ // toggling, never render(). homeOpen remembers what is open in case
+ // something else re-renders the home page.
+ const collapsible=(key,head,body,cls)=>{const row=E('button',{className:'dom-btn'+(cls?' '+cls:''),type:'button','aria-expanded':'false'});head.forEach(h=>row.appendChild(h));row.appendChild(E('span',{className:'dom-chev','aria-hidden':'true'},'›'));
+  const t={row,isOpen:()=>homeOpen.has(key),set:open=>{if(open)homeOpen.add(key);else homeOpen.delete(key);body.style.display=open?'block':'none';row.setAttribute('aria-expanded',String(open));row.classList.toggle('open',open);}};
+  t.set(t.isOpen());return t;};
+
+ // Domain weights card. Descriptions start collapsed to keep the page short.
+ const dw=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+ const allBtn=E('button',{className:'dom-all',type:'button'});
+ dw.appendChild(E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:'.5rem',marginBottom:'.4rem'}},E('h2',{style:{fontSize:'1rem',fontWeight:'700'}},'Exam Domains'),allBtn));
+ dw.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.85rem'}},EX.copy.domainsIntro));
+ const dwData=Object.keys(EX.domains).map((k,i)=>({d:Number(k),n:EX.domains[k].n,w:EX.domains[k].weightPct+'%',c:domainColor(k,i),desc:EX.domains[k].blurb}));
+ const toggles=[];
+ const syncAll=()=>{allBtn.textContent=toggles.every(t=>t.isOpen())?'Hide all':'Show all';};
+ allBtn.addEventListener('click',()=>{const open=!toggles.every(t=>t.isOpen());toggles.forEach(t=>t.set(open));syncAll();});
+ dwData.forEach(d=>{const wrap=E('div',{style:{marginBottom:'.35rem'}});
+ const bar=E('div',{style:{width:'80px',height:'6px',background:'var(--bg)',borderRadius:'3px',overflow:'hidden'}});
+ bar.appendChild(E('div',{style:{width:d.w,height:'100%',background:d.c,borderRadius:'3px'}}));
+ const desc=E('p',{style:{fontSize:'.76rem',color:'var(--text-2)',lineHeight:'1.6',margin:'.1rem 1.6rem .4rem 2rem'}},d.desc);
+ const t=collapsible(d.d,[E('span',{style:{fontWeight:'700',color:d.c,width:'1.5rem',fontFamily:'"JetBrains Mono",monospace'}},'D'+d.d),E('span',{style:{flex:'1',color:'var(--text)',fontWeight:'600'}},d.n),bar,E('span',{style:{fontWeight:'600',width:'2.5rem',textAlign:'right',fontFamily:'"JetBrains Mono",monospace',fontSize:'.75rem'}},d.w)],desc);
+ toggles.push(t);t.row.addEventListener('click',()=>{t.set(!t.isOpen());syncAll();});
+ wrap.appendChild(t.row);wrap.appendChild(desc);
+ dw.appendChild(wrap);});
+ syncAll();
+ ct.appendChild(dw);
+
+ // About this app. The mode cards above already list the features.
+ const about=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+ about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
+ about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
+ about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.disclaimer));
+ ct.appendChild(about);
+
+ // Tips, collapsed by default.
+ const ft=(icon,text)=>{const f=E('div',{style:{display:'flex',gap:'.4rem',marginBottom:'.25rem'}});f.appendChild(E('span',null,icon));f.appendChild(E('span',null,text));return f;};
+ const tips=E('div',{style:{background:'#EEF5FB',border:'1px solid #D6EAF8',borderRadius:'var(--rl)',padding:'.6rem 1.25rem',margin:'0 0 1rem'}});
+ const tipBody=E('div',{style:{padding:'.2rem 0 .4rem'}});
+ tipBody.appendChild(E('p',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.65',marginBottom:'.5rem',opacity:'.9'}},EX.copy.tipsIntro));
  const tipList=E('div',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.7'}});
- 
- 
- 
- 
  EX.copy.tips.forEach(t=>tipList.appendChild(ft(t[0],t[1])));
- tips.appendChild(tipList);ct.appendChild(tips);
+ tipBody.appendChild(tipList);
+ const tt=collapsible('tips',[E('span',{style:{flex:'1',fontSize:'.88rem',fontWeight:'700',color:'#1A2E45'}},'Preparation Tips')],tipBody,'tips-btn');
+ tt.row.addEventListener('click',()=>tt.set(!tt.isOpen()));
+ tips.appendChild(tt.row);tips.appendChild(tipBody);ct.appendChild(tips);
  if(EX.crossLink){const xl=E('a',{href:EX.crossLink.href,style:{display:'block',textDecoration:'none',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1rem 1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
   xl.appendChild(E('div',{style:{fontSize:'.72rem',color:'var(--text-m)',marginBottom:'.2rem'}},EX.crossLink.label));
   xl.appendChild(E('div',{style:{fontSize:'.95rem',fontWeight:'700',color:'var(--ac)',marginBottom:'.25rem'}},EX.crossLink.title+' \u2192'));

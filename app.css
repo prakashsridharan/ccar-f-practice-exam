@@ -102,3 +102,19 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--border-f
 .empty{text-align:center;padding:2rem 1rem;color:var(--text-m);font-size:.85rem}
 .foot{text-align:center;padding:1.5rem 1rem;font-size:.72rem;color:var(--text-m)}.foot a{color:#2E86C1;text-decoration:none}
 @media(max-width:600px){.hdr{padding:1.25rem .75rem 1rem}.hdr h1{font-size:1.15rem}.container{padding:.4rem}.modal-bd{padding:.85rem}}
+/* Home page domain list: name rows toggle their description. */
+.dom-btn{display:flex;align-items:center;gap:.5rem;width:100%;font:inherit;font-size:.8rem;text-align:left;background:none;border:0;border-radius:6px;padding:.4rem .3rem;margin:0 -.3rem;cursor:pointer;color:inherit;box-sizing:content-box}
+.dom-btn:hover{background:var(--bg)}
+.dom-btn:focus-visible{outline:2px solid var(--ac);outline-offset:1px}
+.dom-chev{width:1rem;text-align:center;font-size:1.1rem;line-height:1;color:var(--text-m);transition:transform .15s}
+.dom-btn.open .dom-chev{transform:rotate(90deg)}
+.dom-all{font:inherit;font-size:.74rem;font-weight:600;color:var(--ac);background:none;border:0;cursor:pointer;padding:.15rem .2rem;white-space:nowrap}
+.dom-all:hover{text-decoration:underline}
+.tips-btn{padding:.5rem .3rem}
+.tips-btn:hover{background:rgba(255,255,255,.55)}
+/* Exam facts grid on the home page. One column on phones, where two columns
+   squeezed labels into their values. */
+.exam-facts{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.75rem 0;font-size:.78rem}
+.exam-fact{display:flex;justify-content:space-between;gap:.75rem;padding:.35rem .6rem;background:var(--bg);border-radius:6px}
+.exam-fact span:last-child{text-align:right}
+@media(max-width:560px){.exam-facts{grid-template-columns:1fr}}

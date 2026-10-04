@@ -22,7 +22,6 @@ const EXAM={
    domainsIntro:'The exam is divided into five domains. The percentage is that domain\'s share of your scaled score, so the heavier domains are worth studying first. Practice Mode draws its 60 questions in these same proportions.',
    scoringNote:'Scaled scoring means questions are not all worth the same. A raw percentage is not the same as the 720 you need, and Anthropic does not publish the conversion, so treat the scores in this app as a guide rather than a prediction.',
    aboutExam:'The Claude Certified Architect - Foundations (CCAR-F) certification validates your ability to design, build, and optimize AI-powered applications using Claude and the Anthropic platform. It covers agentic architectures, tool design with MCP, Claude Code configuration, prompt engineering for structured output, and context management for production reliability.',
-   features:[['🎯',"Practice Mode - 60 timed questions weighted by domain blueprint"],['📖',"Study Mode - browse all questions organized by domain with instant answers"],['📊',"Score report with domain breakdown and weak area identification"],['🔗',"Reference links to Anthropic documentation for every question"]],
    tips:[['💡',"The real exam uses scaled scoring - questions carry different weights per domain"],['💡',"Target 80%+ overall and 75%+ in every domain for a confident pass"],['💡',"Weak domains drag your scaled score down disproportionately"],['💡',"Study the Anthropic documentation linked in each answer"]]
   },
   domains:{
