@@ -1,5 +1,4 @@
 /* Shared styles for every exam page. Loaded by each <exam>/index.html shell. */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 :root{--bg:#f5f7fa;--surface:#fff;--border:#dce1e8;--border-focus:#1B4F8A;--text:#2C3E50;--text-2:#4a5568;--text-m:#8b90a0;--ac:#1B4F8A;--ac-l:#D6EAF8;--ac-h:#1A2E45;--ac-s:#EEF5FB;--d1:#0097A7;--d1b:#E8F6F8;--d2:#2E86C1;--d2b:#D6EAF8;--d3:#5B38B6;--d3b:#F0EBF9;--d4:#C0522A;--d4b:#FDF0EB;--d5:#1B4F8A;--d5b:#EEF5FB;--ok-bg:#ecfdf5;--ok-bd:#6ee7b7;--ok-tx:#065f46;--err-bg:#FDF0EB;--err-bd:#e8a88a;--err-tx:#8B2500;--danger:#C0522A;--sh:0 1px 3px rgba(26,46,69,.06);--sh-m:0 4px 14px rgba(26,46,69,.1);--sh-l:0 12px 40px rgba(26,46,69,.18);--r:10px;--rl:14px}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
@@ -216,3 +215,13 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
  .btn-g{background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55));border-color:rgba(27,79,138,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
  .qh{background:linear-gradient(180deg,rgba(238,245,251,.55),rgba(238,245,251,0))}
 }
+
+/* Static crawler summary inside #app (.seo). It is replaced as soon as the app
+   boots, but give it the app's type scale so the brief moment before that does
+   not flash browser-default headings. */
+.seo{max-width:820px;margin:0 auto;padding:1rem .75rem 2rem}
+.seo h2{font-size:1rem;font-weight:700;margin:1.1rem 0 .35rem;color:var(--text)}
+.seo p,.seo li{font-size:.82rem;color:var(--text-2);line-height:1.65}
+.seo p{margin-bottom:.5rem}
+.seo ul{padding-left:1.1rem;margin-bottom:.5rem}
+.seo a{color:var(--ac)}
