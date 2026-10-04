@@ -226,7 +226,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  ct.appendChild(sel);
 
  // Exam overview card
- const info=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'1rem 0',boxShadow:'var(--sh)'}});
+ const info=E('div',{className:'panel',style:{margin:'1rem 0'}});
  info.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'About the '+EX.code+' Exam'));
  info.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.6rem'}},EX.copy.aboutExam));
  // Columns live in app.css (.exam-facts) so they can drop to one on phones.
@@ -245,7 +245,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
   t.set(t.isOpen());return t;};
 
  // Domain weights card. Descriptions start collapsed to keep the page short.
- const dw=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+ const dw=E('div',{className:'panel',style:{margin:'0 0 1rem'}});
  const allBtn=E('button',{className:'dom-all',type:'button'});
  dw.appendChild(E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:'.5rem',marginBottom:'.4rem'}},E('h2',{style:{fontSize:'1rem',fontWeight:'700'}},'Exam Domains'),allBtn));
  dw.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.85rem'}},EX.copy.domainsIntro));
@@ -255,7 +255,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  allBtn.addEventListener('click',()=>{const open=!toggles.every(t=>t.isOpen());toggles.forEach(t=>t.set(open));syncAll();});
  dwData.forEach(d=>{const wrap=E('div',{style:{marginBottom:'.35rem'}});
  const bar=E('div',{style:{width:'80px',height:'6px',background:'var(--bg)',borderRadius:'3px',overflow:'hidden'}});
- bar.appendChild(E('div',{style:{width:d.w,height:'100%',background:d.c,borderRadius:'3px'}}));
+ bar.appendChild(E('div',{className:'gbar',style:{width:d.w,height:'100%',background:d.c,borderRadius:'3px'}}));
  const desc=E('p',{style:{fontSize:'.76rem',color:'var(--text-2)',lineHeight:'1.6',margin:'.1rem 1.6rem .4rem 2rem'}},d.desc);
  const t=collapsible(d.d,[E('span',{style:{fontWeight:'700',color:d.c,width:'1.5rem',fontFamily:'"JetBrains Mono",monospace'}},'D'+d.d),E('span',{style:{flex:'1',color:'var(--text)',fontWeight:'600'}},d.n),bar,E('span',{style:{fontWeight:'600',width:'2.5rem',textAlign:'right',fontFamily:'"JetBrains Mono",monospace',fontSize:'.75rem'}},d.w)],desc);
  toggles.push(t);t.row.addEventListener('click',()=>{t.set(!t.isOpen());syncAll();});
@@ -265,7 +265,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  ct.appendChild(dw);
 
  // About this app. The mode cards above already list the features.
- const about=E('div',{style:{background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+ const about=E('div',{className:'panel',style:{margin:'0 0 1rem'}});
  about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
  about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
  about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.disclaimer));
@@ -274,7 +274,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
 
  // Tips, collapsed by default.
  const ft=(icon,text)=>{const f=E('div',{style:{display:'flex',gap:'.4rem',marginBottom:'.25rem'}});f.appendChild(E('span',null,icon));f.appendChild(E('span',null,text));return f;};
- const tips=E('div',{style:{background:'#EEF5FB',border:'1px solid #D6EAF8',borderRadius:'var(--rl)',padding:'.6rem 1.25rem',margin:'0 0 1rem'}});
+ const tips=E('div',{className:'panel panel-tint',style:{padding:'.6rem 1.25rem',margin:'0 0 1rem'}});
  const tipBody=E('div',{style:{padding:'.2rem 0 .4rem'}});
  tipBody.appendChild(E('p',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.65',marginBottom:'.5rem',opacity:'.9'}},EX.copy.tipsIntro));
  const tipList=E('div',{style:{fontSize:'.78rem',color:'#1B4F8A',lineHeight:'1.7'}});
@@ -283,7 +283,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const tt=collapsible('tips',[E('span',{style:{flex:'1',fontSize:'.88rem',fontWeight:'700',color:'#1A2E45'}},'Preparation Tips')],tipBody,'tips-btn');
  tt.row.addEventListener('click',()=>tt.set(!tt.isOpen()));
  tips.appendChild(tt.row);tips.appendChild(tipBody);ct.appendChild(tips);
- if(EX.crossLink){const xl=E('a',{href:EX.crossLink.href,style:{display:'block',textDecoration:'none',background:'var(--surface)',border:'1px solid var(--border)',borderRadius:'var(--rl)',padding:'1rem 1.25rem',margin:'0 0 1rem',boxShadow:'var(--sh)'}});
+ if(EX.crossLink){const xl=E('a',{href:EX.crossLink.href,className:'panel panel-link',style:{display:'block',textDecoration:'none',padding:'1rem 1.25rem',margin:'0 0 1rem'}});
   xl.appendChild(E('div',{style:{fontSize:'.72rem',color:'var(--text-m)',marginBottom:'.2rem'}},EX.crossLink.label));
   xl.appendChild(E('div',{style:{fontSize:'.95rem',fontWeight:'700',color:'var(--ac)',marginBottom:'.25rem'}},EX.crossLink.title+' \u2192'));
   xl.appendChild(E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',lineHeight:'1.6'}},EX.crossLink.blurb));
