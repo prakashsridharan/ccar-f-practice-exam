@@ -269,7 +269,6 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
  about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
  about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.disclaimer));
- if(EX.copy.contentNotice)about.appendChild(E('div',{className:'notice'},E('strong',null,'Important Note'),E('p',null,EX.copy.contentNotice)));
  ct.appendChild(about);
 
  // Tips, collapsed by default.
@@ -289,7 +288,8 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
   xl.appendChild(E('div',{style:{fontSize:'.78rem',color:'var(--text-2)',lineHeight:'1.6'}},EX.crossLink.blurb));
   ct.appendChild(xl);}
 
- ct.appendChild(E('div',{className:'foot'},E('a',{href:'/',style:{color:'var(--ac)',textDecoration:'none'}},'All practice exams'),' · ',EX.copy.footer+' · ',E('a',{href:'https://docs.anthropic.com',target:'_blank',style:{color:'var(--ac)',textDecoration:'none'}},'Anthropic Documentation')));
+ // The Important Note closes the page; it replaced the old credits footer.
+ if(EX.copy.contentNotice)ct.appendChild(E('div',{className:'notice notice-end'},E('strong',null,'Important Note'),E('p',null,EX.copy.contentNotice)));
  app.appendChild(ct);if(st.modal)renderModals();}
 
 function renderPractice(){const app=document.getElementById('app');app.innerHTML='';const q=st.pq[st.pi];if(!q)return;const answered=st.pq.filter(q=>(st.sel[q.id]||[]).length>0).length;
@@ -322,7 +322,7 @@ function renderStudy(){const app=document.getElementById('app');app.innerHTML=''
  const ct=E('div',{className:'container'});if(sc.at>0)ct.appendChild(renderDomainScores(sc));
  if(st.as===0){let ld=0;fl.forEach(q=>{if(q.domain!==ld){ld=q.domain;const d=DM[q.domain];ct.appendChild(E('div',{className:'sc-hdr'},E('div',null,E('h2',null,'Domain '+q.domain+': '+d.n),E('p',null,(EX.domains[q.domain]||{}).keywords||''))));}ct.appendChild(renderQCard(q,{showAdmin:true}));});}else{fl.forEach(q=>ct.appendChild(renderQCard(q,{showAdmin:true})));}
  if(!fl.length)ct.appendChild(E('div',{className:'empty'},'No questions found.'));
- ct.appendChild(E('div',{className:'foot'},EX.copy.footer));app.appendChild(ct);}
+ app.appendChild(ct);}
 
 // Admin modals
 function renderModals(){if(st.modal==='admin')adminModal();else if(st.modal==='q')qModal(null);else if(st.modal==='s')sModal();else if(st.modal==='u')uModal();else if(st.modal&&st.modal.t==='eq')qModal(st.modal.q);}

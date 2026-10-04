@@ -189,3 +189,30 @@ body{background:radial-gradient(1100px 480px at 50% -160px,rgba(46,134,193,.13),
 .report .big-score{text-shadow:0 2px 12px rgba(27,79,138,.18)}
 
 @media (prefers-reduced-motion:reduce){.hdr::after{display:none}.mode-card::after{display:none}.mode-card:hover,.panel-link:hover{transform:none}}
+
+/* ===== Glass finish ===========================================================
+   Frosted, semi-transparent surfaces over a softly coloured backdrop. Blur is
+   reserved for a handful of large surfaces; the many question cards in Study
+   Mode get translucency only, so long lists still scroll smoothly. Browsers
+   without backdrop-filter keep the opaque gloss above. */
+.notice-end{margin:.5rem 0 2rem}
+body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+ radial-gradient(520px 420px at 8% 22%,rgba(0,151,167,.16),transparent 70%),
+ radial-gradient(620px 480px at 92% 30%,rgba(91,56,182,.12),transparent 70%),
+ radial-gradient(700px 520px at 30% 92%,rgba(46,134,193,.16),transparent 70%),
+ radial-gradient(520px 420px at 85% 88%,rgba(192,82,42,.08),transparent 70%)}
+.hdr::before{background:linear-gradient(180deg,rgba(255,255,255,.17),rgba(255,255,255,.04) 70%,rgba(255,255,255,0))}
+.hdr{box-shadow:0 12px 32px -10px rgba(27,79,138,.6),inset 0 -1px 0 rgba(255,255,255,.18),inset 0 1px 0 rgba(255,255,255,.22)}
+.btn-h{backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+ .panel,.mode-card,.report,.score-s,.sc-hdr,.nav,.prog,.timer-bar{background:linear-gradient(180deg,rgba(255,255,255,.78),rgba(255,255,255,.56));backdrop-filter:blur(16px) saturate(170%);-webkit-backdrop-filter:blur(16px) saturate(170%);border:1px solid rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.95),inset 0 0 0 1px rgba(255,255,255,.2),0 12px 32px -14px rgba(27,79,138,.3)}
+ .nav,.prog,.timer-bar{border-width:0 0 1px;border-color:rgba(27,79,138,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+ .qc{background:linear-gradient(180deg,rgba(255,255,255,.88),rgba(255,255,255,.72));border:1px solid rgba(255,255,255,.8);box-shadow:inset 0 1px 0 #fff,0 10px 28px -14px rgba(27,79,138,.28)}
+ .panel-tint{background:linear-gradient(180deg,rgba(240,247,253,.8),rgba(226,239,250,.6));border-color:rgba(255,255,255,.8)}
+ .notice{background:linear-gradient(180deg,rgba(238,245,252,.82),rgba(226,239,250,.64));backdrop-filter:blur(14px) saturate(160%);-webkit-backdrop-filter:blur(14px) saturate(160%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 10px 26px -14px rgba(27,79,138,.28)}
+ .mode-card:hover,.panel-link:hover{border-color:rgba(255,255,255,.95);box-shadow:inset 0 1px 0 #fff,0 0 0 3px rgba(46,134,193,.14),0 20px 40px -16px rgba(27,79,138,.42)}
+ .exam-fact,.opts li{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,245,250,.55));border-color:rgba(255,255,255,.7)}
+ .opts li:hover{background:linear-gradient(180deg,rgba(255,255,255,.92),rgba(234,242,250,.75))}
+ .btn-g{background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.55));border-color:rgba(27,79,138,.14);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+ .qh{background:linear-gradient(180deg,rgba(238,245,251,.55),rgba(238,245,251,0))}
+}

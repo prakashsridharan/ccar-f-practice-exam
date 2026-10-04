@@ -12,7 +12,6 @@ const EXAM={
    title:'CCAR-P Practice Exam',
    blurb:'Claude Certified Architect - Professional. 110 practice questions across seven domains, with a timed 63-question mock exam.'},
   copy:{
-   footer:'Practice questions based on CCAR-F Certification Guide',
    tipsIntro:'How to read your results and where to spend study time.',
    studyCard:' questions with answers, rationales, and Anthropic doc links. Filter by domain.',
    practiceCard:'Simulate the real exam - 60 random questions, domain-weighted, 120-minute timer. Target 80%+ overall and 75%+ in every domain.',
