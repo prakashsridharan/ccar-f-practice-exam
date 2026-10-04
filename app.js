@@ -50,10 +50,12 @@ let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durati
 //   attempts: finished runs {t, d (ISO date), c, n, ds:{domain:[correct,total]}, wrong, flag, secs}
 //   cur:      the unfinished run {t, ids (in shown order), pi, psec, sel, flag}, for resume
 const FIXED=typeof TESTS!=='undefined'?TESTS:[];
-// Home asks for a mode first (practice | study), then lists the tests in it.
-const MKEY=EX.storagePrefix+'-mode';
-let homeMode=(()=>{try{const m=localStorage.getItem(MKEY);return m==='practice'||m==='study'?m:null;}catch(e){return null;}})();
-function setHomeMode(m){homeMode=m;try{localStorage.setItem(MKEY,m);}catch(e){}render();}
+// Home lists the tests; the selected one (0 = Random Mix) shows its two modes.
+// Remembered per viewer. Default: the first test not yet taken in exam mode.
+const TKEY=EX.storagePrefix+'-test';
+let homeTest=(()=>{try{const v=localStorage.getItem(TKEY);if(v!==null&&(v==='0'||FIXED[+v-1]))return +v;}catch(e){}return null;})();
+function selectedTest(){if(homeTest!==null&&(homeTest===0||FIXED[homeTest-1]))return homeTest;const t=FIXED.find(t=>!attemptsFor(t.n).length);return t?t.n:FIXED.length?1:0;}
+function selectTest(n){homeTest=n;try{localStorage.setItem(TKEY,String(n));}catch(e){}render();}
 const PKEY=EX.storagePrefix+'-progress';
 function freshProgress(){return{v:1,attempts:[],cur:null};}
 function loadProgress(){try{const p=JSON.parse(localStorage.getItem(PKEY)||'null');if(p&&p.v===1&&Array.isArray(p.attempts))return p;}catch(e){}return freshProgress();}
@@ -260,10 +262,10 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  app.appendChild(E('div',{className:'hdr'},E('div',{className:'hub-nav'},E('a',{className:'hub-link',href:'/'},'← All practice exams')),E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
 
- // Mode selection comes first so a returning user can start without scrolling;
- // the exam reference material follows for anyone who wants it.
+ // Tests come first so a returning user can start without scrolling; the exam
+ // reference material follows for anyone who wants it.
  const modeHdr=E('div',{style:{margin:'1rem 0 .6rem'}});
- modeHdr.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.3rem'}},'Choose a Mode'));
+ modeHdr.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.3rem'}},'Practice Tests'));
  modeHdr.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65'}},EX.copy.modeIntro));
  ct.appendChild(modeHdr);
  const mins=Math.round(EX.blueprint.durationSec/60),qn=EX.blueprint.questionCount;
@@ -275,36 +277,42 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
    E('div',{className:'resume-acts'},E('button',{className:'btn btn-p',onClick:resumePractice},'Resume'),
     E('button',{className:'btn btn-g',onClick:()=>{if(confirm('Discard this unfinished run? Its answers are not scored.')){discardCur();render();}}},'Discard'))));}
 
- // Step 1: pick a mode. Step 2: pick a test; it opens in that mode. Both modes
- // use the same fixed tests. The choice is remembered for this viewer.
- const sel=E('div',{className:'mode-sel'});
- const modeCard=(m,icon,title,text,tag)=>{const c=E('div',{className:'mode-card'+(homeMode===m?' on':''),role:'button',tabindex:'0','aria-pressed':String(homeMode===m),onClick:()=>setHomeMode(m),onKeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setHomeMode(m);}}});
-  c.innerHTML=icon;c.appendChild(E('h2',null,title));c.appendChild(E('p',null,text));c.appendChild(E('span',{className:'tag'},tag));return c;};
- sel.appendChild(modeCard('practice',IC.play,'Practice','Exam conditions: a '+mins+'-minute timer, flag questions for review, and your score with a per-domain breakdown at the end.',mins+' min · Timed · Scored'));
- sel.appendChild(modeCard('study',IC.book,'Study','Self-paced: answer each question and see the correct answer, the rationale and a documentation link straight away.','No timer · Answers as you go'));
- ct.appendChild(sel);
+ // Side list of tests (ticked once taken in exam mode) and, beside it, the
+ // selected test with its two modes. Both modes use the same questions.
+ const cur=selectedTest(),isMix=cur===0&&FIXED.length>0;
+ const layout=E('div',{className:'tests-layout'});
+ const side=E('nav',{className:'test-list','aria-label':'Practice tests'});
+ side.appendChild(E('div',{className:'tl-h'},'Practice tests'));
+ const item=(n,label,done,extra)=>{const b=E('button',{type:'button',className:'tl-item'+(n===cur?' on':''),'aria-current':n===cur?'true':'false',onClick:()=>selectTest(n)});
+  b.appendChild(E('span',{className:'tl-box'+(done?' done':''),'aria-hidden':'true'},done?'\u2713':''));
+  b.appendChild(E('span',{className:'tl-name'},label));if(extra)b.appendChild(E('span',{className:'tl-x'},extra));return b;};
+ FIXED.forEach(t=>{const at=attemptsFor(t.n);side.appendChild(item(t.n,t.title,at.length>0,at.length?'Best '+at.reduce((m,a)=>Math.max(m,pctOf(a)),0)+'%':''));});
+ const ra=attemptsFor(0);
+ side.appendChild(item(0,FIXED.length?'Random Mix':'All Questions',ra.length>0,ra.length?'Last '+pctOf(ra[ra.length-1])+'%':''));
 
- if(homeMode){const prac=homeMode==='practice';
-  if(FIXED.length){
-   ct.appendChild(E('h3',{className:'sec-h'},prac?'Choose a Test to Practice':'Choose a Test to Study'));
-   ct.appendChild(E('p',{className:'sec-p'},(FIXED.length>1?'Each test is a fixed set of ':'A fixed set of ')+qn+' questions in the exam\'s domain proportions'+(FIXED.length>1?', with no question shared between tests.':'.')+(prac?' Retake a test to see whether your score improves.':' Study a test before practising it, or after, to go over what you missed.')));
-   const grid=E('div',{className:'test-grid'});
-   FIXED.forEach(t=>{const at=attemptsFor(t.n),last=at[at.length-1],best=at.reduce((m,a)=>Math.max(m,pctOf(a)),0);
-    const live=PROG.cur&&PROG.cur.t===t.n;
-    const card=E('button',{className:'test-card',type:'button',onClick:()=>prac?(live?resumePractice():startPractice(t.n)):startStudy(t.n)});
-    card.appendChild(E('span',{className:'tt'},t.title));
-    card.appendChild(E('span',{className:'tm'},t.ids.length+' Qs'+(prac?' · '+mins+' min':' · Self-paced')));
-    // Scores belong to Practice; Study cards stay plain.
-    if(prac)card.appendChild(E('span',{className:'ts'+(at.length||live?'':' none')},live?'Practice in progress':at.length?'Best '+best+'% · Last '+pctOf(last)+'% · '+at.length+(at.length===1?' attempt':' attempts'):'Not attempted'));
-    card.appendChild(E('span',{className:'tgo'},prac?(live?'Resume →':'Start practice →'):'Start studying →'));
-    grid.appendChild(card);});
-   ct.appendChild(grid);}
-  // Random Mix: a timed draw across the whole bank, so it is practice only.
-  if(prac){const ra=attemptsFor(0),rlive=PROG.cur&&PROG.cur.t===0;
-   ct.appendChild(E('div',{className:'random-row'},
-    E('div',null,E('strong',null,'Random Mix'),E('span',null,EX.copy.practiceCard+(ra.length?' Last score '+pctOf(ra[ra.length-1])+'%.':''))),
-    E('button',{className:'btn btn-p',type:'button',onClick:()=>rlive?resumePractice():startPractice(0)},E('span',{innerHTML:IC.play}),rlive?'Resume':'Start')));}
-  else if(!FIXED.length)ct.appendChild(E('div',{className:'random-row'},E('div',null,E('strong',null,'All Questions'),E('span',null,allQ().length+' questions, grouped by domain.')),E('button',{className:'btn btn-p',type:'button',onClick:()=>startStudy(0)},E('span',{innerHTML:IC.book}),'Start')));}
+ const main=E('section',{className:'test-main'});
+ const T=FIXED[cur-1];
+ main.appendChild(E('div',{className:'tm-k'},T?'Test '+T.n+' of '+FIXED.length:isMix?'Exam mode only':'Question bank'));
+ main.appendChild(E('h3',{className:'tm-h'},T?T.title:isMix?'Random Mix':'All Questions'));
+ main.appendChild(E('p',{className:'tm-p'},T?'A fixed set of '+T.ids.length+' questions in the exam\'s domain proportions'+(FIXED.length>1?', with no question shared with the other tests':'')+'. Take it as many times as you like, in either mode.':isMix?EX.copy.practiceCard:'Every question in the bank, grouped by domain.'));
+ main.appendChild(E('h4',{className:'tm-h2'},'Choose a mode to begin'));
+ const modes=E('div',{className:'mode2-grid'});
+ const fact=(icon,label,value)=>E('div',{className:'m2f'},E('span',{className:'m2f-l'},icon+' '+label),E('span',{className:'m2f-v'},value));
+ const hm=m=>m%60?Math.floor(m/60)+'h '+(m%60)+'min':(m/60)+'h';
+ const mcard=(title,text,facts,status,onGo,cls)=>{const c=E('button',{type:'button',className:'mode2'+(cls?' '+cls:''),onClick:onGo});
+  c.appendChild(E('div',{className:'m2-top'},E('span',{className:'m2-ic',innerHTML:cls==='exam'?IC.play:IC.book}),E('div',null,E('span',{className:'m2-t'},title),E('span',{className:'m2-d'},text))));
+  const fr=E('div',{className:'m2-facts'});facts.forEach(x=>fr.appendChild(x));c.appendChild(fr);
+  if(status)c.appendChild(E('div',{className:'m2-s'},status));return c;};
+ const nq=T?T.ids.length:isMix?qn:allQ().length;
+ if(!isMix)modes.appendChild(mcard('Study mode','Practise at your own pace and see the answer, rationale and a documentation link after each question.',
+  [fact('\u2630','Questions',String(nq)),fact('\u23F1','Duration','None'),fact('\u2691','Target','None')],'',()=>startStudy(cur),'study'));
+ if(T||cur===0){const at=attemptsFor(cur),last=at[at.length-1],best=at.reduce((m,a)=>Math.max(m,pctOf(a)),0),live=PROG.cur&&PROG.cur.t===cur;
+  modes.appendChild(mcard('Exam mode','Simulate the real exam: finish within the time limit, then get your score by domain.',
+   [fact('\u2630','Questions',String(qn)),fact('\u23F1','Duration',hm(mins)),fact('\u2691','Target',EX.blueprint.tiers.pass+'%')],
+   live?'In progress: select to resume':at.length?'Best '+best+'% · Last '+pctOf(last)+'% · '+at.length+(at.length===1?' attempt':' attempts'):'Not taken yet',
+   ()=>live?resumePractice():startPractice(cur),'exam'));}
+ main.appendChild(modes);
+ layout.appendChild(main);layout.appendChild(side);ct.appendChild(layout);
 
  // Progress is per browser; export/import moves it between devices.
  const pl=E('div',{className:'prog-links'});

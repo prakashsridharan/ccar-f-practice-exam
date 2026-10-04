@@ -18,7 +18,7 @@ const EXAM={
    tipsIntro:'How to read your results and where to spend study time.',
    studyCard:' questions with answers, rationales, and Anthropic doc links. Filter by domain.',
    practiceCard:'A fresh set of 60 questions drawn at random from the whole bank in the exam\'s domain proportions, with a 120-minute timer.',
-   modeIntro:'Pick a mode, then a test. Practice and Study use the same tests, so you can study a test first and then take it under exam conditions, or the other way round. Your scores and any unfinished test are saved in this browser, so you can stop and resume later.',
+   modeIntro:'Choose a test from the list, then a mode. Study mode is self-paced, with the answer and rationale after each question; Exam mode is timed and scored like the real exam. Your scores and any unfinished exam are saved in this browser, so you can stop and resume later.',
    disclaimer:'Free, no sign-up, and nothing to install. This is an independent study aid and is not affiliated with or endorsed by Anthropic.',
    contentNotice:'Every question in this app is original, written from the publicly available exam guide and the objectives in its blueprint. Nothing here comes from the real exam, and no question recreates one seen in a test sitting: live exam content is confidential, and every candidate agrees to keep it that way. A high score here is not a guarantee of passing, so pair this practice with hands-on work with Claude and Anthropic\'s official documentation.',
    appOffers:' scenario-based practice questions covering all 5 domains, aligned with the official exam guide. Each question includes a detailed rationale and a direct link to the relevant Anthropic documentation for deeper learning.',
