@@ -41,7 +41,7 @@ const WEIGHTS=weightsFor(EX);
 function byDomainThenId(a,b){return a.domain-b.domain||a.id.localeCompare(b.id,undefined,{numeric:true});}
 const BUILTIN=BQ.map(q=>({id:q.id,scenario:q.s,domain:q.d,type:q.ty,select:q.se,question:q.q,options:q.o,answer:q.a,rationale:q.r,whynot:q.w,difficulty:q.df||'',objective:q.ob||'',ref:REFS[q.id]||''})).sort(byDomainThenId);
 let CQ=[],CS={};let view='home';const homeOpen=new Set();
-let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durationSec,pflag:{},pdone:false,ptest:0,rf:'all'};
+let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durationSec,pflag:{},pdone:false,ptest:0,rf:'all',stest:0};
 
 // ---- Practice tests and progress ------------------------------------------
 // FIXED holds the numbered tests from exams/<exam>.js (TESTS, made by
@@ -50,6 +50,10 @@ let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durati
 //   attempts: finished runs {t, d (ISO date), c, n, ds:{domain:[correct,total]}, wrong, flag, secs}
 //   cur:      the unfinished run {t, ids (in shown order), pi, psec, sel, flag}, for resume
 const FIXED=typeof TESTS!=='undefined'?TESTS:[];
+// Home asks for a mode first (practice | study), then lists the tests in it.
+const MKEY=EX.storagePrefix+'-mode';
+let homeMode=(()=>{try{const m=localStorage.getItem(MKEY);return m==='practice'||m==='study'?m:null;}catch(e){return null;}})();
+function setHomeMode(m){homeMode=m;try{localStorage.setItem(MKEY,m);}catch(e){}render();}
 const PKEY=EX.storagePrefix+'-progress';
 function freshProgress(){return{v:1,attempts:[],cur:null};}
 function loadProgress(){try{const p=JSON.parse(localStorage.getItem(PKEY)||'null');if(p&&p.v===1&&Array.isArray(p.attempts))return p;}catch(e){}return freshProgress();}
@@ -259,7 +263,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  // Mode selection comes first so a returning user can start without scrolling;
  // the exam reference material follows for anyone who wants it.
  const modeHdr=E('div',{style:{margin:'1rem 0 .6rem'}});
- modeHdr.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.3rem'}},'Choose How to Practice'));
+ modeHdr.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.3rem'}},'Choose a Mode'));
  modeHdr.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65'}},EX.copy.modeIntro));
  ct.appendChild(modeHdr);
  const mins=Math.round(EX.blueprint.durationSec/60),qn=EX.blueprint.questionCount;
@@ -271,25 +275,36 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
    E('div',{className:'resume-acts'},E('button',{className:'btn btn-p',onClick:resumePractice},'Resume'),
     E('button',{className:'btn btn-g',onClick:()=>{if(confirm('Discard this unfinished run? Its answers are not scored.')){discardCur();render();}}},'Discard'))));}
 
- // Fixed, numbered tests: same questions every time, so scores are comparable.
- if(FIXED.length){
-  ct.appendChild(E('h3',{className:'sec-h'},'Practice Tests'));
-  ct.appendChild(E('p',{className:'sec-p'},(FIXED.length>1?'Each test is a fixed set of ':'A fixed set of ')+qn+' questions in the exam\'s domain proportions, with a '+mins+'-minute timer.'+(FIXED.length>1?' No question appears in more than one test.':'')+' Retake a test to see whether your score improves.'));
-  const grid=E('div',{className:'test-grid'});
-  FIXED.forEach(t=>{const at=attemptsFor(t.n),last=at[at.length-1],best=at.reduce((m,a)=>Math.max(m,pctOf(a)),0);
-   const live=PROG.cur&&PROG.cur.t===t.n;
-   const card=E('button',{className:'test-card',type:'button',onClick:()=>live?resumePractice():startPractice(t.n)});
-   card.appendChild(E('span',{className:'tt'},t.title));
-   card.appendChild(E('span',{className:'tm'},qn+' Qs · '+mins+' min'));
-   card.appendChild(E('span',{className:'ts'+(at.length?'':' none')},live?'In progress':at.length?'Best '+best+'% · Last '+pctOf(last)+'% · '+at.length+(at.length===1?' attempt':' attempts'):'Not attempted'));
-   grid.appendChild(card);});
-  ct.appendChild(grid);}
-
+ // Step 1: pick a mode. Step 2: pick a test; it opens in that mode. Both modes
+ // use the same fixed tests. The choice is remembered for this viewer.
  const sel=E('div',{className:'mode-sel'});
- const ra=attemptsFor(0);
- const pc=E('div',{className:'mode-card',onClick:()=>startPractice(0)});pc.innerHTML=IC.play;pc.appendChild(E('h2',null,'Random Mix'));pc.appendChild(E('p',null,EX.copy.practiceCard));pc.appendChild(E('span',{className:'tag'},mins+' min · '+qn+' Qs · Timed'+(ra.length?' · Last '+pctOf(ra[ra.length-1])+'%':'')));sel.appendChild(pc);
- const sc2=E('div',{className:'mode-card',onClick:()=>{st.sel={};st.sub={};st.rev={};go('study');}});sc2.innerHTML=IC.book;sc2.appendChild(E('h2',null,'Study'));sc2.appendChild(E('p',null,'Browse all '+aq.length+EX.copy.studyCard));sc2.appendChild(E('span',{className:'tag'},'All Qs · Self-paced'));sel.appendChild(sc2);
+ const modeCard=(m,icon,title,text,tag)=>{const c=E('div',{className:'mode-card'+(homeMode===m?' on':''),role:'button',tabindex:'0','aria-pressed':String(homeMode===m),onClick:()=>setHomeMode(m),onKeydown:e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setHomeMode(m);}}});
+  c.innerHTML=icon;c.appendChild(E('h2',null,title));c.appendChild(E('p',null,text));c.appendChild(E('span',{className:'tag'},tag));return c;};
+ sel.appendChild(modeCard('practice',IC.play,'Practice','Exam conditions: a '+mins+'-minute timer, flag questions for review, and your score with a per-domain breakdown at the end.',mins+' min · Timed · Scored'));
+ sel.appendChild(modeCard('study',IC.book,'Study','Self-paced: answer each question and see the correct answer, the rationale and a documentation link straight away.','No timer · Answers as you go'));
  ct.appendChild(sel);
+
+ if(homeMode){const prac=homeMode==='practice';
+  if(FIXED.length){
+   ct.appendChild(E('h3',{className:'sec-h'},prac?'Choose a Test to Practice':'Choose a Test to Study'));
+   ct.appendChild(E('p',{className:'sec-p'},(FIXED.length>1?'Each test is a fixed set of ':'A fixed set of ')+qn+' questions in the exam\'s domain proportions'+(FIXED.length>1?', with no question shared between tests.':'.')+(prac?' Retake a test to see whether your score improves.':' Study a test before practising it, or after, to go over what you missed.')));
+   const grid=E('div',{className:'test-grid'});
+   FIXED.forEach(t=>{const at=attemptsFor(t.n),last=at[at.length-1],best=at.reduce((m,a)=>Math.max(m,pctOf(a)),0);
+    const live=PROG.cur&&PROG.cur.t===t.n;
+    const card=E('button',{className:'test-card',type:'button',onClick:()=>prac?(live?resumePractice():startPractice(t.n)):startStudy(t.n)});
+    card.appendChild(E('span',{className:'tt'},t.title));
+    card.appendChild(E('span',{className:'tm'},t.ids.length+' Qs'+(prac?' · '+mins+' min':' · Self-paced')));
+    // Scores belong to Practice; Study cards stay plain.
+    if(prac)card.appendChild(E('span',{className:'ts'+(at.length||live?'':' none')},live?'Practice in progress':at.length?'Best '+best+'% · Last '+pctOf(last)+'% · '+at.length+(at.length===1?' attempt':' attempts'):'Not attempted'));
+    card.appendChild(E('span',{className:'tgo'},prac?(live?'Resume →':'Start practice →'):'Start studying →'));
+    grid.appendChild(card);});
+   ct.appendChild(grid);}
+  // Random Mix: a timed draw across the whole bank, so it is practice only.
+  if(prac){const ra=attemptsFor(0),rlive=PROG.cur&&PROG.cur.t===0;
+   ct.appendChild(E('div',{className:'random-row'},
+    E('div',null,E('strong',null,'Random Mix'),E('span',null,EX.copy.practiceCard+(ra.length?' Last score '+pctOf(ra[ra.length-1])+'%.':''))),
+    E('button',{className:'btn btn-p',type:'button',onClick:()=>rlive?resumePractice():startPractice(0)},E('span',{innerHTML:IC.play}),rlive?'Resume':'Start')));}
+  else if(!FIXED.length)ct.appendChild(E('div',{className:'random-row'},E('div',null,E('strong',null,'All Questions'),E('span',null,allQ().length+' questions, grouped by domain.')),E('button',{className:'btn btn-p',type:'button',onClick:()=>startStudy(0)},E('span',{innerHTML:IC.book}),'Start')));}
 
  // Progress is per browser; export/import moves it between devices.
  const pl=E('div',{className:'prog-links'});
@@ -397,8 +412,16 @@ function renderReview(){const app=document.getElementById('app');app.innerHTML='
  const ct=E('div',{className:'container'});list.forEach(q=>ct.appendChild(renderQCard(q,{showAnswer:true,allowSelect:false})));
  if(!list.length)ct.appendChild(E('div',{className:'empty'},st.rf==='wrong'?'No incorrect answers. Well done.':'Nothing to show.'));app.appendChild(ct);}
 
-function renderStudy(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();const as=allS();const sc=calcScore(aq);
- app.appendChild(E('div',{className:'hdr'},E('h1',null,'Study Mode'),E('div',{className:'sub'},aq.length+' Questions - '+Object.keys(EX.domains).length+' Domains'),E('div',{className:'hdr-actions'},E('button',{className:'btn-h',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home'),E('button',{className:'btn-h',onClick:()=>{st.rev={};st.sel={};st.sub={};render();}},E('span',{innerHTML:IC.reset}),'Reset'))));
+// Study works on one test's questions (st.stest = test number). Test 0 means
+// the whole bank including custom questions: reached from the admin panel, or
+// when an exam has no fixed tests.
+function studySet(n){if(n&&FIXED[n-1]){const ids=new Set(FIXED[n-1].ids);return allQ().filter(q=>ids.has(q.id));}return allQ();}
+function studyTitle(n){return n&&FIXED[n-1]?FIXED[n-1].title+': Study':'All Questions: Study';}
+function startStudy(n){n=typeof n==='number'&&FIXED[n-1]?n:0;
+ if(st.pdone)st.pq=[];// a finished run's review is replaced by the study session
+ st.stest=n;st.as=0;st.sel={};st.sub={};st.rev={};go('study');}
+function renderStudy(){const app=document.getElementById('app');app.innerHTML='';const aq=studySet(st.stest);const as=allS();const sc=calcScore(aq);
+ app.appendChild(E('div',{className:'hdr'},E('h1',null,studyTitle(st.stest)),E('div',{className:'sub'},aq.length+' Questions - Self-paced'),E('div',{className:'hdr-actions'},E('button',{className:'btn-h',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home'),E('button',{className:'btn-h',onClick:()=>{st.rev={};st.sel={};st.sub={};render();}},E('span',{innerHTML:IC.reset}),'Reset'))));
  const nav=E('div',{className:'nav'});nav.appendChild(E('button',{className:'nav-t'+(st.as===0?' on':''),onClick:()=>{st.as=0;render();}},'All',E('span',{className:'tc'},String(aq.length))));
  Object.entries(DM).forEach(([id,d])=>{const cnt=aq.filter(q=>q.domain===Number(id)).length;nav.appendChild(E('button',{className:'nav-t'+(st.as===Number(id)?' on':''),onClick:()=>{st.as=Number(id);render();}},'D'+id+': '+(EX.domains[id].short||d.n.split(' ')[0]),E('span',{className:'tc'},String(cnt))));});app.appendChild(nav);
  const fl=st.as===0?aq:aq.filter(q=>q.domain===st.as);const pct=Math.round(sc.at/Math.max(sc.tot,1)*100);
@@ -417,6 +440,8 @@ function adminModal(){const ov=E('div',{className:'modal-ov',onClick:e=>{if(e.ta
   acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='q';render();}},E('span',{innerHTML:IC.plus}),'Add Question'));
  acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='s';render();}},E('span',{innerHTML:IC.plus}),'Add Scenario'));
  acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='u';render();}},E('span',{innerHTML:IC.upload}),'Upload CSV'));
+ // Users only study one test at a time; this is the way to every question, custom ones included (edit/delete).
+ acts.appendChild(E('button',{className:'btn btn-g',onClick:()=>{st.modal=null;startStudy(0);}},E('span',{innerHTML:IC.book}),'Browse All Questions ('+allQ().length+')'));
  acts.appendChild(E('button',{className:'btn btn-g',onClick:()=>{const d={customQuestions:CQ,customScenarios:CS};const b=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=EX.exportNames.backup;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}},E('span',{innerHTML:IC.download}),'Export JSON'));
  acts.appendChild(E('button',{className:'btn btn-g',onClick:()=>{const inp=document.createElement('input');inp.type='file';inp.accept='.json';inp.onchange=()=>{const reader=new FileReader();reader.onload=ev=>{try{const d=JSON.parse(ev.target.result);if(d.customQuestions)CQ.push(...d.customQuestions);if(d.customScenarios)Object.assign(CS,d.customScenarios);saveData();alert('Imported!');st.modal=null;render();}catch(e){alert('Invalid JSON.');}};reader.readAsText(inp.files[0]);};inp.click();}},E('span',{innerHTML:IC.upload}),'Import JSON'));
  bd.appendChild(acts);// Visit stats
@@ -463,19 +488,26 @@ function render(){if(view==='home')renderHome();else if(view==='practice')render
 // needs an exam in memory (practice/report/review) falls back to home after a
 // reload. Leaving an unfinished practice exam asks first.
 const ROUTES=['home','study','practice','report','review'];
-function hashFor(v){return v==='home'?'#/':'#/'+v;}
+// Study carries its test number (#/study/2), so Back, reload and bookmarks
+// land on the same test. Plain #/study is the whole bank (admin only).
+function hashFor(v){return v==='home'?'#/':v==='study'&&st.stest?'#/study/'+st.stest:'#/'+v;}
 function go(v){view=v;if(location.hash!==hashFor(v))history.pushState(null,'',hashFor(v));render();}
 function routeFromHash(force){
  if(location.hash==='#admin'){if(view!=='home'||st.modal!=='admin'||force){view='home';st.modal='admin';render();}return;}
- const m=location.hash.match(/^#\/([a-z]*)/);let v=m&&m[1]||'home';if(!ROUTES.includes(v))v='home';
+ const m=location.hash.match(/^#\/([a-z]*)(?:\/(\d+))?/);let v=m&&m[1]||'home';if(!ROUTES.includes(v))v='home';
+ let stest=st.stest;
+ if(v==='study'){const n=m&&m[2]?parseInt(m[2],10):0;stest=FIXED[n-1]?n:0;}
  if(v==='practice'&&st.pdone)v='report';
  // A reload on #/practice picks the saved unfinished run back up.
  if(v==='practice'&&!st.pq.length&&PROG.cur)restoreCur();
  if((v==='practice'||v==='report'||v==='review')&&!st.pq.length)v='home';
+ const studySwitch=v==='study'&&stest!==st.stest;
+ if(v==='study')st.stest=stest;
  if(location.hash&&hashFor(v)!==location.hash)history.replaceState(null,'',hashFor(v));
- if(v===view&&!force)return;
+ if(v===view&&!studySwitch&&!force)return;
  if(view==='practice'&&!st.pdone&&v!=='practice'){if(!confirm(EXIT_MSG)){history.pushState(null,'',hashFor('practice'));return;}pausePractice();}
  if(st.modal==='admin')st.modal=null;
+ if(studySwitch){st.as=0;st.sel={};st.sub={};st.rev={};}
  view=v;render();}
 // Custom questions come from localStorage (synchronous), so load them before the
 // first route: a resumed run may include them.

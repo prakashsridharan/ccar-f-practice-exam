@@ -62,7 +62,7 @@ ok('attempt saved on submit; report compares with previous',()=>{const T=run('FI
  const a=run('attemptsFor('+T+')');if(a.length!==2)throw new Error(a.length+' attempts saved');if(a[0].c!==1||a[1].c!==0)throw new Error('scores '+a[0].c+','+a[1].c);
  if(run('PROG.cur')!==null)throw new Error('cur not cleared on submit');
  if(!find(byId.app,n=>/from your previous attempt/.test(n.textContent||'')))throw new Error('no comparison line');
- run('renderHome()');if(T&&!find(byId.app,n=>/Best \d+% · Last \d+% · 2 attempts/.test(n.textContent||'')))throw new Error('test card shows no history');});
+ run("homeMode='practice';renderHome()");if(T&&!find(byId.app,n=>/Best \d+% · Last \d+% · 2 attempts/.test(n.textContent||'')))throw new Error('test card shows no history');});
 ok('review filters',()=>{// the last run above answered nothing, then one correctly
  run("st.sel[st.pq[0].id]=st.pq[0].answer.slice();st.rf='wrong';renderReview()");const n=run('st.pq.filter(q=>!isCorrect(q)).length');
  if(n!==run('st.pq.length')-1)throw new Error('wrong count '+n);
@@ -89,6 +89,22 @@ ok('export/import progress merges and rejects other exams',()=>{
  if(run('PROG.attempts[0].d')!=='2026-01-01T00:00:00.000Z')throw new Error('not sorted by date');
  let threw=false;try{run("mergeProgress({app:'certprep',exam:'other',progress:{attempts:[]}})");}catch(e){threw=true;}if(!threw)throw new Error('accepted another exam');
  run('PROG=freshProgress();saveProgress()');});
+ok('mode picker: no tests until a mode is chosen; both modes list every test',()=>{const T=run('FIXED.length');
+ const cards=()=>{const out=[];const walk=n=>{if(!n)return;if(n.className==='test-card')out.push(n);(n.children||[]).forEach(walk);};walk(byId.app);return out;};
+ run('homeMode=null;renderHome()');if(cards().length)throw new Error('tests shown before a mode is picked');
+ run("setHomeMode('study')");if(cards().length!==T)throw new Error('study lists '+cards().length+' of '+T);
+ if(T&&!find(byId.app,n=>/Start studying/.test(n.textContent||'')))throw new Error('study cards do not say study');
+ run("setHomeMode('practice')");if(cards().length!==T)throw new Error('practice lists '+cards().length);
+ if(!find(byId.app,n=>n.className==='random-row'))throw new Error('no Random Mix under practice');
+ run("setHomeMode('study')");if(find(byId.app,n=>n.tagName==='STRONG'&&/^Random Mix/.test(n.textContent||'')))throw new Error('Random Mix shown under study');});
+ok('study opens exactly one test, with its own URL',()=>{const T=run('FIXED');if(!T.length)return;const L=T[T.length-1];
+ run('st.pq=[];st.pdone=false;startStudy('+L.n+')');
+ if(ctx.location.hash!=='#/study/'+L.n)throw new Error('hash '+ctx.location.hash);
+ const ids=run('studySet(st.stest).map(q=>q.id)');if(ids.slice().sort().join()!==L.ids.slice().sort().join())throw new Error('wrong questions');
+ run('renderStudy()');if(!find(byId.app,n=>(n.textContent||'')===L.title+': Study'))throw new Error('no study title');
+ ctx.location.hash='#/study/1';run('routeFromHash()');if(run('st.stest')!==1||run('view')!=='study')throw new Error('#/study/1 -> '+run('st.stest'));
+ ctx.location.hash='#/study/99';run('routeFromHash()');if(run('st.stest')!==0)throw new Error('bad test number kept');
+ run('startStudy(0)');if(run('studySet(0).length')!==run('allQ().length'))throw new Error('study 0 is not the whole bank');});
 ok('router: go(), Back-style routing, guarded routes, #admin',()=>{
  const H=()=>ctx.location.hash,V=()=>run('view');
  run("st.pq=[];st.pdone=false;go('study')");if(H()!=='#/study'||V()!=='study')throw new Error('go(study) -> '+H()+' '+V());
