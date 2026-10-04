@@ -1,5 +1,7 @@
 # Prompt: Build CCAR-F Practice Exam Web Application
 
+> **Historical.** This is the original 2026 brief for the single-file CCAR-F app. The site has since become a multi-exam platform (shared engine, per-exam data files built from Markdown, vendor-grouped URLs, Supabase for visit metrics only). See README.md for the current architecture.
+
 Build a single-file HTML practice exam app for the Claude Certified Architect - Foundations (CCAR-F) certification, deployable on GitHub Pages with optional Supabase backend.
 
 ## Requirements
