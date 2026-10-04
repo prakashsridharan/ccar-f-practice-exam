@@ -121,9 +121,11 @@ DROP POLICY IF EXISTS "Service role delete questions" ON questions;
 DROP POLICY IF EXISTS "Public read visits"          ON visits;
 DROP POLICY IF EXISTS "Anyone can log a visit"      ON visits;
 
--- Recreate policies: public reads
-CREATE POLICY "Public read scenarios" ON scenarios FOR SELECT USING (true);
-CREATE POLICY "Public read questions" ON questions FOR SELECT USING (true);
+-- Recreate policies: public reads.
+-- questions/scenarios have NO public read since 2026-10-04: the app ships its
+-- questions as static files and no longer reads these tables, and a public read
+-- would expose anything stored here (e.g. questions held back for a paid course).
+-- With RLS on and no SELECT policy, the anon key reads zero rows.
 CREATE POLICY "Public read visits"    ON visits    FOR SELECT USING (true);
 
 -- Admin writes (service_role only)
