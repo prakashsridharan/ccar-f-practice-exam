@@ -120,6 +120,26 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
  .exam:hover{border-color:rgba(255,255,255,.95);box-shadow:inset 0 1px 0 #fff,0 0 0 3px rgba(46,134,193,.14),0 20px 40px -16px rgba(27,79,138,.42)}
  .fact{background:linear-gradient(180deg,rgba(255,255,255,.7),rgba(240,245,250,.55))}
 }
+/* Site admin, opened only by /#admin. Lists every exam's own admin panel
+   (each exam keeps its own custom questions) plus site-wide visitor metrics. */
+.adm-ov{position:fixed;inset:0;z-index:50;background:rgba(26,46,69,.45);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:flex;align-items:flex-start;justify-content:center;padding:3rem 1rem;overflow-y:auto}
+.adm-ov[hidden]{display:none}
+.adm{width:100%;max-width:520px;background:linear-gradient(180deg,#fff,#f8fafd);border:1px solid rgba(27,79,138,.12);border-radius:var(--rl);box-shadow:inset 0 1px 0 #fff,0 24px 60px -20px rgba(26,46,69,.45)}
+.adm-hd{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.25rem;border-bottom:1px solid var(--border)}
+.adm-hd h2{font-size:1rem;font-weight:700}
+.adm-x{border:0;background:none;font-size:1.4rem;line-height:1;color:var(--text-m);cursor:pointer;padding:.1rem .4rem;border-radius:6px}
+.adm-x:hover{background:var(--bg)}
+.adm-bd{padding:1.1rem 1.25rem 1.3rem}
+.adm-bd h3{font-size:.8rem;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em;margin:0 0 .5rem}
+.adm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.2rem}
+.adm-stat{text-align:center;padding:.6rem .3rem;border-radius:8px;background:linear-gradient(180deg,#f8fafd,#eef2f7);box-shadow:inset 0 1px 0 #fff}
+.adm-stat b{display:block;font-size:1.25rem;font-weight:800;color:var(--ac)}
+.adm-stat span{font-size:.7rem;color:var(--text-m)}
+.adm-ex{display:flex;justify-content:space-between;align-items:center;gap:.75rem;padding:.65rem .8rem;margin-bottom:.45rem;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:inherit;background:#fff}
+.adm-ex:hover{border-color:var(--ac);background:#f4f9fe}
+.adm-ex b{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ac)}
+.adm-ex span{font-size:.8rem;color:var(--text-2)}
+.adm-note{font-size:.72rem;color:var(--text-m);line-height:1.55;margin-top:.8rem}
 </style>
 </head>
 <body>
@@ -176,5 +196,41 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
   </div>
 
 </div>
+<div class="adm-ov" id="adm" hidden>
+  <div class="adm" role="dialog" aria-modal="true" aria-labelledby="adm-t">
+    <div class="adm-hd"><h2 id="adm-t">Admin</h2><button class="adm-x" type="button" id="adm-x" aria-label="Close">&times;</button></div>
+    <div class="adm-bd">
+      <h3>Visitor metrics (all pages)</h3>
+      <div class="adm-stats"><div class="adm-stat"><b id="adm-total">-</b><span>Total visits</span></div><div class="adm-stat"><b id="adm-today">-</b><span>Today</span></div><div class="adm-stat"><b id="adm-unique">-</b><span>Unique visitors</span></div></div>
+      <h3>Exam admin</h3>
+      <div id="adm-list"></div>
+      <p class="adm-note">Each exam has its own admin panel: add or upload questions, export and import backups, and (CCAR-F only) sync the question bank to Supabase. Your Supabase key is shared between them and stays in this browser.</p>
+    </div>
+  </div>
+</div>
+<script>
+// Site admin at /#admin. Hidden unless the hash is #admin; nothing here is
+// linked from the page. The anon key is the same public, role=anon key the
+// exam pages already ship.
+(function(){
+  var ov=document.getElementById('adm'),list=document.getElementById('adm-list'),loaded=false;
+  document.querySelectorAll('.exams a.exam').forEach(function(a){
+    var code=a.querySelector('.code'),name=a.querySelector('h2');
+    var l=document.createElement('a');l.className='adm-ex';l.href=a.getAttribute('href')+'#admin';
+    l.innerHTML='<b></b><span></span>';l.firstChild.textContent=code?code.textContent:'';l.lastChild.textContent=(name?name.textContent:'')+' admin →';
+    list.appendChild(l);});
+  function stats(){if(loaded)return;loaded=true;
+    var K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1emR5cG1sZnBlc2xzZmV6YXBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjYyNDcsImV4cCI6MjEwMzk0MjI0N30.UGbcFwFLeKnTITJLQm8QO4YPn1hDhWe8ptz1-QJ19ik';
+    fetch('https://vuzdypmlfpeslsfezapd.supabase.co/rest/v1/rpc/visit_stats',{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'}})
+      .then(function(r){return r.ok?r.json():{}}).catch(function(){return {}})
+      .then(function(v){['total','today','unique'].forEach(function(k){document.getElementById('adm-'+k).textContent=v&&v[k]!=null?v[k]:'n/a';});});}
+  function sync(){var on=location.hash==='#admin';ov.hidden=!on;if(on)stats();}
+  function close(){history.replaceState(null,'',location.pathname+location.search);sync();}
+  document.getElementById('adm-x').addEventListener('click',close);
+  ov.addEventListener('click',function(e){if(e.target===ov)close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&!ov.hidden)close();});
+  window.addEventListener('hashchange',sync);sync();
+})();
+</script>
 </body>
 </html>
