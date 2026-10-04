@@ -2,3 +2,7 @@
 # The repo is public and GitHub Pages serves files from the repo root,
 # so anything committed here is readable at ccar-f.pratechlabs.com/<file>.
 CLAUDE.md
+
+# CCAR-P question source. Its answer key cites internal course notes, and the
+# app already ships the questions (exams/ccar-p.js) without those citations.
+ccar-p_practice_questions.md
