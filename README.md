@@ -5,8 +5,8 @@ https://certprep.pratechlabs.com. Currently:
 
 | Exam | Path | Questions | Practice tests |
 |---|---|---|---|
-| Claude Certified Architect - Foundations (CCAR-F) | `/claude/ccar-f/` | 100 | 1 fixed test of 60 questions, 120 min |
-| Claude Certified Architect - Professional (CCAR-P) | `/claude/ccar-p/` | 315 | 5 fixed tests of 63 questions, 120 min |
+| Claude Certified Architect - Foundations (CCAR-F) | `/claude/ccar-f/` | 100 | 2 fixed tests: 60 questions (120 min) and 40 (80 min) |
+| Claude Certified Architect - Professional (CCAR-P) | `/claude/ccar-p/` | 126 | 2 fixed tests of 63 questions, 120 min |
 
 ## Features
 

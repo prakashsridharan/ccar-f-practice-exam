@@ -13,7 +13,7 @@ const EXAM={
   exportNames:{backup:'ccar-f-backup.json',template:'ccar-f-question-template.csv'},
   crossLink:{href:'/claude/ccar-p/',label:'Also preparing for the Professional exam?',
    title:'CCAR-P Practice Exam',
-   blurb:'Claude Certified Architect - Professional. 315 practice questions across seven domains, in five timed 63-question practice tests.'},
+   blurb:'Claude Certified Architect - Professional. 126 practice questions across seven domains, in two timed 63-question practice tests.'},
   copy:{
    tipsIntro:'How to read your results and where to spend study time.',
    studyCard:' questions with answers, rationales, and Anthropic doc links. Filter by domain.',
