@@ -31,7 +31,7 @@ Build a single-file HTML practice exam app for the Claude Certified Architect - 
 1. `index.html` - complete app (~210 KB)
 2. `schema.sql` - database schema, at the repo root
 3. `README.md` - setup and deployment guide
-4. `CNAME` - custom domain (ccar-f.pratechlabs.com)
+4. `CNAME` - custom domain (certprep.pratechlabs.com)
 5. `PROMPT.md` - this rebuild prompt
 
 ## Design

@@ -107,10 +107,10 @@ Enable Pages: repo Settings > Pages > main branch > / (root) > Save.
 
 ```
 Type    Name      Value                       TTL
-CNAME   ccar-f    prakashsridharan.github.io   600
+CNAME   certprep  prakashsridharan.github.io   600
 ```
 
-Then in GitHub: Settings > Pages > Custom domain: `ccar-f.pratechlabs.com` > Enforce HTTPS.
+Then in GitHub: Settings > Pages > Custom domain: `certprep.pratechlabs.com` > Enforce HTTPS.
 
 ## Admin Panel
 

@@ -7,4 +7,4 @@ Disallow: /README.md
 Disallow: /PROMPT.md
 Disallow: /schema.sql
 
-Sitemap: https://ccar-f.pratechlabs.com/sitemap.xml
+Sitemap: https://certprep.pratechlabs.com/sitemap.xml
