@@ -14,7 +14,7 @@ const EXAM={
   exportNames:{backup:'ccar-p-backup.json',template:'ccar-p-question-template.csv'},
   crossLink:{href:'/claude/ccar-f/',label:'Also preparing for the Foundations exam?',
    title:'CCAR-F Practice Exam',
-   blurb:'Claude Certified Architect - Foundations. 100 scenario-based questions across five domains, with a timed 60-question mock exam.'},
+   blurb:'Claude Certified Architect - Foundations. 120 scenario-based questions across five domains, in two timed 60-question practice tests.'},
   copy:{
    tipsIntro:'How to read your results and where to spend study time.',
    studyCard:' questions with answers, rationales, and Anthropic doc links. Filter by domain.',
