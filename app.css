@@ -231,7 +231,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .resume-bar>div>strong{display:block;font-size:.85rem;color:#8a3b1c}
 .resume-bar>div>span{font-size:.75rem;color:var(--text-2)}
 .resume-acts{display:flex;gap:.4rem}
-.prog-links{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.25rem .6rem;margin:-.75rem 0 1rem;font-size:.74rem;color:var(--text-m)}
+.prog-links{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.25rem .4rem;margin:-.75rem 0 1rem;font-size:.74rem;color:var(--text-m)}
 .prog-links button{font-family:inherit;font-size:.74rem;font-weight:600;color:var(--ac);background:none;border:none;padding:.15rem .1rem;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
 .vs-prev{font-size:.8rem;font-weight:600;margin:0 0 .6rem}
 .vs-prev.up{color:#0E7C66}.vs-prev.down{color:#C0522A}.vs-prev.same{color:var(--text-2)}
@@ -270,3 +270,9 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 @media(max-width:760px){.tests-layout{grid-template-columns:1fr}}
 @media(max-width:560px){.mode2-grid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.mode2:hover{transform:none}}
+/* "Saved in this browser · Move or reset progress" and the panel it opens. */
+.prog-links .pl-sep{color:var(--text-m)}
+.data-panel{max-width:520px;margin:-.4rem auto 1.1rem;padding:.75rem .9rem;border-radius:12px;border:1px solid rgba(27,79,138,.13);background:linear-gradient(180deg,#fff 0%,#f6f9fd 100%);box-shadow:var(--gloss-sh);text-align:center}
+.data-panel p{font-size:.76rem;color:var(--text-2);line-height:1.55;margin-bottom:.6rem}
+.dp-acts{display:flex;flex-wrap:wrap;justify-content:center;gap:.4rem}
+.dp-acts .dp-reset{color:#C0522A}

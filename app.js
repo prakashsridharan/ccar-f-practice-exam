@@ -333,14 +333,23 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  main.appendChild(modes);
  layout.appendChild(side);layout.appendChild(main);ct.appendChild(layout);
 
- // Progress is per browser; export/import moves it between devices.
+ // Progress is per browser. One short line; the backup/restore/reset tools sit
+ // in a panel it opens (direct DOM toggle, remembered in homeOpen like the
+ // other collapsibles), so the home page stays uncluttered, also on phones.
+ const hasData=PROG.attempts.length>0||!!PROG.cur||(PROG.study&&Object.keys(PROG.study).length>0);
  const pl=E('div',{className:'prog-links'});
- const hasStudy=PROG.study&&Object.keys(PROG.study).length>0;
- pl.appendChild(E('span',null,'Your scores and study progress are saved in this browser'+(PROG.attempts.length?' ('+PROG.attempts.length+(PROG.attempts.length===1?' exam attempt':' exam attempts')+').':'.')));
- pl.appendChild(E('button',{type:'button',onClick:exportProgress},'Export'));
- pl.appendChild(E('button',{type:'button',onClick:importProgress},'Import'));
- if(PROG.attempts.length||PROG.cur||hasStudy)pl.appendChild(E('button',{type:'button',onClick:()=>{if(confirm('Delete all saved scores, study progress and any unfinished exam for '+EX.code+' in this browser?')){PROG=freshProgress();saveProgress();render();}}},'Reset'));
- ct.appendChild(pl);
+ const dataBtn=E('button',{type:'button','aria-expanded':'false'},'Move or reset progress');
+ pl.appendChild(E('span',null,'Saved in this browser'));pl.appendChild(E('span',{className:'pl-sep','aria-hidden':'true'},'·'));pl.appendChild(dataBtn);
+ const dp=E('div',{className:'data-panel'});
+ dp.appendChild(E('p',null,'Your scores and study progress are kept only in this browser. To continue on another device, download a backup here and restore it there.'));
+ const acts=E('div',{className:'dp-acts'});
+ acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:exportProgress},E('span',{innerHTML:IC.download}),'Download backup'));
+ acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:importProgress},E('span',{innerHTML:IC.upload}),'Restore from backup'));
+ if(hasData)acts.appendChild(E('button',{className:'btn btn-g dp-reset',type:'button',onClick:()=>{if(confirm('Delete all saved scores, study progress and any unfinished exam for '+EX.code+' in this browser?')){PROG=freshProgress();saveProgress();render();}}},E('span',{innerHTML:IC.reset}),'Reset'));
+ dp.appendChild(acts);
+ const setDp=open=>{if(open)homeOpen.add('data');else homeOpen.delete('data');dp.style.display=open?'block':'none';dataBtn.setAttribute('aria-expanded',String(open));};
+ setDp(homeOpen.has('data'));dataBtn.addEventListener('click',()=>setDp(!homeOpen.has('data')));
+ ct.appendChild(pl);ct.appendChild(dp);
 
  // Exam overview card
  const info=E('div',{className:'panel',style:{margin:'1rem 0'}});
