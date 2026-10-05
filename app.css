@@ -236,18 +236,18 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .vs-prev{font-size:.8rem;font-weight:600;margin:0 0 .6rem}
 .vs-prev.up{color:#0E7C66}.vs-prev.down{color:#C0522A}.vs-prev.same{color:var(--text-2)}
 /* Test-first home: selected test with two mode cards, test list beside it. */
-.tests-layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:1rem;align-items:center;margin:.6rem 0 1rem}
-.test-list{border:1px solid rgba(27,79,138,.13);border-radius:12px;background:linear-gradient(180deg,#fff 0%,#f6f9fd 100%);box-shadow:var(--gloss-sh);overflow:hidden}
-.tl-h{font-size:.82rem;font-weight:700;color:var(--ac-h);padding:.75rem .9rem;border-bottom:1px solid rgba(27,79,138,.1);background:rgba(214,234,248,.35)}
-.tl-item{display:flex;align-items:center;gap:.6rem;width:100%;padding:.62rem .9rem;border:none;border-bottom:1px solid rgba(27,79,138,.06);background:transparent;font-family:inherit;font-size:.8rem;color:var(--text);text-align:left;cursor:pointer;transition:background .12s}
-.tl-item:last-child{border-bottom:none}
-.tl-item:hover{background:rgba(214,234,248,.45)}
-.tl-item.on{background:linear-gradient(180deg,#e6f1fb,#d6e8f7);font-weight:600}
+/* Test picker: one card, a tab per test on top, the selected test below. */
+.test-card{margin:.6rem 0 1rem;border:1px solid rgba(27,79,138,.11);border-radius:var(--rl);background:linear-gradient(180deg,#fff 0%,#f8fafd 100%);box-shadow:var(--gloss-sh);overflow:hidden}
+.test-list{display:flex;flex-wrap:wrap;gap:0 .25rem;padding:.4rem .9rem 0;border-bottom:1px solid rgba(27,79,138,.12);background:rgba(214,234,248,.3)}
+.tl-item{display:flex;align-items:center;gap:.5rem;padding:.6rem .75rem .55rem;border:none;border-bottom:2.5px solid transparent;margin-bottom:-1px;background:transparent;font-family:inherit;font-size:.8rem;color:var(--text-2);text-align:left;white-space:nowrap;cursor:pointer;transition:background .12s,color .12s,border-color .12s;border-radius:8px 8px 0 0}
+.tl-item:hover{background:rgba(214,234,248,.55);color:var(--text)}
+.tl-item.on{color:var(--ac-h);font-weight:700;border-bottom-color:var(--ac);background:rgba(255,255,255,.7)}
+.tl-item:focus-visible{outline:3px solid rgba(46,134,193,.45);outline-offset:-3px}
 .tl-box{flex:none;width:16px;height:16px;border-radius:4px;border:1.5px solid #9fb3c8;display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff}
 .tl-box.done{background:var(--ac);border-color:var(--ac)}
-.tl-name{flex:1}
+.tl-name{flex:none}
 .tl-x{font-family:'JetBrains Mono',monospace;font-size:.66rem;color:#0E7C66;white-space:nowrap}
-.test-main{border:1px solid rgba(27,79,138,.11);border-radius:var(--rl);background:linear-gradient(180deg,#fff 0%,#f8fafd 100%);box-shadow:var(--gloss-sh);padding:1.25rem 1.35rem}
+.test-main{padding:1.1rem 1.35rem 1.25rem}
 .tm-k{font-size:.74rem;font-weight:700;color:var(--ac)}
 .tm-h{font-size:1.35rem;font-weight:800;color:var(--ac-h);margin:.1rem 0 .4rem}
 .tm-p{font-size:.82rem;color:var(--text-2);line-height:1.65}
@@ -267,7 +267,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .m2f-l{display:block;white-space:nowrap;font-size:.62rem;font-weight:700;color:var(--text-2)}
 .m2f-v{display:block;font-size:.76rem;margin-top:0}
 .m2-s{text-align:center;min-height:1.1em;margin-top:.35rem;font-size:.7rem;font-weight:600;color:#0E7C66}
-@media(max-width:760px){.tests-layout{grid-template-columns:1fr}}
+@media(max-width:560px){.test-list{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:.35rem .5rem 0}.test-list::-webkit-scrollbar{display:none}.test-list.more{-webkit-mask-image:linear-gradient(90deg,#000 80%,transparent);mask-image:linear-gradient(90deg,#000 80%,transparent)}.test-list.less{-webkit-mask-image:linear-gradient(90deg,transparent,#000 20%);mask-image:linear-gradient(90deg,transparent,#000 20%)}.test-list.less.more{-webkit-mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent);mask-image:linear-gradient(90deg,transparent,#000 15%,#000 85%,transparent)}.test-main{padding:1rem .9rem 1.1rem}}
 @media(max-width:560px){.mode2-grid{grid-template-columns:1fr}}
 @media (prefers-reduced-motion:reduce){.mode2:hover{transform:none}}
 /* "Saved in this browser · Move or reset progress" and the panel it opens. */

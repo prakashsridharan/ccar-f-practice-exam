@@ -323,16 +323,19 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
    E('div',{className:'resume-acts'},E('button',{className:'btn btn-p',onClick:resumePractice},'Resume'),
     E('button',{className:'btn btn-g',onClick:()=>{if(confirm('Discard this unfinished run? Its answers are not scored.')){discardCur();render();}}},'Discard'))));}
 
- // Side list of tests (ticked once taken in exam mode) and, beside it, the
- // selected test with its two modes. Both modes use the same questions.
+ // One card: a tab per test across the top (ticked once taken in exam mode)
+ // and, below it, the selected test with its two modes. Tabs rather than a side
+ // list, so the card has no empty column however many tests there are.
  const cur=selectedTest(),isMix=cur===0&&FIXED.length>0;
- const layout=E('div',{className:'tests-layout'});
+ const layout=E('div',{className:'test-card'});
  const side=E('nav',{className:'test-list','aria-label':'Practice tests'});
- side.appendChild(E('div',{className:'tl-h'},'Practice tests'));
  const item=(n,label,done,extra)=>{const b=E('button',{type:'button',className:'tl-item'+(n===cur?' on':''),'aria-current':n===cur?'true':'false',onClick:()=>selectTest(n)});
   b.appendChild(E('span',{className:'tl-box'+(done?' done':''),'aria-hidden':'true'},done?'\u2713':''));
   b.appendChild(E('span',{className:'tl-name'},label));if(extra)b.appendChild(E('span',{className:'tl-x'},extra));return b;};
- FIXED.forEach(t=>{const at=attemptsFor(t.n);side.appendChild(item(t.n,t.title,at.length>0,at.length?'Best '+at.reduce((m,a)=>Math.max(m,pctOf(a)),0)+'%':''));});
+ // Tabs use a short label ("Test 2"): the section heading already says
+ // Practice Tests and the panel below shows the full title. Keeps five tests
+ // plus Random Mix on one line on desktop.
+ FIXED.forEach(t=>{const at=attemptsFor(t.n);side.appendChild(item(t.n,t.short||t.title.replace(/^Practice /,''),at.length>0,at.length?'Best '+at.reduce((m,a)=>Math.max(m,pctOf(a)),0)+'%':''));});
  const ra=attemptsFor(0);
  side.appendChild(item(0,FIXED.length?'Random Mix':'All Questions',ra.length>0,ra.length?'Last '+pctOf(ra[ra.length-1])+'%':''));
 
@@ -446,7 +449,13 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
 
  // The Important Note closes the page; it replaced the old credits footer.
  if(EX.copy.contentNotice)ct.appendChild(E('div',{className:'notice notice-end'},E('strong',null,'Important Note'),E('p',null,EX.copy.contentNotice)));
- app.appendChild(ct);if(st.modal)renderModals();}
+ app.appendChild(ct);
+ // Phones scroll the tabs sideways: bring the selected one into view and fade
+ // whichever edge has more tabs hidden past it.
+ const onTab=side.querySelector('.tl-item.on'),syncFade=()=>{side.classList.toggle('more',side.scrollLeft+side.clientWidth<side.scrollWidth-4);side.classList.toggle('less',side.scrollLeft>4);};
+ if(onTab&&side.scrollWidth>side.clientWidth)side.scrollLeft=Math.max(0,onTab.offsetLeft-side.clientWidth/2+onTab.offsetWidth/2);
+ syncFade();side.addEventListener('scroll',syncFade,{passive:true});
+ if(st.modal)renderModals();}
 
 // Readiness by domain, from the latest answer to each question (PROG.ql), with
 // the way into Retry mistakes: all of them, or one domain's. Home shows one
