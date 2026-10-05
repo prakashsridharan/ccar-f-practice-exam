@@ -41,7 +41,7 @@ const WEIGHTS=weightsFor(EX);
 function byDomainThenId(a,b){return a.domain-b.domain||a.id.localeCompare(b.id,undefined,{numeric:true});}
 const BUILTIN=BQ.map(q=>({id:q.id,scenario:q.s,domain:q.d,type:q.ty,select:q.se,question:q.q,options:q.o,answer:q.a,rationale:q.r,whynot:q.w,difficulty:q.df||'',objective:q.ob||'',ref:REFS[q.id]||''})).sort(byDomainThenId);
 let CQ=[],CS={};let view='home';const homeOpen=new Set();
-let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durationSec,pflag:{},pdone:false,ptest:0,rf:'all',stest:0};
+let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durationSec,pflag:{},pdone:false,ptest:0,rf:'all',stest:0,rq:[],ri:0,rd:0};
 
 // ---- Practice tests and progress ------------------------------------------
 // FIXED holds the numbered tests from exams/<exam>.js (TESTS, made by
@@ -57,8 +57,8 @@ let homeTest=(()=>{try{const v=localStorage.getItem(TKEY);if(v!==null&&(v==='0'|
 function selectedTest(){if(homeTest!==null&&(homeTest===0||FIXED[homeTest-1]))return homeTest;const t=FIXED.find(t=>!attemptsFor(t.n).length);return t?t.n:FIXED.length?1:0;}
 function selectTest(n){homeTest=n;try{localStorage.setItem(TKEY,String(n));}catch(e){}render();}
 const PKEY=EX.storagePrefix+'-progress';
-function freshProgress(){return{v:1,attempts:[],cur:null};}
-function loadProgress(){try{const p=JSON.parse(localStorage.getItem(PKEY)||'null');if(p&&p.v===1&&Array.isArray(p.attempts))return p;}catch(e){}return freshProgress();}
+function freshProgress(){return{v:1,attempts:[],cur:null,ql:{}};}
+function loadProgress(){try{const p=JSON.parse(localStorage.getItem(PKEY)||'null');if(p&&p.v===1&&Array.isArray(p.attempts)){if(!p.ql||typeof p.ql!=='object')p.ql=qlFromProgress(p);return p;}}catch(e){}return freshProgress();}
 function saveProgress(){try{localStorage.setItem(PKEY,JSON.stringify(PROG));}catch(e){}}
 let PROG=loadProgress();
 // A test's time limit: its own secs, else the blueprint's scaled to its length
@@ -91,6 +91,31 @@ function saveStudyScroll(){if(view!=='study'||!PROG.study||!PROG.study[st.stest]
 function loadStudy(n){const s=(PROG.study||{})[n]||{};st.sel={...(s.sel||{})};st.sub={};st.rev={};(s.sub||[]).forEach(id=>st.sub[id]=true);(s.rev||[]).forEach(id=>st.rev[id]=true);st.as=s.as||0;return s.y||0;}
 function studyStats(n){const s=(PROG.study||{})[n];if(!s||!s.sub||!s.sub.length)return null;const by=new Map(allQ().map(q=>[q.id,q]));let c=0;
  s.sub.forEach(id=>{const q=by.get(id);if(q&&((s.sel||{})[id]||[]).slice().sort().join()===q.answer.slice().sort().join())c++;});return{done:s.sub.length,c};}
+// Latest graded answer per question: PROG.ql[id] = [1 right | 0 wrong, ISO date].
+// Written by every grading event (exam submit, Study Submit, Retry Submit),
+// never by a peek. Retry mistakes and Readiness both read it.
+function attemptIds(a){return Array.isArray(a.ids)?a.ids:a.t>0&&FIXED[a.t-1]?FIXED[a.t-1].ids:null;}
+// Rebuilds ql from saved attempts and study state, for progress saved before ql
+// existed and for imported backups. Study answers carry no date, so they go
+// first and any exam attempt overrides them. Old Random Mix attempts did not
+// store their ids, so only their wrong answers are known.
+function qlFromProgress(p){const ql={},by=new Map([...BUILTIN,...CQ].map(q=>[q.id,q]));
+ Object.values(p.study||{}).forEach(s=>{(s&&s.sub||[]).forEach(id=>{const q=by.get(id);if(q)ql[id]=[((s.sel||{})[id]||[]).slice().sort().join()===q.answer.slice().sort().join()?1:0,''];});});
+ (p.attempts||[]).slice().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).forEach(a=>{const w=new Set(a.wrong||[]);(attemptIds(a)||[]).forEach(id=>{ql[id]=[w.has(id)?0:1,a.d];});w.forEach(id=>{ql[id]=[0,a.d];});});
+ return ql;}
+function recordResult(q,ok,d){PROG.ql=PROG.ql||{};PROG.ql[q.id]=[ok?1:0,d||new Date().toISOString()];}
+// Questions whose latest answer was wrong, optionally in one domain. Ids no
+// longer in the bank (removed or held-back questions) are skipped.
+function missedIds(d){const by=new Map(allQ().map(q=>[q.id,q]));return Object.keys(PROG.ql||{}).filter(id=>PROG.ql[id][0]===0&&by.has(id)&&(!d||by.get(id).domain===d));}
+// Per-domain readiness from ql. A domain needs READY_MIN answers before it gets
+// a verdict; the overall figure weights the domains that have one by blueprint.
+const READY_MIN=5;
+function readiness(){const DT=EX.blueprint.domainThreshold,ql=PROG.ql||{},rows=[];let wSum=0,wAcc=0;
+ Object.keys(EX.domains).forEach(k=>{const d=Number(k),pool=allQ().filter(q=>q.domain===d),seen=pool.filter(q=>ql[q.id]),c=seen.filter(q=>ql[q.id][0]===1).length,n=seen.length,acc=n?Math.round(c/n*100):0;
+  const status=!n||n<Math.min(READY_MIN,pool.length)?'none':acc>=DT?'ok':acc>=DT-15?'close':'work';
+  if(status!=='none'){wSum+=EX.domains[k].weightPct;wAcc+=EX.domains[k].weightPct*c/n;}
+  rows.push({d,pool:pool.length,n,c,acc,miss:n-c,status});});
+ return{rows,overall:wSum?Math.round(wAcc/wSum*100):null,rated:rows.filter(r=>r.status!=='none').length};}
 // Export/import is how progress moves between browsers without an account.
 // Import merges: attempts already present (same test and date) are skipped.
 function exportProgress(){const d={app:'certprep',exam:EX.id,exported:new Date().toISOString(),progress:PROG};
@@ -104,6 +129,9 @@ function mergeProgress(d){
  if(!PROG.cur&&d.progress.cur&&Array.isArray(d.progress.cur.ids))PROG.cur=d.progress.cur;
  // Study state: take the imported one only for tests with nothing saved here.
  if(d.progress.study&&typeof d.progress.study==='object'){PROG.study=PROG.study||{};Object.keys(d.progress.study).forEach(k=>{const s=d.progress.study[k];if(!PROG.study[k]&&s&&typeof s==='object')PROG.study[k]=s;});}
+ // Latest answer per question: keep whichever side answered more recently.
+ const inQl=d.progress.ql&&typeof d.progress.ql==='object'?d.progress.ql:qlFromProgress(d.progress);PROG.ql=PROG.ql||{};
+ Object.keys(inQl).forEach(id=>{const v=inQl[id];if(Array.isArray(v)&&(v[0]===0||v[0]===1)&&(!PROG.ql[id]||String(v[1]||'')>String(PROG.ql[id][1]||'')))PROG.ql[id]=[v[0],String(v[1]||'')];});
  saveProgress();return added;}
 function importProgress(){const inp=document.createElement('input');inp.type='file';inp.accept='.json,application/json';
  inp.onchange=()=>{const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{const n=mergeProgress(JSON.parse(ev.target.result));alert(n?'Imported '+n+(n===1?' attempt.':' attempts.'):'Nothing new to import.');render();}catch(e){alert(e instanceof SyntaxError?'That file is not valid JSON.':e.message);}};r.readAsText(f);};inp.click();}
@@ -138,8 +166,9 @@ function startTimer(){clearInterval(timerInt);timerInt=setInterval(()=>{if(st.ps
 // and Forward to #/practice goes through restoreCur(), which restarts the timer.
 function pausePractice(){saveCur();clearInterval(timerInt);st.pq=[];}
 function submitPractice(){if(st.pdone)return;clearInterval(timerInt);st.pdone=true;st.pq.forEach(q=>{st.sub[q.id]=true;});
+ const now=new Date().toISOString();st.pq.forEach(q=>recordResult(q,isCorrect(q),now));
  const sc=calcScore(st.pq),ds={};Object.entries(sc.ds).forEach(([d,x])=>{if(x.t)ds[d]=[x.c,x.t];});
- PROG.attempts.push({t:st.ptest,d:new Date().toISOString(),c:sc.c,n:sc.tot,ds,wrong:st.pq.filter(q=>!isCorrect(q)).map(q=>q.id),flag:Object.keys(st.pflag).filter(k=>st.pflag[k]),secs:testSecs(st.ptest)-st.psec});
+ PROG.attempts.push({t:st.ptest,d:now,c:sc.c,n:sc.tot,ds,...(st.ptest?{}:{ids:st.pq.map(q=>q.id)}),wrong:st.pq.filter(q=>!isCorrect(q)).map(q=>q.id),flag:Object.keys(st.pflag).filter(k=>st.pflag[k]),secs:testSecs(st.ptest)-st.psec});
  if(PROG.attempts.length>300)PROG.attempts=PROG.attempts.slice(-300);
  PROG.cur=null;saveProgress();go('report');}
 function calcScore(questions){let c=0,at=0;const ds={};Object.keys(DM).forEach(d=>ds[d]={c:0,t:0,a:0});questions.forEach(q=>{if(ds[q.domain])ds[q.domain].t++;if(st.sub[q.id]){at++;if(ds[q.domain])ds[q.domain].a++;const s=(st.sel[q.id]||[]).slice().sort().join(',');if(s===q.answer.slice().sort().join(',')){c++;if(ds[q.domain])ds[q.domain].c++;}}});return{c,at,tot:questions.length,ds};}
@@ -197,7 +226,7 @@ function renderQCard(q,opts){
   if(!showAns&&!opts.hideActions){
     var actions=E('div',{className:'qa'});
     var submitBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:function(){
-      st.sub[q.id]=true;saveStudy();
+      st.sub[q.id]=true;recordResult(q,isCorrect(q));saveStudy();saveProgress();
       // Highlight correct/wrong options
       var lis=ol.querySelectorAll('li');
       lis.forEach(function(li){
@@ -332,6 +361,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
    ()=>live?resumePractice():startPractice(cur),'exam'));}
  main.appendChild(modes);
  layout.appendChild(side);layout.appendChild(main);ct.appendChild(layout);
+ if(Object.keys(PROG.ql||{}).length)ct.appendChild(renderReadiness());
 
  // Progress is per browser. One short line; the backup/restore/reset tools sit
  // in a panel it opens (direct DOM toggle, remembered in homeOpen like the
@@ -418,6 +448,68 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  if(EX.copy.contentNotice)ct.appendChild(E('div',{className:'notice notice-end'},E('strong',null,'Important Note'),E('p',null,EX.copy.contentNotice)));
  app.appendChild(ct);if(st.modal)renderModals();}
 
+// Readiness by domain, from the latest answer to each question (PROG.ql), with
+// the way into Retry mistakes: all of them, or one domain's. Home shows one
+// summary line; the domain table opens under it on request (direct DOM toggle,
+// remembered in homeOpen like the other collapsibles).
+function renderReadiness(){const R=readiness(),DT=EX.blueprint.domainThreshold,P=EX.blueprint.tiers.pass,miss=missedIds();
+ const wrap=E('div',null),line=E('div',{className:'prog-links rd-line'});
+ line.appendChild(E('span',null,'Readiness '));
+ if(R.overall!==null)line.appendChild(E('strong',{className:R.overall>=P?'ok':''},R.overall+'%'));
+ line.appendChild(E('span',null,R.overall!==null?'target '+P+'%':'not rated yet'));
+ if(miss.length){line.appendChild(E('span',{className:'pl-sep','aria-hidden':'true'},'·'));line.appendChild(E('button',{type:'button',onClick:()=>startRetry(0)},'Retry '+miss.length+(miss.length===1?' mistake':' mistakes')));}
+ line.appendChild(E('span',{className:'pl-sep','aria-hidden':'true'},'·'));
+ const tog=E('button',{type:'button','aria-expanded':'false'});line.appendChild(tog);
+ const box=E('div',{className:'panel ready'});
+ const setOpen=open=>{if(open)homeOpen.add('ready');else homeOpen.delete('ready');box.style.display=open?'block':'none';tog.setAttribute('aria-expanded',String(open));tog.textContent=open?'Hide by domain':'Show by domain';};
+ setOpen(homeOpen.has('ready'));tog.addEventListener('click',()=>setOpen(!homeOpen.has('ready')));
+ wrap.appendChild(line);wrap.appendChild(box);
+ box.appendChild(E('div',{className:'rd-head'},E('h2',null,'Readiness by Domain')));
+ box.appendChild(E('p',{className:'rd-intro'},'Based on your latest answer to each question, in Study mode, Exam mode and retries. Aim for '+DT+'%+ in every domain. A domain gets a verdict once you have answered '+READY_MIN+' of its questions.'));
+ if(R.overall!==null){const n=R.rows.length;box.appendChild(E('div',{className:'rd-overall'},E('span',null,'Weighted by the exam blueprint'),E('strong',{className:R.overall>=P?'ok':''},R.overall+'%'),
+  E('span',null,'target '+P+'%'+(R.rated<n?' · '+R.rated+' of '+n+' domains rated so far':''))));}
+ const label={ok:'On track',close:'Close',work:'Needs work',none:'Not enough yet'};
+ R.rows.forEach(r=>{const c=domainColor(r.d),row=E('div',{className:'rd-row'});
+  row.appendChild(E('span',{className:'rd-d',style:{color:c}},'D'+r.d));
+  row.appendChild(E('span',{className:'rd-n'},DM[r.d].n));
+  row.appendChild(E('div',{className:'rd-bar'},E('div',{style:{width:(r.n?r.acc:0)+'%',background:c}})));
+  row.appendChild(E('span',{className:'rd-p',style:{color:c}},r.n?r.acc+'%':'-'));
+  row.appendChild(E('span',{className:'rd-s '+r.status},label[r.status]));
+  const meta=E('div',{className:'rd-m'},E('span',null,r.n+' of '+r.pool+' answered'+(r.n?' · '+r.c+' right':'')));
+  if(r.miss)meta.appendChild(E('button',{type:'button',onClick:()=>startRetry(r.d)},'Retry '+r.miss+' missed'));
+  row.appendChild(meta);box.appendChild(row);});
+ return wrap;}
+
+// Retry mistakes: an untimed session through questions whose latest answer was
+// wrong (all, one domain via st.rd, or a given list such as one exam's misses).
+// The list is fixed when it starts; each Submit is recorded at once, so a
+// question leaves the missed pool as soon as it is answered correctly, and
+// leaving early loses nothing. st.ri === st.rq.length is the summary screen.
+function retryQs(d,ids){const by=new Map(allQ().map(q=>[q.id,q]));return shuffled(ids||missedIds(d)).map(id=>by.get(id)).filter(Boolean);}
+function initRetry(d,qs){if(st.pdone)st.pq=[];// a finished run's review is replaced, as with Study
+ st.rq=qs;st.ri=0;st.rd=d||0;st.sel={};st.sub={};st.rev={};}
+function startRetry(d,ids){const qs=retryQs(d,ids);if(!qs.length){alert('Nothing to retry: every question you have answered is now correct.');render();return;}initRetry(d,qs);go('retry');window.scrollTo(0,0);}
+function retryTitle(){return st.rd&&DM[st.rd]?'Retry Mistakes: D'+st.rd:'Retry Mistakes';}
+function renderRetry(){const app=document.getElementById('app');app.innerHTML='';const N=st.rq.length,done=st.rq.filter(q=>st.sub[q.id]),right=done.filter(q=>isCorrect(q)).length;
+ const fin=st.ri>=N;
+ app.appendChild(E('div',{className:'hdr'},E('h1',null,retryTitle()),E('div',{className:'sub'},fin?'Session complete':'Question '+(st.ri+1)+' of '+N+' · untimed'),
+  E('div',{className:'hdr-actions'},E('button',{className:'btn-h',onClick:()=>go('home')},E('span',{innerHTML:IC.home}),'Home'))));
+ app.appendChild(E('div',{className:'prog'},E('div',{className:'prog-bar'},E('div',{className:'prog-fill',style:'width:'+Math.round(done.length/Math.max(N,1)*100)+'%'})),E('span',{className:'prog-lbl'},right+' right · '+done.length+'/'+N)));
+ const ct=E('div',{className:'container'});
+ if(fin){const left=missedIds(st.rd).length,sum=E('div',{className:'panel retry-done'});
+  sum.appendChild(E('div',{className:'big-score '+(done.length&&right===done.length?'pass':'border')},right+' / '+done.length));
+  sum.appendChild(E('p',null,done.length?'You got '+right+' of the '+done.length+' you answered right'+(done.length<N?' ('+(N-done.length)+' skipped)':'')+'.':'You did not submit any answers this time.'));
+  sum.appendChild(E('p',{className:'rd-intro'},left?left+(left===1?' question is':' questions are')+' still marked as missed'+(st.rd?' in D'+st.rd:'')+'.':'Nothing left to retry'+(st.rd?' in D'+st.rd:'')+'. Take a fresh exam-mode test to confirm it sticks.'));
+  const acts=E('div',{className:'dp-acts'});
+  if(left)acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>startRetry(st.rd)},E('span',{innerHTML:IC.reset}),'Retry the '+left+' still missed'));
+  acts.appendChild(E('button',{className:'btn btn-g',onClick:()=>go('home')},E('span',{innerHTML:IC.home}),'Home'));
+  sum.appendChild(acts);ct.appendChild(sum);app.appendChild(ct);return;}
+ ct.appendChild(renderQCard(st.rq[st.ri],{}));
+ const last=st.ri===N-1;
+ ct.appendChild(E('div',{className:'retry-nav'},E('button',{className:'btn btn-g',style:st.ri===0?{opacity:'.4',pointerEvents:'none'}:{},onClick:()=>{if(st.ri>0){st.ri--;render();window.scrollTo(0,0);}}},'< Previous'),
+  E('button',{className:'btn btn-p',onClick:()=>{st.ri++;render();window.scrollTo(0,0);}},last?'Finish':'Next >')));
+ app.appendChild(ct);}
+
 // Every answer, flag and navigation click comes through here (they all call
 // render()), so this is where an unfinished run is saved for resume.
 function renderPractice(){const app=document.getElementById('app');app.innerHTML='';const q=st.pq[st.pi];if(!q)return;saveCur();const answered=st.pq.filter(q=>(st.sel[q.id]||[]).length>0).length;
@@ -440,7 +532,7 @@ function renderReport(){const app=document.getElementById('app');app.innerHTML='
  const weakD=[];Object.entries(sc.ds).forEach(([d,dd])=>{if(dd.a>0&&(dd.c/dd.a)<DT/100)weakD.push('D'+d+': '+DM[d].n+' ('+Math.round(dd.c/dd.a*100)+'%)');});
  if(weakD.length){const wd=E('div',{style:{textAlign:'left',padding:'.6rem .8rem',margin:'.5rem 0',borderRadius:'8px',background:'#FDF0EB',border:'1px solid #e8a88a',fontSize:'.78rem',color:'#C0522A',lineHeight:'1.5'}});wd.appendChild(E('strong',null,'Focus areas (below '+DT+'%): '));wd.appendChild(document.createTextNode(weakD.join(', ')));rpt.appendChild(wd);}
  rpt.appendChild(renderDomainScores(sc));ct.appendChild(rpt);
- ct.appendChild(E('div',{style:{display:'flex',justifyContent:'center',gap:'.75rem',margin:'1.5rem 0',flexWrap:'wrap'}},E('button',{className:'btn btn-p',onClick:()=>{go('review');}},E('span',{innerHTML:IC.book}),'Review Answers'),E('button',{className:'btn btn-p',onClick:()=>startPractice(st.ptest)},E('span',{innerHTML:IC.play}),st.ptest?'Retake '+testLabel(st.ptest):'New Random Mix'),E('button',{className:'btn btn-g',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home')));app.appendChild(ct);}
+ ct.appendChild(E('div',{style:{display:'flex',justifyContent:'center',gap:'.75rem',margin:'1.5rem 0',flexWrap:'wrap'}},E('button',{className:'btn btn-p',onClick:()=>{go('review');}},E('span',{innerHTML:IC.book}),'Review Answers'),E('button',{className:'btn btn-p',onClick:()=>startPractice(st.ptest)},E('span',{innerHTML:IC.play}),st.ptest?'Retake '+testLabel(st.ptest):'New Random Mix'),(w=>w.length?E('button',{className:'btn btn-g',onClick:()=>startRetry(0,w)},E('span',{innerHTML:IC.reset}),'Retry the '+w.length+' you missed'):null)(st.pq.filter(q=>!isCorrect(q)).map(q=>q.id)),E('button',{className:'btn btn-g',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home')));app.appendChild(ct);}
 
 function renderReview(){const app=document.getElementById('app');app.innerHTML='';app.appendChild(E('div',{className:'hdr',style:{padding:'1rem 1.5rem'}},E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},E('button',{className:'btn-h',onClick:()=>{go('report');}},E('span',{innerHTML:IC.home}),'Back'),E('h1',{style:{fontSize:'1.1rem'}},'Review Answers'),E('span',null,''))));
  const F={all:['All',()=>true],wrong:['Incorrect',q=>!isCorrect(q)],flag:['Flagged',q=>!!st.pflag[q.id]],skip:['Unanswered',q=>!(st.sel[q.id]||[]).length]};
@@ -518,16 +610,17 @@ function uModal(){let parsed=null;let fileStatus=null;let importDone=false;
  function doImport(){if(!parsed||!parsed.questions.length){alert('Upload a CSV first.');return;}const scenarios=allS();parsed.questions.forEach(pq=>{if(!scenarios[pq.sn]&&!CS[pq.sn]){CS[pq.sn]={t:pq.st||'Scenario '+pq.sn,d:pq.sd||''};scenarios[pq.sn]=CS[pq.sn];}CQ.push({id:nextId(pq.sn),scenario:pq.sn,domain:pq.dm,type:pq.ty,...(pq.ty==='multi'?{select:pq.se}:{}),question:pq.q,options:pq.opts,answer:pq.ans,rationale:pq.rat,whynot:pq.wn,custom:true});});saveData();importDone=true;parsed=null;fileStatus=null;rf();setTimeout(()=>{st.modal=null;render();},1200);}
  const ov=E('div',{className:'modal-ov',onClick:e=>{if(e.target===e.currentTarget){st.modal=null;render();}}});const m=E('div',{className:'modal'});m.appendChild(E('div',{className:'modal-hd'},E('h2',null,'Upload CSV'),E('button',{className:'modal-x',innerHTML:IC.x,onClick:()=>{st.modal=null;render();}})));m.appendChild(E('div',{className:'modal-bd',id:'mb'}));m.appendChild(E('div',{className:'modal-ft'},E('button',{className:'btn btn-g',onClick:()=>{st.modal=null;render();}},'Cancel'),E('button',{className:'btn btn-p',onClick:doImport},E('span',{innerHTML:IC.upload}),'Import')));ov.appendChild(m);document.getElementById('app').appendChild(ov);rf();}
 
-function render(){if(view==='home')renderHome();else if(view==='practice')renderPractice();else if(view==='study')renderStudy();else if(view==='report')renderReport();else if(view==='review')renderReview();}
+function render(){if(view==='home')renderHome();else if(view==='practice')renderPractice();else if(view==='study')renderStudy();else if(view==='report')renderReport();else if(view==='review')renderReview();else if(view==='retry')renderRetry();}
 // Hash routes give every view its own URL, so Back/Forward work and a view
 // can be bookmarked. go() is the only way views change from inside the app;
 // routeFromHash() handles Back/Forward, typed URLs and #admin. A route that
 // needs an exam in memory (practice/report/review) falls back to home after a
 // reload. Leaving an unfinished practice exam asks first.
-const ROUTES=['home','study','practice','report','review'];
+const ROUTES=['home','study','practice','report','review','retry'];
 // Study carries its test number (#/study/2), so Back, reload and bookmarks
 // land on the same test. Plain #/study is the whole bank (admin only).
-function hashFor(v){return v==='home'?'#/':v==='study'&&st.stest?'#/study/'+st.stest:'#/'+v;}
+// Retry carries its domain the same way (#/retry/3); plain #/retry is every mistake.
+function hashFor(v){return v==='home'?'#/':v==='study'&&st.stest?'#/study/'+st.stest:v==='retry'&&st.rd?'#/retry/'+st.rd:'#/'+v;}
 function go(v){if(view==='study'&&v!=='study')saveStudyScroll();view=v;if(location.hash!==hashFor(v))history.pushState(null,'',hashFor(v));render();}
 function routeFromHash(force){
  if(location.hash==='#admin'){if(view!=='home'||st.modal!=='admin'||force){view='home';st.modal='admin';render();}return;}
@@ -535,6 +628,12 @@ function routeFromHash(force){
  let stest=st.stest;
  if(v==='study'){const n=m&&m[2]?parseInt(m[2],10):0;stest=FIXED[n-1]?n:0;}
  if(v==='practice'&&st.pdone)v='report';
+ // Retry rebuilds its list from the missed pool when it is not already in
+ // memory for that domain (reload, typed URL). State is set only after the
+ // practice-exit guard below, which still needs the exam's st.sel to save it.
+ let retryNew=null;
+ if(v==='retry'){const n=m&&m[2]?parseInt(m[2],10):0,d=DM[n]?n:0;
+  if(!(st.rq.length&&st.rd===d)){const qs=retryQs(d);if(qs.length){retryNew=qs;st.rd=d;}else v='home';}}
  // A reload on #/practice picks the saved unfinished run back up.
  if(v==='practice'&&!st.pq.length&&PROG.cur)restoreCur();
  if((v==='practice'||v==='report'||v==='review')&&!st.pq.length)v='home';
@@ -542,9 +641,10 @@ function routeFromHash(force){
  if(view==='study'&&(v!=='study'||studySwitch))saveStudyScroll();
  if(v==='study')st.stest=stest;
  if(location.hash&&hashFor(v)!==location.hash)history.replaceState(null,'',hashFor(v));
- if(v===view&&!studySwitch&&!force)return;
+ if(v===view&&!studySwitch&&!retryNew&&!force)return;
  if(view==='practice'&&!st.pdone&&v!=='practice'){if(!confirm(EXIT_MSG)){history.pushState(null,'',hashFor('practice'));return;}pausePractice();}
  if(st.modal==='admin')st.modal=null;
+ if(retryNew)initRetry(st.rd,retryNew);
  // Entering study (Back/Forward, reload, typed URL) restores that test's saved state.
  let studyY=0;if(v==='study'&&(studySwitch||view!=='study'))studyY=loadStudy(st.stest);
  view=v;render();if(studyY)window.scrollTo(0,studyY);}

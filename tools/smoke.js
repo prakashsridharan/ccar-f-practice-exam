@@ -125,6 +125,59 @@ ok('study state is saved per test and restored (leave, other test, reload, Back)
  const ss=run('studyStats(1)');if(!ss||ss.done!==1||ss.c!==1)throw new Error('studyStats '+JSON.stringify(ss));
  run("go('home');homeTest=1;renderHome()");if(!find(byId.app,n=>/Answered 1 of \d+ · 1 correct/.test(n.textContent||'')))throw new Error('home does not show study progress');
  run('PROG=freshProgress();saveProgress();st.sel={};st.sub={};st.rev={};st.as=0;st.stest=0;homeTest=null');});
+ok('latest answer per question: exam submit records it, old progress is back-filled',()=>{const T=run('FIXED');
+ run('PROG=freshProgress();st.pq=[];st.pdone=false;startPractice(0)');const q0=run('st.pq[0].id');
+ run('st.sel[st.pq[0].id]=st.pq[0].answer.slice();submitPractice()');
+ const a=run('PROG.attempts[0]');if(!a.ids||a.ids.length!==run('st.pq.length'))throw new Error('Random Mix attempt has no ids');
+ const ql=run('PROG.ql');if(Object.keys(ql).length!==a.ids.length)throw new Error('ql has '+Object.keys(ql).length);
+ if(ql[q0][0]!==1||ql[a.ids.find(i=>i!==q0)][0]!==0)throw new Error('ql right/wrong mixed up');
+ if(!T.length)return;
+ // Progress saved before ql existed: a Test 1 attempt and a study answer.
+ const t1=T[0].ids,sq=run("allQ().find(q=>q.id==='"+t1[1]+"')");
+ store[run('PKEY')]=JSON.stringify({v:1,cur:null,attempts:[{t:1,d:'2026-10-01T00:00:00.000Z',c:59,n:60,ds:{},wrong:[t1[0]]}],study:{1:{sel:{[t1[1]]:sq.answer.filter((_,i)=>i>0).concat(sq.options.find(o=>!sq.answer.includes(o.l)).l)},sub:[t1[1]],rev:[]}}});
+ run('PROG=loadProgress()');const b=run('PROG.ql');
+ if(b[t1[0]][0]!==0)throw new Error('missed exam answer not back-filled');
+ if(b[t1[1]][0]!==1)throw new Error('exam attempt should override the undated study answer');
+ if(b[t1[2]][0]!==1||Object.keys(b).length!==t1.length)throw new Error('test ids not back-filled');
+ run('PROG=freshProgress();saveProgress()');});
+ok('retry mistakes: all and per domain, answers leave the pool, summary, URL and reload',()=>{
+ const ids=run('(()=>{const by={};allQ().forEach(q=>(by[q.domain]=by[q.domain]||[]).push(q.id));const d=Object.keys(by);return[by[d[0]][0],by[d[0]][1],by[d[1]][0]];})()');
+ const d1=run("allQ().find(q=>q.id==='"+ids[0]+"').domain");
+ run('PROG=freshProgress();st.pq=[];st.pdone=false;view="home"');
+ ids.forEach(id=>run("recordResult(allQ().find(q=>q.id==='"+id+"'),false)"));
+ if(run('missedIds().length')!==3||run('missedIds('+d1+').length')!==2)throw new Error('missedIds');
+ run('startRetry(0)');if(run('view')!=='retry'||ctx.location.hash!=='#/retry'||run('st.rq.length')!==3)throw new Error('startRetry(0) -> '+run('view')+' '+ctx.location.hash);
+ run('renderRetry()');if(!find(byId.app,n=>/Question 1 of 3/.test(n.textContent||'')))throw new Error('no position line');
+ // Answer the first one correctly (what Submit does), then finish.
+ run('const __q=st.rq[0];st.sel[__q.id]=__q.answer.slice();st.sub[__q.id]=true;recordResult(__q,true);saveProgress();st.ri=st.rq.length;renderRetry()');
+ if(run('missedIds().length')!==2)throw new Error('correct answer did not leave the pool');
+ if(!find(byId.app,n=>/2 questions are still marked as missed/.test(n.textContent||'')))throw new Error('no summary');
+ run('startRetry('+d1+')');if(ctx.location.hash!=='#/retry/'+d1)throw new Error('domain hash '+ctx.location.hash);
+ if(run('st.rq.some(q=>q.domain!=='+d1+')'))throw new Error('domain retry has other domains');
+ // Reload on #/retry/<d>: rebuilt from the saved pool.
+ run("go('home');st.rq=[];st.rd=0;PROG=loadProgress()");ctx.location.hash='#/retry/'+d1;run('routeFromHash()');
+ if(run('view')!=='retry'||run('st.rd')!==d1||!run('st.rq.length'))throw new Error('reload did not rebuild');
+ // Nothing missed: the route falls back to home.
+ run("go('home');st.rq=[];PROG=freshProgress()");ctx.location.hash='#/retry';run('routeFromHash()');if(run('view')!=='home')throw new Error('empty retry -> '+run('view'));
+ // Report offers a retry of that attempt's misses.
+ run('startPractice(0);submitPractice();renderReport()');if(!find(byId.app,n=>/^Retry the \d+ you missed$/.test(n.textContent||'')))throw new Error('no retry button on report');
+ run('PROG=freshProgress();saveProgress();st.rq=[]');});
+ok('readiness: hidden without data, verdict needs enough answers, weighted overall',()=>{
+ run('PROG=freshProgress();renderHome()');if(find(byId.app,n=>n.textContent==='Readiness by Domain'))throw new Error('shown with no data');
+ const d=run('Object.keys(EX.domains).map(Number)'),pool=run('allQ().filter(q=>q.domain==='+d[0]+').map(q=>q.id)');
+ pool.slice(0,4).forEach(id=>run("recordResult(allQ().find(q=>q.id==='"+id+"'),true)"));
+ let R=run('readiness()');if(R.rows[0].status!=='none'||R.overall!==null)throw new Error('verdict on 4 answers');
+ run("recordResult(allQ().find(q=>q.id==='"+pool[4]+"'),true)");R=run('readiness()');
+ if(R.rows[0].status!=='ok'||R.rows[0].acc!==100||R.overall!==100||R.rated!==1)throw new Error('after 5 right: '+JSON.stringify(R.rows[0])+' overall '+R.overall);
+ const p2=run('allQ().filter(q=>q.domain==='+d[1]+').map(q=>q.id)');p2.slice(0,5).forEach(id=>run("recordResult(allQ().find(q=>q.id==='"+id+"'),false)"));
+ R=run('readiness()');const w=run('EX.domains')[d[0]].weightPct,w2=run('EX.domains')[d[1]].weightPct;
+ if(R.rows[1].status!=='work'||R.overall!==Math.round(100*w/(w+w2)))throw new Error('weighting '+R.overall);
+ run('renderHome()');if(!find(byId.app,n=>n.textContent==='Readiness by Domain'))throw new Error('panel missing');
+ if(!find(byId.app,n=>n.textContent==='Retry 5 mistakes'))throw new Error('no retry-all button');
+ // Import keeps the more recent answer for each question.
+ const id=pool[0],f={app:'certprep',exam:run('EX.id'),progress:{attempts:[],ql:{[id]:[0,'2999-01-01T00:00:00.000Z'],[p2[0]]:[1,'2000-01-01T00:00:00.000Z']}}};
+ run('mergeProgress('+JSON.stringify(f)+')');if(run("PROG.ql['"+id+"'][0]")!==0||run("PROG.ql['"+p2[0]+"'][0]")!==0)throw new Error('import merge did not keep the newer answer');
+ run('PROG=freshProgress();saveProgress()');});
 ok('router: go(), Back-style routing, guarded routes, #admin',()=>{
  const H=()=>ctx.location.hash,V=()=>run('view');
  run("st.pq=[];st.pdone=false;go('study')");if(H()!=='#/study'||V()!=='study')throw new Error('go(study) -> '+H()+' '+V());
