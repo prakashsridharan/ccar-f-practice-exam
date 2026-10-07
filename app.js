@@ -173,6 +173,9 @@ function submitPractice(){if(st.pdone)return;clearInterval(timerInt);st.pdone=tr
  PROG.cur=null;saveProgress();go('report');}
 function calcScore(questions){let c=0,at=0;const ds={};Object.keys(DM).forEach(d=>ds[d]={c:0,t:0,a:0});questions.forEach(q=>{if(ds[q.domain])ds[q.domain].t++;if(st.sub[q.id]){at++;if(ds[q.domain])ds[q.domain].a++;const s=(st.sel[q.id]||[]).slice().sort().join(',');if(s===q.answer.slice().sort().join(',')){c++;if(ds[q.domain])ds[q.domain].c++;}}});return{c,at,tot:questions.length,ds};}
 function E(tag,a,...ch){const e=document.createElement(tag);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='className')e.className=v;else if(k==='innerHTML')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else e.setAttribute(k,v);});ch.flat().forEach(c=>{if(typeof c==='string')e.appendChild(document.createTextNode(c));else if(c)e.appendChild(c);});return e;}
+// Rich text for exams that opt in (EXAM.richText): **bold** and `code` only. Returns text strings and
+// <b>/<code> elements, never innerHTML, so question text cannot inject markup.
+function rich(s){s=String(s==null?'':s);if(!EX.richText)return s;var f=[],re=/\*\*([^*]+)\*\*|`([^`]+)`/g,i=0,m;while((m=re.exec(s))){if(m.index>i)f.push(s.slice(i,m.index));f.push(E(m[1]!==undefined?'b':'code',null,m[1]!==undefined?m[1]:m[2]));i=re.lastIndex;}if(i<s.length)f.push(s.slice(i));return f;}
 
 // CSV helpers
 function parseCSV(text){const rows=[];let row=[];let cell='';let inQ=false;for(let i=0;i<text.length;i++){const c=text[i];if(inQ){if(c==='"'){if(i+1<text.length&&text[i+1]==='"'){cell+='"';i++;}else inQ=false;}else cell+=c;}else{if(c==='"')inQ=true;else if(c===','){row.push(cell.trim());cell='';}else if(c==='\n'||c==='\r'){if(c==='\r'&&i+1<text.length&&text[i+1]==='\n')i++;row.push(cell.trim());if(row.some(c=>c))rows.push(row);row=[];cell='';}else cell+=c;}}row.push(cell.trim());if(row.some(c=>c))rows.push(row);return rows;}
@@ -202,7 +205,7 @@ function renderQCard(q,opts){
   var revealed=showAns||(!!q.id&&st.rev[q.id]===true);
   var locked=graded||revealed;
 
-  var body=E('div',{className:'qb'},E('p',null,q.question));
+  var body=E('div',{className:'qb'},E('p',null,rich(q.question)));
   var ol=E('ul',{className:'opts'});
   q.options.forEach(function(opt){var sel=st.sel[q.id]||[];var isSel=sel.includes(opt.l);var isCor=q.answer.includes(opt.l);
     var cls='';
@@ -210,15 +213,15 @@ function renderQCard(q,opts){
     else if(revealed&&isCor)cls=' ok'+(isSel?' sel':'');
     else if(isSel)cls=' sel';
     if(!allowSel||locked)cls+=' disabled';
-    ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||st.sub[q.id]||(!!q.id&&st.rev[q.id]===true))return;if(q.type==='multi'){var s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' '+opt.t));
+    ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||st.sub[q.id]||(!!q.id&&st.rev[q.id]===true))return;if(q.type==='multi'){var s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' ',rich(opt.t)));
   });body.appendChild(ol);card.appendChild(body);
 
   var ab=E('div',{className:'ans-b',style:{display:revealed?'block':'none'}});
   ab.appendChild(E('div',{className:'al'},'Correct Answer'));
   ab.appendChild(E('div',{className:'av'},q.answer.join(', ')));
-  ab.appendChild(E('div',{className:'rat'},q.rationale));
+  ab.appendChild(E('div',{className:'rat'},rich(q.rationale)));
   if(q.objective)ab.appendChild(E('div',{className:'wn'},'Exam objective: '+q.objective));
-  if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: '+q.whynot));
+  if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: ',rich(q.whynot)));
   if(q.ref){var parts=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:parts[0],target:'_blank',style:{fontSize:'.78rem',color:'#2E86C1',textDecoration:'none',fontWeight:'600'}},'📖 '+parts[1]+' →')));}
   card.appendChild(ab);
 

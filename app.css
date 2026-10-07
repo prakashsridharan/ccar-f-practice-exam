@@ -300,3 +300,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .retry-done>p{font-size:.85rem;color:var(--text-2);margin-bottom:.4rem}.retry-done .rd-intro{margin-bottom:1rem}
 .rd-line{margin:.9rem 0 1rem}.rd-line strong{font-family:'JetBrains Mono',monospace;font-weight:700;color:#C0522A}.rd-line strong.ok{color:var(--ac)}
 .rd-line+.ready{margin-top:0}
+
+/* rich text (exams with richText): inline code in questions, options and rationales */
+.qb code,.ans-b code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.9em;background:rgba(27,79,138,.08);padding:.05em .3em;border-radius:4px}

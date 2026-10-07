@@ -10,3 +10,8 @@ ccar-p_practice_questions*.md
 # CCAR-F question source (300 questions). Only Tests 1-2 are published, via the
 # private content repo and publish.json; the rest stay private.
 CCAR-F-*Questions*.md
+
+# Udemy upload CSVs (Tests 3-5 are private)
+CCAR-P_Balanced*.csv
+CCAR-P_LinkTest*.csv
+udemy-csv-backup*/
