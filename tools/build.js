@@ -109,7 +109,7 @@ function buildExam(dir){
     if(q.se>1)o.se=q.se;
     Object.assign(o,{q:q.stem.join('\n\n'),o:q.o,a:key.a,r:key.r.join(' ')});
     if(key.w)o.w=key.w;
-    if(notes){const nx=notes[id];
+    if(notes&&notes[id]){const nx=notes[id];
       if(!Array.isArray(nx)||nx.length!==q.o.length)errs.push(at+': option-notes.json needs '+q.o.length+' notes');
       else{q.o.forEach((op,i)=>{const want=key.a.includes(op.l)?'Correct.':'Incorrect.';if(!String(nx[i]).startsWith(want))errs.push(at+': note for option '+op.l+' must start with "'+want+'"');});o.x=nx;}}
     if(q.df)o.df=q.df;
