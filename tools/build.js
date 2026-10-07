@@ -86,6 +86,8 @@ function buildExam(dir){
   const qfile=path.join(dir,'questions.md');
   const {qs,keys}=parseQuestions(fs.readFileSync(qfile,'utf8'),qfile);
   const refs=JSON.parse(fs.readFileSync(path.join(dir,'refs.json'),'utf8'));
+  const notesPath=path.join(dir,'option-notes.json');
+  const notes=fs.existsSync(notesPath)?JSON.parse(fs.readFileSync(notesPath,'utf8')):null;
   const scPath=path.join(dir,'scenarios.json');
   const BS=fs.existsSync(scPath)?JSON.parse(fs.readFileSync(scPath,'utf8')):{1:{t:EXAM.code+' Question Bank',d:'Scenario-based questions across the '+EXAM.code+' domains.'}};
   const errs=[],seen=new Set(),BQ=[],REFS={};
@@ -107,12 +109,16 @@ function buildExam(dir){
     if(q.se>1)o.se=q.se;
     Object.assign(o,{q:q.stem.join('\n\n'),o:q.o,a:key.a,r:key.r.join(' ')});
     if(key.w)o.w=key.w;
+    if(notes){const nx=notes[id];
+      if(!Array.isArray(nx)||nx.length!==q.o.length)errs.push(at+': option-notes.json needs '+q.o.length+' notes');
+      else{q.o.forEach((op,i)=>{const want=key.a.includes(op.l)?'Correct.':'Incorrect.';if(!String(nx[i]).startsWith(want))errs.push(at+': note for option '+op.l+' must start with "'+want+'"');});o.x=nx;}}
     if(q.df)o.df=q.df;
     if(key.ob)o.ob=key.ob;
     if(!BS[o.s])errs.push(at+': unknown scenario '+o.s);
     BQ.push(o);REFS[id]=refs[id];
   }
   Object.keys(keys).forEach(n=>{if(!qs.some(q=>q.n===+n))errs.push('answer key Q'+n+' has no question');});
+  if(notes)Object.keys(notes).forEach(id=>{if(!seen.has(id))errs.push('option-notes.json '+id+' has no question');});
   Object.keys(refs).forEach(id=>{if(!seen.has(id))errs.push('refs.json '+id+' has no question');});
   // Fixed practice tests (tools/make-tests.js). Optional; Random mix always exists.
   const tPath=path.join(dir,'tests.json');

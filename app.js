@@ -39,7 +39,7 @@ const WEIGHTS=weightsFor(EX);
 
 // Numeric id order, so Q2 sorts before Q10.
 function byDomainThenId(a,b){return a.domain-b.domain||a.id.localeCompare(b.id,undefined,{numeric:true});}
-const BUILTIN=BQ.map(q=>({id:q.id,scenario:q.s,domain:q.d,type:q.ty,select:q.se,question:q.q,options:q.o,answer:q.a,rationale:q.r,whynot:q.w,difficulty:q.df||'',objective:q.ob||'',ref:REFS[q.id]||''})).sort(byDomainThenId);
+const BUILTIN=BQ.map(q=>({id:q.id,scenario:q.s,domain:q.d,type:q.ty,select:q.se,question:q.q,options:q.o,answer:q.a,rationale:q.r,whynot:q.w,notes:q.x||null,difficulty:q.df||'',objective:q.ob||'',ref:REFS[q.id]||''})).sort(byDomainThenId);
 let CQ=[],CS={};let view='home';const homeOpen=new Set();
 let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durationSec,pflag:{},pdone:false,ptest:0,rf:'all',stest:0,rq:[],ri:0,rd:0};
 
@@ -221,7 +221,8 @@ function renderQCard(q,opts){
   ab.appendChild(E('div',{className:'av'},q.answer.join(', ')));
   ab.appendChild(E('div',{className:'rat'},rich(q.rationale)));
   if(q.objective)ab.appendChild(E('div',{className:'wn'},'Exam objective: '+q.objective));
-  if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: ',rich(q.whynot)));
+  if(q.notes&&q.notes.length===q.options.length){var nl=E('div',{className:'on'},E('div',{className:'al'},'Explanation of each option'));q.options.forEach(function(op,i){var good=q.answer.includes(op.l);nl.appendChild(E('div',{className:'on-i'+(good?' ok':'')},E('span',{className:'on-l'},op.l+'.'),' ',rich(q.notes[i])));});ab.appendChild(nl);}
+  else if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: ',rich(q.whynot)));
   if(q.ref){var parts=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:parts[0],target:'_blank',style:{fontSize:'.78rem',color:'#2E86C1',textDecoration:'none',fontWeight:'600'}},'📖 '+parts[1]+' →')));}
   card.appendChild(ab);
 

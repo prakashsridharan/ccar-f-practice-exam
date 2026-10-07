@@ -303,3 +303,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 
 /* rich text (exams with richText): inline code in questions, options and rationales */
 .qb code,.ans-b code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.9em;background:rgba(27,79,138,.08);padding:.05em .3em;border-radius:4px}
+.ans-b .on{margin-top:.6rem;padding-top:.6rem;border-top:1px solid rgba(6,95,70,.12)}
+.ans-b .on-i{font-size:.78rem;color:#3a6a50;line-height:1.5;margin-top:.35rem;padding-left:.2rem}
+.ans-b .on-i.ok{color:#14532d;font-weight:500}
+.ans-b .on-l{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:600;margin-right:.1rem}
