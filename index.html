@@ -58,7 +58,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/hub.css?v=20261004i">
+<link rel="stylesheet" href="/hub.css?v=20261011c">
 </head>
 <body>
 
@@ -68,6 +68,17 @@
 </div>
 
 <div class="container">
+
+  <!-- Udemy launch coupons. The script below hides this box once data-until has passed. -->
+  <div class="promo" data-until="2026-11-12">
+    <div class="promo-t"><span class="promo-pill">Free coupon</span><span class="promo-until">Valid until 11 Nov 2026 &middot; first 100 people</span></div>
+    <h2>Get all five practice tests free on Udemy</h2>
+    <p>Each course has the two tests on this site plus three more, and every question explains why the answer is right.</p>
+    <div class="promo-l">
+      <a class="promo-b" href="https://www.udemy.com/course/claude-certified-architect-foundations-practice-tests-c/?couponCode=CCAR-F-OCT26" target="_blank" rel="noopener"><b>CCAR-F</b><span>Foundations<small>5 tests &middot; 300 questions</small></span><i>Get it free &rarr;</i></a>
+      <a class="promo-b" href="https://www.udemy.com/course/claude-certified-architect-professional-practice-tests-w/?couponCode=CCAR-P-OCT26" target="_blank" rel="noopener"><b>CCAR-P</b><span>Professional<small>5 tests &middot; 315 questions</small></span><i>Get it free &rarr;</i></a>
+    </div>
+  </div>
 
   <p class="intro">Pick the certification you are preparing for. Each practice exam mirrors its official blueprint: questions are drawn in the same domain proportions as the real exam, every answer carries a full rationale explaining why the other options are wrong, and each links to the relevant official documentation.</p>
 
@@ -103,7 +114,6 @@
 
   </div>
 
-
   <div class="more">
     <h3>More certifications to come</h3>
     <p>AWS certification practice exams are in preparation, and further Claude certifications will be added as they are published.</p>
@@ -127,6 +137,10 @@
     </div>
   </div>
 </div>
+<script>
+// Hide time-limited offers (the Udemy coupon box) after their data-until date.
+document.querySelectorAll('[data-until]').forEach(function(el){if(new Date()>=new Date(el.getAttribute('data-until')+'T00:00:00'))el.hidden=true;});
+</script>
 <script>
 // Site admin at /#admin. Hidden unless the hash is #admin; nothing here is
 // linked from the page. The anon key is the same public, role=anon key the

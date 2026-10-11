@@ -83,6 +83,28 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .adm-ex span{font-size:.8rem;color:var(--text-2)}
 .adm-note{font-size:.72rem;color:var(--text-m);line-height:1.55;margin-top:.8rem}
 
+/* Udemy coupon banner on the hub: the first thing under the header, in teal so it
+   reads as an announcement rather than another exam card. */
+.promo{position:relative;overflow:hidden;margin:1rem 0 .4rem;padding:.8rem 1.1rem .85rem;border-radius:var(--rl);color:#fff;background:linear-gradient(135deg,#00a3b4 0%,#0097A7 40%,#1B4F8A 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.25),0 14px 34px -14px rgba(0,120,140,.6)}
+.promo::before{content:'';position:absolute;right:-60px;top:-80px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18),transparent 70%);pointer-events:none}
+.promo>*{position:relative}
+.promo[hidden]{display:none}
+.promo-t{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.3rem}
+.promo-pill{font-size:.68rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:.22rem .6rem;border-radius:20px;background:#fff;color:#007a87}
+.promo-until{font-size:.75rem;font-weight:600;opacity:.92}
+.promo h2{font-size:1.1rem;font-weight:800;letter-spacing:-.02em;line-height:1.25;margin-bottom:.2rem;text-shadow:0 1px 2px rgba(0,0,0,.18)}
+.promo p{font-size:.8rem;line-height:1.5;opacity:.95;margin-bottom:.6rem}
+.promo-l{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.promo-b{display:flex;align-items:center;gap:.6rem;padding:.45rem .7rem;border-radius:var(--r);background:#fff;text-decoration:none;color:var(--text);box-shadow:0 4px 14px -6px rgba(0,0,0,.3);transition:transform .15s,box-shadow .15s}
+.promo-b:hover{transform:translateY(-2px);box-shadow:0 10px 22px -8px rgba(0,0,0,.38)}
+.promo-b b{font-family:'JetBrains Mono',monospace;font-size:.74rem;font-weight:600;color:#00727e;background:#e3f6f8;padding:.2rem .55rem;border-radius:20px;flex-shrink:0}
+.promo-b span{display:flex;flex-direction:column;font-size:.85rem;font-weight:700;color:var(--ac-h);line-height:1.25}
+.promo-b small{font-size:.72rem;font-weight:500;color:var(--text-2)}
+.promo-b i{margin-left:auto;font-style:normal;font-size:.82rem;font-weight:700;color:#fff;background:#C0522A;padding:.3rem .65rem;border-radius:8px;white-space:nowrap}
+.promo-b:hover i{background:#a8451f}
+@media(max-width:720px){.promo-l{grid-template-columns:1fr}.promo h2{font-size:1rem}}
+@media (prefers-reduced-motion:reduce){.promo-b:hover{transform:none}}
+
 /* Vendor sections on the hub, and the breadcrumb on vendor pages. */
 .vendor{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;flex-wrap:wrap;margin:1.5rem 0 .65rem}
 .vendor h2{font-size:1.05rem;font-weight:800;color:var(--ac-h)}
