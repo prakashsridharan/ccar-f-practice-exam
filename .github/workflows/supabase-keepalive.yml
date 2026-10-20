@@ -1,0 +1,22 @@
+# Keeps the free-tier Supabase project (visit tracking) from being paused for
+# inactivity. Calls the read-only visit_stats RPC twice a week with the public
+# anon key that app.js already ships, so no secret is needed.
+name: Supabase keep-alive
+
+on:
+  schedule:
+    - cron: '17 6 * * 1,4'   # Mondays and Thursdays, 06:17 UTC
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Call visit_stats
+        run: |
+          URL=$(grep -o "SUPABASE_URL='[^']*'" app.js | cut -d"'" -f2)
+          KEY=$(grep -o "SUPABASE_ANON='[^']*'" app.js | cut -d"'" -f2)
+          curl -fsS -X POST "$URL/rest/v1/rpc/visit_stats" \
+            -H "apikey: $KEY" -H "Authorization: Bearer $KEY" \
+            -H "Content-Type: application/json"
