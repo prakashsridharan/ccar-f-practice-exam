@@ -30,7 +30,7 @@ const ctx={document,console:{log(){},warn(){},error:console.error},setTimeout:()
  localStorage:{getItem:k=>store[k]??null,setItem:(k,v)=>store[k]=String(v),removeItem:k=>delete store[k]},
  location:{hash:'',pathname:'/',href:'https://x/'},history:{replaceState(_s,_t,h){ctx.location.hash=h;},pushState(_s,_t,h){ctx.location.hash=h;}},
  navigator:{userAgent:'smoke'},fetch:u=>{fetched.push(String(u));return Promise.reject(new Error('offline'))},confirm:()=>true,alert(){},prompt:()=>null,
- scrollTo(){},addEventListener(){},matchMedia:()=>({matches:false,addEventListener(){}}),URL,Blob:function(){},getComputedStyle:()=>({getPropertyValue:()=>''})};
+ scrollTo(){},scrollBy(){},addEventListener(){},matchMedia:()=>({matches:false,addEventListener(){}}),URL,Blob:function(){},getComputedStyle:()=>({getPropertyValue:()=>''})};
 ctx.window=ctx;vm.createContext(ctx);
 let fail=0;const ok=(n,f)=>{try{f();console.log('PASS',n)}catch(e){fail++;console.log('FAIL',n,'-',e&&e.message||e)}};
 const run=c=>vm.runInContext(c,ctx);
@@ -186,5 +186,27 @@ ok('router: go(), Back-style routing, guarded routes, #admin',()=>{
  ctx.location.hash='#/nonsense';run('routeFromHash()');if(V()!=='home')throw new Error('unknown route -> '+V());
  ctx.location.hash='#admin';run('routeFromHash()');if(run('st.modal')!=='admin')throw new Error('#admin did not open admin');
  ctx.location.hash='#/study';run('routeFromHash()');if(run('st.modal')||V()!=='study')throw new Error('leaving #admin -> '+V());});
+ok('learning guide: every lesson task has questions, answer panels link the objective to its lesson',()=>{
+ run('renderHome()');const strip=find(byId.app,n=>n.className==='learn-strip');
+ if(!!strip!==!!run("LESSONS.length"))throw new Error('guide strip shown='+!!strip+' but lessons='+run("LESSONS.length"));
+ const L=run("typeof LEARN!=='undefined'?LEARN.lessons:[]");
+ for(const l of L)if(!run('allQ().some(q=>q.objective==='+JSON.stringify(l.t)+')'))throw new Error('lesson '+l.id+' task has no question');
+ const q=run('allQ().find(q=>q.objective&&lessonForOb(q.objective))');
+ if(!L.length){if(q)throw new Error('lesson link without a guide');return;}
+ const l=L.find(x=>x.t===q.objective);
+ const card=run('renderQCard(allQ().find(q=>q.id==='+JSON.stringify(q.id)+'),{showAnswer:true})');
+ if(!find(card,n=>n.textContent==='Read lesson '+l.id))throw new Error('no "Read lesson '+l.id+'" link on '+q.id);});
+ok('learning guide return point: Read lesson saves the view, #/back restores it once',()=>{
+ if(!run('LESSONS.length'))return;
+ run("startPractice(1);st.pq.slice(0,7).forEach(q=>{st.sel[q.id]=[q.options[0].l]});submitPractice();go('review');st.rf='wrong'");
+ const q=run("st.pq.find(q=>lessonForOb(q.objective)).id");
+ run("saveBack(allQ().find(q=>q.id==='"+q+"'))");
+ const rec=run('readBack()');if(!rec||rec.v!=='review'||rec.label!=='your review'||rec.ids.length!==run('st.pq.length'))throw new Error('bad record '+JSON.stringify(rec&&{v:rec.v,label:rec.label}));
+ const want=run('JSON.stringify(st.sel)');
+ run("st.pq=[];st.pdone=false;st.sel={};view='home'");ctx.location.hash='#/back';run('routeFromHash()');
+ if(run('view')!=='review'||ctx.location.hash!=='#/review'||!run('st.pdone')||run('JSON.stringify(st.sel)')!==want||run('st.rf')!=='wrong')throw new Error('review not restored: '+run('view')+' '+ctx.location.hash);
+ if(run('readBack()'))throw new Error('record not consumed');
+ ctx.location.hash='#/back';run('routeFromHash()');if(run('view')!=='home')throw new Error('#/back with no record -> '+run('view'));
+ run("PROG=freshProgress();saveProgress();st.pq=[];st.pdone=false;go('home')");});
 if(dumpI>0)fs.writeFileSync(process.argv[dumpI+1],JSON.stringify(run('({EX,WEIGHTS,DM,BUILTIN:BUILTIN.map(q=>({...q,difficulty:undefined,objective:undefined})).sort((a,b)=>a.id<b.id?-1:1),BS})')));
 console.log((fail?fail+' FAILED':'ALL PASS')+'  ['+run('EX.code')+', '+run('allQ().length')+' questions]');process.exit(fail?1:0);

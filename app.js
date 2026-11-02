@@ -50,6 +50,36 @@ let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durati
 //   attempts: finished runs {t, d (ISO date), c, n, ds:{domain:[correct,total]}, wrong, flag, secs}
 //   cur:      the unfinished run {t, ids (in shown order), pi, psec, sel, flag}, for resume
 const FIXED=typeof TESTS!=='undefined'?TESTS:[];
+// Learning-guide lessons (exams/<exam>.js, from the guide's outline): answer panels link
+// a question's objective to the lesson that teaches it. Exams without a guide have none.
+const LESSONS=typeof LEARN!=='undefined'?LEARN.lessons:[];
+const lessonForOb=ob=>LESSONS.find(l=>l.t===ob);
+// Return point. "Read lesson" saves where the reader was in localStorage['<prefix>-back'];
+// the guide's header then reads "Back to ..." and links to #/back, which restores that
+// view on that question. Review and Retry live only in memory, so their state goes in the
+// record too; Study is already saved per test. A browser Back to the same URL restores it
+// as well. Used once, and ignored after BACK_TTL.
+const BKEY=EX.storagePrefix+'-back',BACK_TTL=24*3600*1000;
+function saveBack(q){const r={at:Date.now(),h:location.hash||'#/',v:view,q:q.id,y:Math.round(window.scrollY||0)};
+ const ids=a=>a.map(x=>x.id),on=o=>Object.keys(o).filter(k=>o[k]);
+ if(view==='study'){saveStudy();saveStudyScroll();r.label=testLabel(st.stest);}
+ else if(view==='review'){Object.assign(r,{ids:ids(st.pq),sel:st.sel,flag:on(st.pflag),t:st.ptest,psec:st.psec,rf:st.rf});r.label='your review';}
+ else if(view==='retry'){Object.assign(r,{ids:ids(st.rq),ri:st.ri,rd:st.rd,sel:st.sel,sub:on(st.sub),rev:on(st.rev)});r.label='Retry mistakes';}
+ else r.label='the practice tests';
+ try{localStorage.setItem(BKEY,JSON.stringify(r));}catch(e){}}
+function readBack(){try{const r=JSON.parse(localStorage.getItem(BKEY)||'null');if(r&&Date.now()-r.at<BACK_TTL)return r;}catch(e){}return null;}
+// Rebuild the saved view. False when there is nothing usable (then the caller routes home).
+function restoreBack(r){try{localStorage.removeItem(BKEY);}catch(e){}
+ const by=new Map(allQ().map(q=>[q.id,q])),list=a=>(a||[]).map(id=>by.get(id)).filter(Boolean),flags=a=>{const o={};(a||[]).forEach(id=>o[id]=true);return o;};
+ if(r.v==='review'){const pq=list(r.ids);if(!pq.length)return false;clearInterval(timerInt);
+  Object.assign(st,{pq,pi:0,pdone:true,ptest:r.t||0,psec:r.psec||0,sel:r.sel||{},pflag:flags(r.flag),rev:{},rf:r.rf||'all'});st.sub=flags(r.ids);}
+ else if(r.v==='retry'){const rq=list(r.ids);if(!rq.length)return false;if(st.pdone)st.pq=[];
+  Object.assign(st,{rq,ri:Math.min(r.ri||0,rq.length),rd:r.rd||0,sel:r.sel||{},sub:flags(r.sub),rev:flags(r.rev)});}
+ else if(r.v==='study'){const m=(r.h||'').match(/^#\/study\/(\d+)/),n=m?+m[1]:0;if(st.pdone)st.pq=[];st.stest=FIXED[n-1]?n:0;loadStudy(st.stest);}
+ else return false;
+ view=r.v;history.replaceState(null,'',hashFor(view));render();
+ const el=document.querySelector('[data-q="'+r.q+'"]');if(el&&el.scrollIntoView){el.scrollIntoView({block:'start'});window.scrollBy(0,-12);}else window.scrollTo(0,r.y||0);
+ return true;}
 // Home lists the tests; the selected one (0 = Random Mix) shows its two modes.
 // Remembered per viewer. Default: the first test not yet taken in exam mode.
 const TKEY=EX.storagePrefix+'-test';
@@ -186,7 +216,7 @@ function parseUploadRows(rows){if(rows.length<2)return{questions:[],errors:['No 
 // Shared question card renderer
 function renderQCard(q,opts){
   var showAns=opts.showAnswer===true;var allowSel=opts.allowSelect!==false;var showAdmin=opts.showAdmin;
-  var card=E('div',{className:'qc'+(q.custom?' cust':'')});var d=DM[q.domain];var tl=q.type==='multi'?'Select '+(q.select||2):'Select one';
+  var card=E('div',{className:'qc'+(q.custom?' cust':''),'data-q':q.id});var d=DM[q.domain];var tl=q.type==='multi'?'Select '+(q.select||2):'Select one';
   var qh=E('div',{className:'qh'},E('span',{className:'qn'},q.id),E('span',{className:'badge',style:{background:domainTint(q.domain),color:domainColor(q.domain)}},'D'+q.domain),E('span',{className:'badge b-type'},tl));
   if(q.difficulty)qh.appendChild(E('span',{className:'badge b-type'},q.difficulty.charAt(0).toUpperCase()+q.difficulty.slice(1)));
   if(q.custom&&showAdmin){qh.appendChild(E('span',{className:'badge b-custom'},'Custom'));var rt=E('div',{className:'qhr'});rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.edit,onClick:()=>{st.modal={t:'eq',q};render();}}));rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.trash,style:{color:'var(--danger)'},onClick:()=>{if(confirm('Delete?')){CQ=CQ.filter(c=>c.id!==q.id);saveData();render();}}}));qh.appendChild(rt);}
@@ -220,7 +250,7 @@ function renderQCard(q,opts){
   ab.appendChild(E('div',{className:'al'},'Correct Answer'));
   ab.appendChild(E('div',{className:'av'},q.answer.join(', ')));
   ab.appendChild(E('div',{className:'rat'},rich(q.rationale)));
-  if(q.objective)ab.appendChild(E('div',{className:'wn'},'Exam objective: '+q.objective));
+  if(q.objective){var ls=lessonForOb(q.objective),ow=E('div',{className:'wn'},'Exam objective: '+q.objective);if(ls)ow.appendChild(E('span',null,' \u00b7 ',E('a',{href:ls.u,onClick:()=>saveBack(q)},'Read lesson '+ls.id)));ab.appendChild(ow);}
   if(q.notes&&q.notes.length===q.options.length){var nl=E('div',{className:'on'},E('div',{className:'al'},'Explanation of each option'));q.options.forEach(function(op,i){var good=q.answer.includes(op.l);nl.appendChild(E('div',{className:'on-i'+(good?' ok':'')},E('span',{className:'on-l'},op.l+'.'),' ',rich(q.notes[i])));});ab.appendChild(nl);}
   else if(q.whynot)ab.appendChild(E('div',{className:'wn'},'Why not the others: ',rich(q.whynot)));
   if(q.ref){var parts=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:parts[0],target:'_blank',style:{fontSize:'.78rem',color:'#2E86C1',textDecoration:'none',fontWeight:'600'}},'📖 '+parts[1]+' →')));}
@@ -308,9 +338,19 @@ function renderQCard(q,opts){
 function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',null,'Score by Domain'));const rs=E('div',{className:'ds'});Object.entries(DM).forEach(([d,info])=>{const dd=sc.ds[d];const dp=dd.a?Math.round(dd.c/dd.a*100):0;rs.appendChild(E('div',{className:'dsr'},E('span',{className:'dn'},'D'+d+': '+info.n),E('div',{className:'db'},E('div',{className:'dbf',style:'width:'+dp+'%;background:'+domainColor(d)})),E('span',{className:'dp',style:'color:'+domainColor(d)},dd.a?dp+'%':'-')));});sm.appendChild(rs);return sm;}
 
 // Views
+// Exams with a learning guide show it above the tests, with the reader's lesson progress
+// (kept by the guide's learn.js in '<prefix>-learn') and a link to the next unfinished lesson.
+function learnStrip(){let done={};try{const p=JSON.parse(localStorage.getItem(EX.storagePrefix+'-learn')||'null');if(p&&p.done)done=p.done;}catch(e){}
+ const n=LESSONS.filter(l=>done[l.id]).length,next=LESSONS.find(l=>!done[l.id]);
+ const go=n&&next?{href:next.u,t:'Continue with '+next.id+' '+next.n}:{href:LEARN.u,t:'Open the learning guide'};
+ return E('div',{className:'learn-strip'},E('div',{className:'ls-t'},E('div',{className:'ls-k'},'Learning guide'),
+   E('div',{className:'ls-h'},LESSONS.length+' lessons, one per exam task, with check questions and case-study exercises'),
+   E('div',{className:'ls-p'},n?n+' of '+LESSONS.length+' lessons complete':'Learn the topics first, then test yourself here.')),
+  E('a',{className:'btn btn-p ls-go',href:go.href},go.t+' →'));}
 function renderHome(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();
  app.appendChild(E('div',{className:'hdr'},E('div',{className:'hub-nav'},E('a',{className:'hub-link',href:'/'},'← All practice exams')),E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
+ if(LESSONS.length)ct.appendChild(learnStrip());
 
  // Tests come first so a returning user can start without scrolling; the exam
  // reference material follows for anyone who wants it.
@@ -636,6 +676,8 @@ const ROUTES=['home','study','practice','report','review','retry'];
 function hashFor(v){return v==='home'?'#/':v==='study'&&st.stest?'#/study/'+st.stest:v==='retry'&&st.rd?'#/retry/'+st.rd:'#/'+v;}
 function go(v){if(view==='study'&&v!=='study')saveStudyScroll();view=v;if(location.hash!==hashFor(v))history.pushState(null,'',hashFor(v));render();}
 function routeFromHash(force){
+ if(location.hash==='#/back'){const r=readBack();if(!(r&&restoreBack(r))){history.replaceState(null,'','#/');view='';routeFromHash(true);}return;}
+ if(force){const r=readBack();if(r&&r.h===location.hash&&restoreBack(r))return;}
  if(location.hash==='#admin'){if(view!=='home'||st.modal!=='admin'||force){view='home';st.modal='admin';render();}return;}
  const m=location.hash.match(/^#\/([a-z]*)(?:\/(\d+))?/);let v=m&&m[1]||'home';if(!ROUTES.includes(v))v='home';
  let stest=st.stest;

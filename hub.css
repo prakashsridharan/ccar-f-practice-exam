@@ -113,3 +113,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .crumb{position:absolute;left:1.5rem;top:2.5rem;z-index:2;font-size:.75rem;font-weight:600;color:#fff;opacity:.8;text-decoration:none}
 .crumb:hover{opacity:1;text-decoration:underline}
 @media(max-width:700px){.crumb{position:static;display:block;text-align:left;margin:-1rem 0 .8rem}}
+/* A card with two destinations (learning guide and practice tests): the card itself is not a link */
+.exam-2:hover{transform:none}
+.pill.new{background:#E6F4F1;color:#0E7C66}
+.acts{margin-top:auto;padding-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.act{position:relative;z-index:1;font-size:.84rem;font-weight:700;text-decoration:none;padding:.5rem .9rem;border-radius:8px;border:1.5px solid var(--ac);color:var(--ac);background:#fff}
+.act:hover{background:#EEF5FB}
+.act-p{background:var(--ac);color:#fff}.act-p:hover{background:#1A2E45;border-color:#1A2E45}

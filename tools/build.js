@@ -156,6 +156,7 @@ function buildExam(dir){
     'const BS='+JSON.stringify(BS)+';',
     'const REFS='+JSON.stringify(outREFS,null,0)+';',
     'const TESTS='+JSON.stringify(outTESTS)+';',
+    ...learnIndex(dir,EXAM,outBQ),
     ''].join('\n');
   if(out.includes(EM)||out.includes(EN))throw new Error(dir+': em/en dash in output (check config.js)');
   const target=path.join(ROOT,'exams',EXAM.id+'.js');
@@ -176,4 +177,19 @@ if(!dirs.length){console.error('no <vendor>/<exam>/config.js found under '+conte
 let failed=0;
 for(const d of dirs){try{buildExam(d);}catch(e){failed++;console.error('FAILED '+e.message);}}
 process.exit(failed?1:0);
+}
+
+// Learning guide index (learn/outline.json, see tools/build-learn.js): the lessons that
+// are written, so answer panels can link each question's objective to the lesson that
+// teaches it. Emitted only when the exam has a guide.
+function learnIndex(dir,EXAM,outBQ){
+  const oPath=path.join(dir,'learn','outline.json');
+  if(!fs.existsSync(oPath))return [];
+  const O=JSON.parse(fs.readFileSync(oPath,'utf8')),base=EXAM.path+'learn/',lessons=[];
+  for(const d of O.domains)for(const l of d.lessons){
+    if(!fs.existsSync(path.join(dir,'learn',l.slug+'.md')))continue;
+    if(!outBQ.some(q=>q.ob===l.task))throw new Error(dir+': lesson '+l.id+' task matches no published question');
+    lessons.push({id:l.id,n:l.title,t:l.task,u:base+d.slug+'/'+l.slug+'/'});
+  }
+  return ['const LEARN='+JSON.stringify({u:base,lessons})+';'];
 }

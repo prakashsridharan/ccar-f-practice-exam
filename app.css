@@ -307,3 +307,10 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .ans-b .on-i{font-size:.78rem;color:#3a6a50;line-height:1.5;margin-top:.35rem;padding-left:.2rem}
 .ans-b .on-i.ok{color:#14532d;font-weight:500}
 .ans-b .on-l{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:600;margin-right:.1rem}
+/* Learning-guide strip on the exam home (exams with a guide only) */
+.learn-strip{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-left:4px solid #0E7C66;border-radius:var(--r);padding:.9rem 1.1rem;margin-top:1.25rem;box-shadow:var(--sh)}
+.ls-t{flex:1;min-width:220px}
+.ls-k{font-family:'JetBrains Mono',monospace;font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:#0E7C66}
+.ls-h{font-weight:700;color:var(--ac-h);font-size:.92rem;margin:.1rem 0 .15rem}
+.ls-p{font-size:.8rem;color:var(--text-2)}
+.ls-go{text-decoration:none;white-space:normal}
