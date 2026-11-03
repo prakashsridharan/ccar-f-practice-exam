@@ -1,0 +1,42 @@
+{
+  "name": "CertPrep",
+  "tagline": "Free learning guides and practice exams for AI and cloud certifications",
+  "vendors": [
+    {
+      "id": "claude",
+      "name": "Claude (Anthropic)",
+      "url": "/claude/",
+      "exams": [
+        {
+          "id": "ccar-f",
+          "code": "CCAR-F",
+          "name": "Claude Certified Architect - Foundations",
+          "level": "Foundations",
+          "status": "live",
+          "blurb": "Agents, tools and MCP, Claude Code, prompts and structured output, context and reliability."
+        },
+        {
+          "id": "ccar-p",
+          "code": "CCAR-P",
+          "name": "Claude Certified Architect - Professional",
+          "level": "Professional",
+          "status": "live",
+          "blurb": "Solution design, models and prompting, integration, evaluation, governance and the delivery lifecycle."
+        }
+      ]
+    },
+    {
+      "id": "aws",
+      "name": "AWS",
+      "status": "soon",
+      "note": "Practice exams in preparation.",
+      "exams": []
+    }
+  ],
+  "general": [
+    {"url": "https://platform.claude.com/docs/en/home", "label": "Claude Developer Platform documentation"},
+    {"url": "https://code.claude.com/docs/en/overview", "label": "Claude Code documentation"},
+    {"url": "https://modelcontextprotocol.io/", "label": "Model Context Protocol specification and guides"},
+    {"url": "https://github.com/anthropics/claude-cookbooks", "label": "Anthropic Claude Cookbook (runnable notebooks)"}
+  ]
+}

@@ -5,10 +5,6 @@ body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var
 a{color:var(--ac)}a:hover{color:var(--ac-h)}
 html:not(.js) .js-only{display:none!important}
 
-.lhdr{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,#1B4F8A,#1A2E45);color:#fff;box-shadow:0 4px 20px rgba(27,79,138,.3)}
-.lhdr-in{max-width:1200px;margin:0 auto;padding:.9rem 16px;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
-.brand{color:#fff;font-weight:800;letter-spacing:-.02em;text-decoration:none;font-size:1.05rem}.brand .b-short{display:none}.brand .b-sub{font-weight:600;opacity:.8}.brand:hover{color:#fff;opacity:.9}
-.top{display:flex;gap:1.1rem;align-items:center}.top a{color:#fff;opacity:.8;font-size:.82rem;font-weight:600;text-decoration:none}.top a:hover{color:#fff;opacity:1;text-decoration:underline}
 
 .wrap{max-width:1200px;margin:0 auto;padding:1.75rem 16px 3rem;display:grid;grid-template-columns:280px minmax(0,1fr);gap:2.25rem;align-items:start}
 .main{max-width:780px;min-width:0}
@@ -89,9 +85,6 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 .pn .next{text-align:right;grid-column:2}
 
 /* header practice-tests button, on every page */
-.top a.hp{opacity:1;background:#fff;color:var(--ac);padding:.4rem .85rem;border-radius:8px;font-weight:700;display:inline-flex;align-items:center;gap:.4rem;white-space:nowrap}
-.top a.hp.is-back::before{content:"\2190"}
-.top a.hp:hover{color:var(--ac-h);background:#EEF5FB;text-decoration:none}
 .btn-g{background:var(--surface);color:var(--ac)}.btn-g:hover{background:var(--ac-s);color:var(--ac-h)}
 
 /* check questions */
@@ -178,10 +171,20 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 @media(max-width:560px){
  .pn{grid-template-columns:1fr}.pn .next{grid-column:1}
  .bar{flex-basis:110px}
- .top{gap:.8rem}.top a.tl{display:none}
- .lhdr-in{flex-wrap:nowrap;padding:.65rem 16px}.brand .b-long{display:none}.brand .b-short{display:inline}.brand{font-size:.92rem}.top a.hp{font-size:.78rem;padding:.35rem .65rem}
  .side{max-height:none}
 }
-@media print{.lhdr,.side,.pn,.done-row,.kc-b,.ex-copy{display:none}.wrap{display:block}}
+@media print{.side,.pn,.done-row,.kc-b,.ex-copy{display:none}.wrap{display:block}}
 /* Phones: slightly larger lesson numbers in the lesson list */
 @media(max-width:560px){.side .lid{font-size:.78rem}}
+/* One-column pages (exam resources) and the resources lists */
+.wrap.wrap-1{grid-template-columns:minmax(0,1fr);max-width:900px}
+.wrap-1 .main{max-width:none}
+.res-s{margin:1.8rem 0 0}
+.res-s h2{display:flex;flex-direction:column;gap:.15rem;font-size:1.15rem;font-weight:800;color:var(--ac-h);padding-top:1.2rem;border-top:3px solid var(--dc);scroll-margin-top:5rem}
+.res-s h2 span{font-family:'JetBrains Mono',monospace;font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--dc)}
+.res{list-style:none;margin:.7rem 0 0}
+.res li{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;padding:.55rem 0;border-bottom:1px solid var(--border)}
+.res li>a{font-weight:600;text-decoration:none}.res li>a:hover{text-decoration:underline}
+.res li span{flex-shrink:0;font-size:.8rem;color:var(--text-m)}
+.res li span a{color:var(--text-2)}
+@media(max-width:560px){.res li{flex-direction:column;gap:.15rem}}

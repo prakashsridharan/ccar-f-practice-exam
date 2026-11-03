@@ -1,0 +1,106 @@
+/* Site chrome shared by every page (hub, vendor, exam app, learning guide, resources):
+   header + Certifications menu, exam tab bar, certification list rows, footer.
+   Markup comes from tools/site-nav.js. Colours are literal so this file does not depend
+   on the page stylesheet's variables. */
+html:not(.js) .js-only{display:none!important}
+
+/* ---- header ---- */
+.sh{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,#1B4F8A,#1A2E45);color:#fff;box-shadow:0 4px 18px rgba(26,46,69,.28);font-family:Inter,system-ui,sans-serif}
+.sh-in{max-width:1200px;margin:0 auto;padding:0 16px;height:3.4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.sh-brand{display:inline-flex;align-items:center;gap:.5rem;color:#fff;text-decoration:none;font-weight:800;font-size:1.08rem;letter-spacing:-.02em;white-space:nowrap}
+.sh-brand:hover{color:#fff;opacity:.92}
+.sh-logo{display:inline-grid;place-items:center;width:1.75rem;height:1.75rem;border-radius:7px;background:linear-gradient(135deg,#0097A7,#2E86C1);font-family:'JetBrains Mono',monospace;font-size:.68rem;font-weight:600;letter-spacing:0;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.3)}
+.sh-nav{display:flex;align-items:center;gap:.25rem}
+.sh-m{position:relative}
+.sh-m>summary,.sh-a{display:inline-flex;align-items:center;gap:.35rem;min-height:2.2rem;padding:0 .75rem;border-radius:8px;color:#fff;font-size:.86rem;font-weight:600;text-decoration:none;cursor:pointer;list-style:none;white-space:nowrap}
+.sh-m>summary::-webkit-details-marker{display:none}
+.sh-m>summary::after{content:'';width:.4rem;height:.4rem;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:translateY(-2px) rotate(45deg);opacity:.8;transition:transform .15s}
+.sh-m[open]>summary::after{transform:translateY(1px) rotate(225deg)}
+.sh-m>summary:hover,.sh-a:hover,.sh-m[open]>summary{background:rgba(255,255,255,.14);color:#fff}
+.sh-m>summary:focus-visible,.sh-a:focus-visible{outline:2px solid #fff;outline-offset:1px}
+.sh-p{position:absolute;right:0;top:calc(100% + .45rem);width:min(34rem,calc(100vw - 32px));background:#fff;color:#2C3E50;border:1px solid #dce1e8;border-radius:12px;box-shadow:0 24px 50px -18px rgba(26,46,69,.45);padding:.6rem;display:grid;gap:.35rem}
+.sh-g{padding:.35rem .4rem .45rem}
+.sh-g+.sh-g{border-top:1px solid #edf0f4;padding-top:.6rem}
+.sh-gt{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8b90a0;margin:0 0 .35rem .35rem}
+.sh-x{display:flex;align-items:center;justify-content:space-between;gap:.75rem;border-radius:8px}
+.sh-x:hover{background:#f4f8fc}
+.sh-xn{display:flex;align-items:center;gap:.6rem;flex:1;min-width:0;padding:.5rem .4rem;text-decoration:none;color:#1A2E45}
+.sh-x b{font-family:'JetBrains Mono',monospace;font-size:.74rem;font-weight:600;color:#1B4F8A;background:#EEF5FB;padding:.15rem .5rem;border-radius:20px;flex-shrink:0}
+.sh-x span{font-size:.86rem;font-weight:600;line-height:1.3}
+.sh-xl{display:flex;gap:.25rem;padding-right:.3rem;flex-shrink:0}
+.sh-xl a{font-size:.78rem;font-weight:600;color:#1B4F8A;text-decoration:none;padding:.3rem .5rem;border-radius:6px}
+.sh-xl a:hover{background:#e2eef9}
+.sh-soon{padding:.5rem .4rem;color:#8b90a0}
+.sh-soon b{background:#f1f3f6;color:#8b90a0}
+.sh-soon span{font-weight:500}
+.sh-soon i{font-style:normal;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#8B2500;background:#FDF0EB;padding:.15rem .5rem;border-radius:20px;white-space:nowrap}
+.sh-all{display:inline-block;margin:.3rem 0 0 .4rem;font-size:.8rem;font-weight:600;color:#1B4F8A;text-decoration:none;padding:.2rem 0}
+.sh-all:hover{text-decoration:underline}
+
+/* ---- exam tab bar ---- */
+.xt{background:#fff;border-bottom:1px solid #dce1e8;font-family:Inter,system-ui,sans-serif}
+.xt-in{max-width:1200px;margin:0 auto;padding:0 16px;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.xt-h{display:flex;align-items:center;gap:.6rem;min-width:0;padding:.6rem 0}
+.xt-h b{font-family:'JetBrains Mono',monospace;font-size:.74rem;font-weight:600;color:#1B4F8A;background:#EEF5FB;padding:.15rem .55rem;border-radius:20px;flex-shrink:0}
+.xt-h span{font-size:.86rem;font-weight:700;color:#1A2E45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.xt-ts{display:flex;align-self:stretch;flex-shrink:0}
+.xt-t{display:inline-flex;align-items:center;padding:0 .85rem;min-height:2.75rem;font-size:.85rem;font-weight:600;color:#4a5568;text-decoration:none;border-bottom:3px solid transparent;white-space:nowrap}
+.xt-t:hover{color:#1B4F8A;background:#f7fafd}
+.xt-t.on{color:#1B4F8A;border-bottom-color:#1B4F8A}
+.xt-t.is-back::before{content:"\2190";margin-right:.3rem}
+
+/* ---- certification list (hub and vendor pages) ---- */
+.cl-f{margin:0 0 .8rem}
+.cl-q{width:100%;font:inherit;font-size:.9rem;padding:.65rem .9rem;border:1px solid #dce1e8;border-radius:10px;background:#fff}
+.cl-v{margin:0 0 1.25rem}
+.cl-vh{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;flex-wrap:wrap;margin:1.4rem 0 .6rem}
+.cl-vh h2{font-size:1.05rem;font-weight:800;color:#1A2E45}
+.cl-vh a{font-size:.8rem;font-weight:600;color:#1B4F8A;text-decoration:none;padding:.3rem 0}
+.cl-vh a:hover{text-decoration:underline}
+.cert-row{display:flex;align-items:center;justify-content:space-between;gap:1.25rem;background:#fff;border:1px solid #dce1e8;border-radius:12px;padding:1rem 1.15rem;margin-bottom:.6rem;box-shadow:0 1px 2px rgba(26,46,69,.05),0 8px 24px -16px rgba(26,46,69,.25)}
+.cert-row[hidden]{display:none}
+.cr-m{min-width:0}
+.cr-t{display:flex;align-items:center;gap:.45rem;margin-bottom:.2rem}
+.cr-c{font-family:'JetBrains Mono',monospace;font-size:.74rem;font-weight:600;color:#1B4F8A;background:#EEF5FB;padding:.15rem .55rem;border-radius:20px}
+.cr-l{font-size:.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#0E7C66;background:#E6F4F1;padding:.15rem .5rem;border-radius:20px}
+.cr-s{font-size:.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#8B2500;background:#FDF0EB;padding:.15rem .5rem;border-radius:20px}
+.cert-row h3{font-size:1rem;font-weight:700;color:#1A2E45;line-height:1.35}
+.cert-row p{font-size:.82rem;color:#4a5568;line-height:1.55;margin:.15rem 0 .4rem}
+.cr-f{display:flex;flex-wrap:wrap;gap:.35rem}
+.cr-f span{font-size:.72rem;color:#4a5568;background:#f1f4f8;border-radius:6px;padding:.2rem .5rem}
+.cr-a{display:flex;flex-direction:column;gap:.45rem;flex-shrink:0}
+.cr-b{display:inline-flex;justify-content:center;font-size:.84rem;font-weight:700;text-decoration:none;padding:.5rem .95rem;border-radius:8px;border:1.5px solid #1B4F8A;color:#1B4F8A;background:#fff;white-space:nowrap}
+.cr-b:hover{background:#EEF5FB}
+.cr-p{background:#1B4F8A;color:#fff}.cr-p:hover{background:#1A2E45;border-color:#1A2E45;color:#fff}
+.cr-soon{box-shadow:none;background:rgba(255,255,255,.6);border-style:dashed}
+.cr-soon p{margin:.2rem 0 0}
+
+/* ---- footer ---- */
+.sf{background:#1A2E45;color:rgba(255,255,255,.78);font-family:Inter,system-ui,sans-serif;margin-top:2rem}
+.sf-in{max-width:1200px;margin:0 auto;padding:1.75rem 16px 2rem;display:grid;grid-template-columns:minmax(0,2fr) 1fr 1fr;gap:1.5rem}
+.sf-b p{font-size:.78rem;line-height:1.65;margin-top:.6rem;max-width:30rem}
+.sf-h{font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:rgba(255,255,255,.55);margin-bottom:.4rem}
+.sf-c a{display:block;font-size:.82rem;color:#fff;text-decoration:none;padding:.25rem 0}
+.sf-c a:hover{text-decoration:underline}
+
+/* ---- phones and tablets ---- */
+@media(max-width:760px){
+ .xt-in{flex-direction:column;align-items:stretch;gap:0}
+ .xt-h{padding:.55rem 0 .1rem}
+ .xt-ts{overflow-x:auto;margin:0 -16px;padding:0 8px}
+ .sf-in{grid-template-columns:1fr 1fr}.sf-b{grid-column:1/-1}
+}
+@media(max-width:560px){
+ .sh-in{height:3.1rem;gap:.5rem}
+ .sh-brand{font-size:1rem}
+ .sh-m>summary,.sh-a{padding:0 .55rem;font-size:.84rem}
+ .sh-m{position:static}
+ .sh-p{position:fixed;left:8px;right:8px;top:3.35rem;width:auto;max-height:calc(100vh - 4rem);overflow:auto}
+ .sh-x{flex-wrap:wrap;gap:0}.sh-xn{flex:1 1 100%;padding-bottom:.15rem}.sh-xl{padding:0 0 .35rem 3.9rem}.sh-xl a{padding:.4rem .6rem;background:#EEF5FB;margin-right:.35rem}
+ .xt-h span{font-size:.82rem}
+ .xt-t{padding:0 .7rem;font-size:.84rem}
+ .cert-row{flex-direction:column;align-items:stretch;gap:.75rem}
+ .cr-a{flex-direction:row}.cr-b{flex:1}
+ .cr-f span{font-size:.76rem}
+}
+@media print{.sh,.xt,.sf{display:none}}

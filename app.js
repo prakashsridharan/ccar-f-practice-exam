@@ -360,7 +360,8 @@ function learnStrip(){let done={};try{const p=JSON.parse(localStorage.getItem(EX
    E('div',{className:'ls-p'},n?n+' of '+LESSONS.length+' lessons complete':'Learn the topics first, then test yourself here.')),
   E('a',{className:'btn btn-p ls-go',href:go.href},go.t+' →'));}
 function renderHome(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();
- app.appendChild(E('div',{className:'hdr'},E('div',{className:'hub-nav'},E('a',{className:'hub-link',href:'/'},'← All practice exams')),E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
+ // The site header and exam tabs above #app (static in the shell) handle navigation.
+ app.appendChild(E('div',{className:'hdr'},E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
  if(LESSONS.length)ct.appendChild(learnStrip());
 

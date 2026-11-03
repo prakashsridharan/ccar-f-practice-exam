@@ -35,13 +35,14 @@
 //     - self-check item
 //     :::
 //
-// Writes <exam path>/learn/** in this repo (wiped first: generated, never edit by hand) and
+// Writes <exam path>/learn/** (wiped first) and <exam path>/resources/ in this repo (generated, never edit by hand) and
 // rewrites the learn URLs in sitemap.xml. Fails on: a lesson task that matches no published
 // question objective, an em or en dash, chat phrasing ("your notes", "Let's", "Course 3"),
 // a term from outline.json bannedTerms, an unknown callout, a source page not in refs.json, a lesson without an exercise,
 // an exercise without steps, a model answer or a self-check, an unknown case, or a broken internal link.
 'use strict';
 const fs=require('fs'),path=require('path'),vm=require('vm');
+const NAV=require('./site-nav');
 const ROOT=path.resolve(__dirname,'..');
 const SITE='https://certprep.pratechlabs.com';
 const EM=String.fromCharCode(0x2014),EN=String.fromCharCode(0x2013);
@@ -262,7 +263,7 @@ function exercise(lines,i,file){
 // ---- page template ----
 const V=OUT.assetVersion||'1';
 const WORDS=['no','one','two','three','four','five','six','seven','eight','nine','ten'];
-function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld}){
+function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',side=true}){
   const canon=SITE+url;
   return `<!DOCTYPE html>
 <html lang="en">
@@ -286,21 +287,22 @@ function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld}){
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="/learn.css?v=${V}">
+<link rel="stylesheet" href="/site.css?v=${V}">
 </head>
 <body data-prefix="${esc(EXAM.storagePrefix)}"${lesson?' data-lesson="'+lesson+'"':''}${domainColor?' style="--dc:'+domainColor.color+';--dt:'+domainColor.tint+'"':''}>
-<header class="lhdr"><div class="lhdr-in">
- <a class="brand" href="${learnPath}"><span class="b-long">${esc(EXAM.name)}</span><span class="b-short">${esc(EXAM.code)}</span> <span class="b-sub">Learning Guide</span></a>
- <nav class="top"><a class="hp" href="${examPath}">Practice tests</a><a class="tl" href="/">All certifications</a></nav>
-</div></header>
-<div class="wrap">
-${sidebar(lesson)}
+${NAV.siteHeader()}
+${NAV.examTabs(examId,tab)}
+<div class="wrap${side?'':' wrap-1'}">
+${side?sidebar(lesson):''}
 <main class="main">
 <nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c,i)=>i<crumbs.length-1?'<a href="'+c[1]+'">'+esc(c[0])+'</a>':'<span>'+esc(c[0])+'</span>').join('<i>/</i>')}</nav>
 ${main}
 <aside class="notice"><strong>Important Note</strong><p>${esc(OUT.notice)}</p></aside>
 </main>
 </div>
+${NAV.siteFooter()}
 <script src="/learn.js?v=${V}"></script>
+<script src="/site.js?v=${V}"></script>
 </body>
 </html>
 `;
@@ -388,8 +390,34 @@ if(casesIndex){
   }
 }
 
+// Resources page (<exam path>/resources/): the outline's official links, then every documentation
+// page the lessons cite, grouped by domain with the lessons that cite it, then the cookbook notebooks.
+const resPath=examPath+'resources/';
+{
+  const lessonLinks=ls=>ls.map(l=>'<a href="'+l.url+'#sources">'+l.id+'</a>').join(', ');
+  const group=(items)=>{const m=new Map();for(const [s,l] of items){const k=s.url;if(!m.has(k))m.set(k,{s,ls:[]});if(!m.get(k).ls.includes(l))m.get(k).ls.push(l);}return[...m.values()];};
+  const list=g=>'<ul class="res">'+g.map(({s,ls})=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a><span>Lesson'+(ls.length>1?'s ':' ')+lessonLinks(ls)+'</span></li>').join('')+'</ul>';
+  const official=OUT.official||[];
+  const doms=OUT.domains.map(d=>({d,g:group(d.lessons.filter(l=>l.html).flatMap(l=>l.sources.map(s=>[s,l])))})).filter(x=>x.g.length);
+  const ho=group(written.flatMap(l=>l.handson.map(s=>[s,l])));
+  const nDocs=new Set(written.flatMap(l=>l.sources.map(s=>s.url))).size;
+  pages.push({url:resPath,html:page({
+    title:EXAM.code+' Study Resources - '+EXAM.name,tab:'resources',side:false,
+    desc:'Official documentation and hands-on notebooks for the '+EXAM.name+' exam, grouped by exam domain and linked to the lessons that use them.',url:resPath,
+    crumbs:[[EXAM.code,examPath],['Resources']],
+    jsonld:orgJson('CollectionPage',EXAM.code+' Study Resources',resPath,'Official documentation and hands-on notebooks for the '+EXAM.code+' exam, grouped by domain.'),
+    main:`<div class="tag">${esc(EXAM.code)} Study Resources</div>
+<h1>Study resources</h1>
+<p class="lead">The ${nDocs} documentation pages the ${esc(EXAM.code)} lessons are built on, grouped by exam domain, with the lessons that cite each one.${ho.length?' Then runnable notebooks from Anthropic\'s Claude Cookbook for hands-on practice.':''}</p>
+${official.length?'<section class="res-s"><h2 id="official">Official exam information</h2><ul class="res">'+official.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')+'</ul></section>':''}
+${doms.map(({d,g})=>`<section class="res-s" style="--dc:${d.color}"><h2 id="domain-${d.n}"><span>Domain ${d.n}</span>${esc(d.name)}</h2>${list(g)}</section>`).join('\n')}
+${ho.length?'<section class="res-s"><h2 id="hands-on"><span>Go hands-on</span>Claude Cookbook notebooks</h2><p class="ho-p">Optional and needs a Claude API key. Each notebook builds a pattern from the lessons listed beside it.</p>'+list(ho)+'</section>':''}
+<p class="after">Learning the topics? Start with the <a href="${learnPath}">${esc(EXAM.code)} learning guide</a>. Ready to test yourself? Take the <a href="${examPath}">practice tests</a>.</p>`})});
+}
+
 // ---- internal link check ----
-const known=new Set(pages.map(p=>p.url));
+// /resources/ (site-wide) is written by tools/build-site.js, which runs after this.
+const known=new Set([...pages.map(p=>p.url),'/resources/']);
 for(const p of pages){
   for(const m of p.html.matchAll(/href="(\/[^"#?]*)/g)){
     const u=m[1];
@@ -406,7 +434,8 @@ for(const p of pages){const f=path.join(ROOT,p.url,'index.html');fs.mkdirSync(pa
 // sitemap: drop this guide's old entries, append the current ones
 const smf=path.join(ROOT,'sitemap.xml'),today=new Date().toISOString().slice(0,10);
 let sm=fs.readFileSync(smf,'utf8').replace(/\r\n/g,'\n');
-sm=sm.replace(new RegExp('  <url>\\n    <loc>'+(SITE+learnPath).replace(/[.\/]/g,'\\$&')+'[^<]*</loc>[\\s\\S]*?</url>\\n','g'),'');
+for(const base of [learnPath,resPath])
+  sm=sm.replace(new RegExp('  <url>\\n    <loc>'+(SITE+base).replace(/[.\/]/g,'\\$&')+'[^<]*</loc>[\\s\\S]*?</url>\\n','g'),'');
 const entries=pages.filter(p=>p.url===learnPath||p.url.split('/').length>0).map(p=>
   '  <url>\n    <loc>'+SITE+p.url+'</loc>\n    <lastmod>'+today+'</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>'+(p.url===learnPath?'0.8':'0.7')+'</priority>\n  </url>\n').join('');
 sm=sm.replace('</urlset>',entries+'</urlset>');

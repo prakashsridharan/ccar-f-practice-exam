@@ -38,7 +38,11 @@ ok('load scripts ('+scripts.map(s=>s.name).join(', ')+')',()=>scripts.forEach(s=
 const text=n=>!n?'':(n.textContent||'');
 const find=(n,pred)=>{if(!n)return null;if(pred(n))return n;for(const c of n.children||[]){const r=find(c,pred);if(r)return r;}return null;};
 ok('renderHome',()=>run('renderHome()'));
-ok('home has hub link',()=>{if(!find(byId.app,n=>n.attrs&&n.attrs.href==='/'))throw new Error('no href="/" link')});
+// Navigation lives in the static site header and exam tabs above #app (tools/build-site.js).
+ok('shell has site header and exam tabs',()=>{
+ if(!/<header class="sh">[\s\S]*?href="\/"/.test(html))throw new Error('no site header with a link to /');
+ if(!/<nav class="xt"[\s\S]*?class="xt-t hp on"/.test(html))throw new Error('no exam tab bar with Practice tests active');
+ if(html.indexOf('<header class="sh">')>html.indexOf('<div id="app">'))throw new Error('site header must sit outside #app');});
 ok('renderStudy',()=>run('renderStudy()'));
 ok('renderPractice',()=>run('startPractice();renderPractice()'));
 ok('practice draws questionCount',()=>{const n=run('st.pq.length'),N=run('EX.blueprint.questionCount');if(n!==N)throw new Error(n+' != '+N);if(new Set(run('st.pq.map(q=>q.id)')).size!==n)throw new Error('duplicate ids in draw');});

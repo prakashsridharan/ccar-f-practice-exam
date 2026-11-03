@@ -41,8 +41,8 @@
   window.addEventListener('storage',function(e){if(e.key===key){P=load();paint();}});
 
   // Came here from the practice tests ("Read lesson")? The exam app saved where the reader
-  // was in '<prefix>-back'; the header button then goes back to it (#/back restores it).
-  var hp=document.querySelector('.top a.hp');
+  // was in '<prefix>-back'; the Practice tests tab then goes back to it (#/back restores it).
+  var hp=document.querySelector('.xt a.hp');
   try{var back=JSON.parse(localStorage.getItem((body.getAttribute('data-prefix')||'')+'-back')||'null');
     if(hp&&back&&Date.now()-back.at<24*3600*1000){
       hp.href=hp.getAttribute('href').split('#')[0]+'#/back';

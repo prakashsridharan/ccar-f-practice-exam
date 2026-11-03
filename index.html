@@ -74,13 +74,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/hub.css?v=20261104c">
+<link rel="stylesheet" href="/hub.css?v=20261104d">
+<link rel="stylesheet" href="/site.css?v=20261104d">
 </head>
 <body>
-
+<!--site-header--><header class="sh"><div class="sh-in"><a class="sh-brand" href="/"><span class="sh-logo" aria-hidden="true">CP</span>CertPrep</a><nav class="sh-nav" aria-label="Site"><details class="sh-m"><summary>Certifications</summary><div class="sh-p"><div class="sh-g"><div class="sh-gt">Claude (Anthropic)</div><div class="sh-x"><a class="sh-xn" href="/claude/ccar-f/learn/"><b>CCAR-F</b><span>Claude Certified Architect - Foundations</span></a><span class="sh-xl"><a href="/claude/ccar-f/learn/">Guide</a><a href="/claude/ccar-f/">Tests</a></span></div><div class="sh-x"><a class="sh-xn" href="/claude/ccar-p/learn/"><b>CCAR-P</b><span>Claude Certified Architect - Professional</span></a><span class="sh-xl"><a href="/claude/ccar-p/learn/">Guide</a><a href="/claude/ccar-p/">Tests</a></span></div><a class="sh-all" href="/claude/">All Claude certifications &rarr;</a></div><div class="sh-g"><div class="sh-gt">AWS</div><div class="sh-x sh-soon"><span>Practice exams in preparation.</span><i>Coming soon</i></div></div></div></details><a class="sh-a" href="/resources/">Resources</a></nav></div></header><!--/site-header-->
 <div class="hdr">
-  <h1>Certification Learning Guides and Practice Exams</h1>
-  <div class="sub">Free learning guides and scenario-based practice exams for cloud and AI certifications. No sign-up, nothing to install.</div>
+  <h1>Free learning guides and practice exams for AI and cloud certifications</h1>
+  <div class="sub">Learn every exam task in a short lesson, then test yourself against the official blueprint. No sign-up, nothing to install.</div>
 </div>
 
 <div class="container">
@@ -96,44 +97,25 @@
     </div>
   </div>
 
-  <p class="intro">Pick the certification you are preparing for. Learning guides for CCAR-F and CCAR-P teach every exam task in a short lesson with check questions and a hands-on exercise set in a realistic case study. Practice exams then test you against the official blueprint: questions are drawn in the same domain proportions as the real exam, every answer carries a full rationale explaining why the other options are wrong, and each links to the relevant official documentation.</p>
+  <!--cert-list--><section class="cl-v" data-vendor="claude"><div class="cl-vh"><h2>Claude (Anthropic)</h2><a href="/claude/">All Claude certifications &rarr;</a></div><div class="cert-row" data-q="ccar-f claude certified architect - foundations claude (anthropic)"><div class="cr-m"><div class="cr-t"><span class="cr-c">CCAR-F</span><span class="cr-l">Foundations</span></div><h3>Claude Certified Architect - Foundations</h3><p>Agents, tools and MCP, Claude Code, prompts and structured output, context and reliability.</p><div class="cr-f"><span>30 lessons</span><span>120 questions</span><span>2 practice tests</span><span>5 domains</span></div></div><div class="cr-a"><a class="cr-b cr-p" href="/claude/ccar-f/learn/">Learning guide</a><a class="cr-b" href="/claude/ccar-f/">Practice tests</a></div></div><div class="cert-row" data-q="ccar-p claude certified architect - professional claude (anthropic)"><div class="cr-m"><div class="cr-t"><span class="cr-c">CCAR-P</span><span class="cr-l">Professional</span></div><h3>Claude Certified Architect - Professional</h3><p>Solution design, models and prompting, integration, evaluation, governance and the delivery lifecycle.</p><div class="cr-f"><span>38 lessons</span><span>126 questions</span><span>2 practice tests</span><span>7 domains</span></div></div><div class="cr-a"><a class="cr-b cr-p" href="/claude/ccar-p/learn/">Learning guide</a><a class="cr-b" href="/claude/ccar-p/">Practice tests</a></div></div></section><section class="cl-v" data-vendor="aws"><div class="cl-vh"><h2>AWS</h2></div><div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>Practice exams in preparation.</p></div></div></section><!--/cert-list-->
 
-  <div class="vendor"><h2>Claude (Anthropic)</h2><a href="/claude/">All Claude certifications &rarr;</a></div>
-  <div class="exams">
-  <div class="exam exam-2">
-    <div class="top"><span class="code">CCAR-F</span><span class="pill live">Live</span><span class="pill new">New: learning guide</span></div>
-    <h2>Foundations: Learning Guide and Practice Exams</h2>
-    <div class="name">Claude Certified Architect - Foundations</div>
-    <p>A free learning guide with 30 lessons, one per exam task, each with short code examples, check questions and a hands-on exercise set in one of the exam's six scenarios. Then 120 original scenario-based practice questions across five domains, in two timed 60-question tests with study or exam mode and a per-domain score breakdown.</p>
-    <div class="facts">
-      <span class="fact">30 lessons</span>
-      <span class="fact">120 questions</span>
-      <span class="fact">2 practice tests</span>
-      <span class="fact">5 domains</span>
-    </div>
-    <div class="acts"><a class="act act-p" href="/claude/ccar-f/learn/">Learning guide &rarr;</a><a class="act" href="/claude/ccar-f/">Practice tests &rarr;</a></div>
-  </div>
+  <section class="how">
+    <h2>How it works</h2>
+    <ol>
+      <li><b>Learn</b><span>One short lesson per exam task, with the traps the exam uses as wrong answers, check questions and a hands-on exercise.</span></li>
+      <li><b>Practice</b><span>Timed practice tests in the exam's domain proportions. Every answer explains why it is right and why the others are wrong.</span></li>
+      <li><b>Check readiness</b><span>Scores by domain, a readiness estimate and a retry list of the questions you missed. Progress stays in your browser.</span></li>
+    </ol>
+  </section>
 
-  <div class="exam exam-2">
-    <div class="top"><span class="code">CCAR-P</span><span class="pill live">Live</span><span class="pill new">New: learning guide</span></div>
-    <h2>Professional: Learning Guide and Practice Exams</h2>
-    <div class="name">Claude Certified Architect - Professional</div>
-    <p>A free learning guide with 38 lessons, one per exam task, each with check questions and a hands-on exercise set in a realistic case study. Then 126 original scenario-based practice questions across seven domains, including multiple-response items, in two timed 63-question tests with study or exam mode and a per-domain score breakdown.</p>
-    <div class="facts">
-      <span class="fact">38 lessons</span>
-      <span class="fact">126 questions</span>
-      <span class="fact">2 practice tests</span>
-      <span class="fact">7 domains</span>
-    </div>
-    <div class="acts"><a class="act act-p" href="/claude/ccar-p/learn/">Learning guide &rarr;</a><a class="act" href="/claude/ccar-p/">Practice tests &rarr;</a></div>
-  </div>
-
-  </div>
-
-  <div class="more">
-    <h3>More certifications to come</h3>
-    <p>AWS certification practice exams are in preparation, and further Claude certifications will be added as they are published.</p>
-  </div>
+  <section class="faq">
+    <h2>Frequently asked questions</h2>
+    <details><summary>Is it really free?</summary><p>Yes. Every learning guide and practice test on this site is free, with no sign-up. Your progress is saved in your browser, and you can download a backup to move it to another device.</p></details>
+    <details><summary>Are these real exam questions?</summary><p>No. Every lesson and question is original, written from the public exam guides and the providers' documentation. Live exam content is confidential, and nothing here comes from a real exam.</p></details>
+    <details><summary>Is this affiliated with Anthropic?</summary><p>No. This is an independent study aid. It is not affiliated with or endorsed by Anthropic or any other certification provider.</p></details>
+    <details><summary>What happens when an exam guide changes?</summary><p>Each guide follows the published exam guide task by task. When a new version is published, the lessons are compared against it and updated, and where the exam guide and the current documentation differ, a note in the lesson explains both.</p></details>
+    <details><summary>Which certification should I start with?</summary><p>If you build with Claude day to day, start with Foundations (CCAR-F): it covers agents, tools, Claude Code and prompting. Professional (CCAR-P) adds solution design, evaluation, governance and stakeholder work, and suits architects who lead Claude projects.</p></details>
+  </section>
 
   <div class="notice">
     <strong>Important Note</strong>
@@ -141,6 +123,7 @@
   </div>
 
 </div>
+<!--site-footer--><footer class="sf"><div class="sf-in"><div class="sf-b"><a class="sh-brand" href="/"><span class="sh-logo" aria-hidden="true">CP</span>CertPrep</a><p>Free learning guides and practice exams for AI and cloud certifications. An independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p></div><div class="sf-c"><div class="sf-h">Certifications</div><a href="/claude/ccar-f/learn/">CCAR-F Foundations</a><a href="/claude/ccar-p/learn/">CCAR-P Professional</a></div><div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a></div></div></footer><!--/site-footer-->
 <div class="adm-ov" id="adm" hidden>
   <div class="adm" role="dialog" aria-modal="true" aria-labelledby="adm-t">
     <div class="adm-hd"><h2 id="adm-t">Admin</h2><button class="adm-x" type="button" id="adm-x" aria-label="Close">&times;</button></div>
@@ -167,10 +150,10 @@ document.querySelectorAll('[data-until]').forEach(function(el){if(new Date()>=ne
 // exam pages already ship.
 (function(){
   var ov=document.getElementById('adm'),list=document.getElementById('adm-list'),loaded=false;
-  // A card is either one link (a.exam) or a div with Learning guide + Practice tests buttons.
-  document.querySelectorAll('.exams .exam').forEach(function(a){
-    var code=a.querySelector('.code'),name=a.querySelector('h2');
-    var t=a.tagName==='A'?a:a.querySelector('.acts a:not(.act-p)')||a.querySelector('a');if(!t)return;
+  // One row per live exam (generated by tools/build-site.js); its Practice tests button is the exam page.
+  document.querySelectorAll('.cert-row[data-q]').forEach(function(a){
+    var code=a.querySelector('.cr-c'),name=a.querySelector('h3');
+    var t=a.querySelector('.cr-a a:not(.cr-p)')||a.querySelector('.cr-a a');if(!t)return;
     var l=document.createElement('a');l.className='adm-ex';l.href=t.getAttribute('href')+'#admin';
     l.innerHTML='<b></b><span></span>';l.firstChild.textContent=code?code.textContent:'';l.lastChild.textContent=(name?name.textContent:'')+' admin →';
     list.appendChild(l);});
@@ -199,5 +182,6 @@ document.querySelectorAll('[data-until]').forEach(function(el){if(new Date()>=ne
   window.addEventListener('hashchange',sync);sync();
 })();
 </script>
+<script src="/site.js?v=20261104d"></script>
 </body>
 </html>
