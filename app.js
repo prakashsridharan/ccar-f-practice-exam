@@ -350,20 +350,21 @@ function renderQCard(q,opts){
 function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',null,'Score by Domain'));const rs=E('div',{className:'ds'});Object.entries(DM).forEach(([d,info])=>{const dd=sc.ds[d];const dp=dd.a?Math.round(dd.c/dd.a*100):0;rs.appendChild(E('div',{className:'dsr'},E('span',{className:'dn'},'D'+d+': '+info.n),E('div',{className:'db'},E('div',{className:'dbf',style:'width:'+dp+'%;background:'+domainColor(d)})),E('span',{className:'dp',style:'color:'+domainColor(d)},dd.a?dp+'%':'-')));});sm.appendChild(rs);return sm;}
 
 // Views
-// Exams with a learning guide show it above the tests, with the reader's lesson progress
-// (kept by the guide's learn.js in '<prefix>-learn') and a link to the next unfinished lesson.
-function learnStrip(){let done={};try{const p=JSON.parse(localStorage.getItem(EX.storagePrefix+'-learn')||'null');if(p&&p.done)done=p.done;}catch(e){}
- const n=LESSONS.filter(l=>done[l.id]).length,next=LESSONS.find(l=>!done[l.id]);
- const go=n&&next?{href:next.u,t:'Continue with '+next.id+' '+next.n}:{href:LEARN.u,t:'Open the learning guide'};
- return E('div',{className:'learn-strip'},E('div',{className:'ls-t'},E('div',{className:'ls-k'},'Learning guide'),
-   E('div',{className:'ls-h'},LESSONS.length+' lessons, one per exam task, with check questions and case-study exercises'),
-   E('div',{className:'ls-p'},n?n+' of '+LESSONS.length+' lessons complete':'Learn the topics first, then test yourself here.')),
-  E('a',{className:'btn btn-p ls-go',href:go.href},go.t+' →'));}
+// A returning reader of the learning guide gets one compact line above the tests: lesson
+// progress (kept by the guide's learn.js in '<prefix>-learn') and a link to the next unread
+// lesson. Shown only once a lesson is complete: the exam tab bar already links the guide itself.
+function learnProgress(){let done={};try{const p=JSON.parse(localStorage.getItem(EX.storagePrefix+'-learn')||'null');if(p&&p.done)done=p.done;}catch(e){}
+ return{n:LESSONS.filter(l=>done[l.id]).length,next:LESSONS.find(l=>!done[l.id])};}
+function learnStrip(){const {n,next}=learnProgress();
+ const go=next?{href:next.u,t:'Continue with '+next.id+' '+next.n}:{href:LEARN.u,t:'Review the guide'};
+ return E('div',{className:'learn-strip'},E('div',{className:'ls-t'},E('span',{className:'ls-k'},'Learning guide'),
+   E('span',{className:'ls-p'},n+' of '+LESSONS.length+' lessons complete')),
+  E('a',{className:'ls-go',href:go.href},go.t+' →'));}
 function renderHome(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();
  // The site header and exam tabs above #app (static in the shell) handle navigation.
  app.appendChild(E('div',{className:'hdr'},E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
- if(LESSONS.length)ct.appendChild(learnStrip());
+ if(LESSONS.length&&learnProgress().n)ct.appendChild(learnStrip());
 
  // Tests come first so a returning user can start without scrolling; the exam
  // reference material follows for anyone who wants it.

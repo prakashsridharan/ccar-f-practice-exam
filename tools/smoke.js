@@ -191,9 +191,13 @@ ok('router: go(), Back-style routing, guarded routes, #admin',()=>{
  ctx.location.hash='#admin';run('routeFromHash()');if(run('st.modal')!=='admin')throw new Error('#admin did not open admin');
  ctx.location.hash='#/study';run('routeFromHash()');if(run('st.modal')||V()!=='study')throw new Error('leaving #admin -> '+V());});
 ok('learning guide: every lesson task has questions, answer panels link the objective to its lesson',()=>{
- run('renderHome()');const strip=find(byId.app,n=>n.className==='learn-strip');
- if(!!strip!==!!run("LESSONS.length"))throw new Error('guide strip shown='+!!strip+' but lessons='+run("LESSONS.length"));
- const L=run("typeof LEARN!=='undefined'?LEARN.lessons:[]");
+ // The progress strip appears only once a lesson is complete (the exam tab bar links the guide).
+ const L=run("typeof LEARN!=='undefined'?LEARN.lessons:[]"),pk=run('EX.storagePrefix')+'-learn',hasStrip=()=>!!find(byId.app,n=>n.className==='learn-strip');
+ delete store[pk];run('renderHome()');if(hasStrip())throw new Error('guide strip shown with no lesson complete');
+ if(L.length){store[pk]=JSON.stringify({v:1,done:{[L[0].id]:'2026-11-04'}});run('renderHome()');
+  if(!hasStrip())throw new Error('guide strip missing after a lesson was completed');
+  if(!find(byId.app,n=>n.className==='ls-go'&&n.attrs.href===L[1].u))throw new Error('strip does not link the next lesson');
+  delete store[pk];run('renderHome()');}
  for(const l of L)if(!run('allQ().some(q=>q.objective==='+JSON.stringify(l.t)+')'))throw new Error('lesson '+l.id+' task has no question');
  const q=run('allQ().find(q=>q.objective&&lessonForOb(q.objective))');
  if(!L.length){if(q)throw new Error('lesson link without a guide');return;}
