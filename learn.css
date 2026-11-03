@@ -183,3 +183,5 @@ td:first-child{font-weight:600;color:var(--ac-h)}
  .side{max-height:none}
 }
 @media print{.lhdr,.side,.pn,.done-row,.kc-b,.ex-copy{display:none}.wrap{display:block}}
+/* Phones: slightly larger lesson numbers in the lesson list */
+@media(max-width:560px){.side .lid{font-size:.78rem}}

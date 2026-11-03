@@ -314,3 +314,5 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .ls-h{font-weight:700;color:var(--ac-h);font-size:.92rem;margin:.1rem 0 .15rem}
 .ls-p{font-size:.8rem;color:var(--text-2)}
 .ls-go{text-decoration:none;white-space:normal}
+/* Phones: slightly larger labels, taller tap targets for the text links */
+@media(max-width:560px){.badge,.tc,.qnum-dot{font-size:.72rem}.m2f-l{font-size:.7rem}.m2-d,.prog-links,.prog-links button,.prog-lbl{font-size:.8rem}.prog-links button{padding:.55rem .25rem}.dom-all{padding:.5rem .3rem}}

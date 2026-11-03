@@ -120,3 +120,5 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .act{position:relative;z-index:1;font-size:.84rem;font-weight:700;text-decoration:none;padding:.5rem .9rem;border-radius:8px;border:1.5px solid var(--ac);color:var(--ac);background:#fff}
 .act:hover{background:#EEF5FB}
 .act-p{background:var(--ac);color:#fff}.act-p:hover{background:#1A2E45;border-color:#1A2E45}
+/* Phones: slightly larger labels, taller tap targets for the text links */
+@media(max-width:560px){.pill{font-size:.72rem}.code,.fact{font-size:.78rem}.promo-pill{font-size:.74rem}.vendor a{display:inline-block;padding:.5rem 0}.crumb{padding:.4rem 0}}
