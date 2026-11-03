@@ -34,9 +34,43 @@
     }
   ],
   "general": [
-    {"url": "https://platform.claude.com/docs/en/home", "label": "Claude Developer Platform documentation"},
-    {"url": "https://code.claude.com/docs/en/overview", "label": "Claude Code documentation"},
-    {"url": "https://modelcontextprotocol.io/", "label": "Model Context Protocol specification and guides"},
-    {"url": "https://github.com/anthropics/claude-cookbooks", "label": "Anthropic Claude Cookbook (runnable notebooks)"}
+    {
+      "url": "https://platform.claude.com/docs/en/home",
+      "label": "Claude Developer Platform documentation"
+    },
+    {
+      "url": "https://code.claude.com/docs/en/overview",
+      "label": "Claude Code documentation"
+    },
+    {
+      "url": "https://modelcontextprotocol.io/",
+      "label": "Model Context Protocol specification and guides"
+    },
+    {
+      "url": "https://github.com/anthropics/claude-cookbooks",
+      "label": "Anthropic Claude Cookbook (runnable notebooks)"
+    }
+  ],
+  "official": [
+    {
+      "url": "https://anthropic-partners.skilljar.com/page/partner-certifications",
+      "label": "Anthropic: Claude certifications (exams, exam guides, prep courses and registration)"
+    },
+    {
+      "url": "https://anthropic-partners.skilljar.com/page/certification-eligibility",
+      "label": "Anthropic: who can take a Claude certification exam"
+    },
+    {
+      "url": "https://anthropic-partners.skilljar.com/page/faq-certifications",
+      "label": "Anthropic: certification FAQ"
+    },
+    {
+      "url": "https://www.pearsonvue.com/us/en/anthropic.html",
+      "label": "Pearson VUE: schedule, reschedule or cancel a Claude exam"
+    },
+    {
+      "url": "https://claude.com/partners",
+      "label": "Claude Partner Network (registration requires a partner organization)"
+    }
   ]
 }
