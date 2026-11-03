@@ -282,7 +282,7 @@ function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld}){
 </head>
 <body data-prefix="${esc(EXAM.storagePrefix)}"${lesson?' data-lesson="'+lesson+'"':''}${domainColor?' style="--dc:'+domainColor.color+';--dt:'+domainColor.tint+'"':''}>
 <header class="lhdr"><div class="lhdr-in">
- <a class="brand" href="${learnPath}">${esc(EXAM.code)} Learning Guide</a>
+ <a class="brand" href="${learnPath}"><span class="b-long">${esc(EXAM.name)}</span><span class="b-short">${esc(EXAM.code)}</span> <span class="b-sub">Learning Guide</span></a>
  <nav class="top"><a class="hp" href="${examPath}">Practice tests</a><a class="tl" href="/">All certifications</a></nav>
 </div></header>
 <div class="wrap">
@@ -317,7 +317,8 @@ pages.push({url:learnPath,html:page({
   desc:OUT.intro,url:learnPath,crumbs:[[EXAM.code,examPath],['Learning guide']],
   jsonld:orgJson('Course',EXAM.code+' Learning Guide',learnPath,OUT.intro,{provider:{'@type':'Organization',name:'certprep'},
     hasPart:lessons.filter(l=>l.html).map(l=>({'@type':'LearningResource',name:l.title,url:SITE+l.url}))}),
-  main:`<h1>${esc(OUT.title)}</h1>
+  main:`<div class="tag">${esc(EXAM.code)} Learning Guide</div>
+<h1>${esc(OUT.title)}</h1>
 <p class="lead">${esc(OUT.intro)}</p>
 <div class="progress js-only"><div class="bar"><i data-bar="all"></i></div><span data-prog="all" data-total="${lessons.length}"></span> lessons complete</div>
 <div class="dgrid">${OUT.domains.map(d=>`<a class="dcard" href="${d.url}" style="--dc:${d.color};--dt:${d.tint}">
