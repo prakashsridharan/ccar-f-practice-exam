@@ -280,8 +280,8 @@ function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',
 <meta property="og:site_name" content="${esc(EXAM.code)} Learning Guide">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
-<meta name="twitter:card" content="summary">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📘</text></svg>">
+<meta name="twitter:card" content="summary_large_image">
+${NAV.headIcons()}
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

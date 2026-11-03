@@ -6,6 +6,7 @@
 // Run it last: node tools/build.js <content> -> node tools/build-learn.js <content> <exam> (each) -> this.
 //
 // Static pages carry marked regions, rewritten from tools/site-nav.js on every run:
+//   <!--site-icons-->...<!--/site-icons-->   (in <head>: favicons, manifest, link-preview image)
 //   <!--site-header-->...<!--/site-header-->
 //   <!--exam-tabs <exam-id> <learn|tests|resources>-->...<!--/exam-tabs-->
 //   <!--cert-list [vendor-id]-->...<!--/cert-list-->
@@ -48,7 +49,8 @@ const resHtml=`<!DOCTYPE html>
 <meta property="og:site_name" content="${esc(SITE.name)}">
 <meta property="og:title" content="Study Resources - ${esc(SITE.name)}">
 <meta property="og:description" content="Curated official documentation and hands-on notebooks for each certification, grouped by exam domain.">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+<meta name="twitter:card" content="summary_large_image">
+<!--site-icons--><!--/site-icons-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
@@ -85,14 +87,15 @@ fs.writeFileSync(path.join(ROOT,'resources','index.html'),resHtml);
 const pages=['index.html','resources/index.html',
   ...SITE.vendors.filter(v=>v.url).map(v=>v.url.replace(/^\//,'')+'index.html'),
   ...liveExams.map(x=>x.path.replace(/^\//,'')+'index.html')];
-const RE=/<!--(site-header|site-footer|exam-tabs|cert-list)([^>]*?)-->[\s\S]*?<!--\/\1-->/g;
+const RE=/<!--(site-icons|site-header|site-footer|exam-tabs|cert-list)([^>]*?)-->[\s\S]*?<!--\/\1-->/g;
 for(const p of pages){
   const f=path.join(ROOT,p);
   if(!fs.existsSync(f)){errors.push(p+': missing');continue;}
   const src=fs.readFileSync(f,'utf8');
   const out=src.replace(RE,(_,kind,args)=>{
     const a=args.trim().split(/\s+/).filter(Boolean);let body='';
-    if(kind==='site-header')body=N.siteHeader();
+    if(kind==='site-icons')body='\n'+N.headIcons()+'\n';
+    else if(kind==='site-header')body=N.siteHeader();
     else if(kind==='site-footer')body=N.siteFooter();
     else if(kind==='cert-list')body=N.certList(a[0]);
     else{if(!N.exam(a[0])){errors.push(p+': exam-tabs for unknown exam '+a[0]);return _;}body=N.examTabs(a[0],a[1]);}

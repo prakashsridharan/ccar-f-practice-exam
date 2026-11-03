@@ -25,6 +25,25 @@ const exams=()=>SITE.vendors.flatMap(v=>v.exams);
 const exam=id=>exams().find(x=>x.id===id);
 const live=x=>x.status==='live'&&x.counts;
 
+// Logo: a progress ring closing into a check (concept A, chosen 2026-11-04). This is the
+// light-on-dark version for the navy header and footer; /favicon.svg is the same mark on a tile.
+const LOGO='<svg class="sh-mark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="25" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="7"/><path d="M32 7a25 25 0 1 1-23.5 16.4" fill="none" stroke="#5fd3e0" stroke-width="7" stroke-linecap="round"/><path d="M21 33l8 8 15-17" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const brand=()=>'<a class="sh-brand" href="/" aria-label="'+esc(SITE.name)+' home">'+LOGO+'<span>'+esc(SITE.name).replace(/Prep$/,'<b>Prep</b>')+'</span></a>';
+const ORIGIN='https://certprep.pratechlabs.com';
+// <head> tags shared by every page: icons, theme colour, manifest and the link-preview image.
+function headIcons(){
+  return ['<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
+    '<link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png">',
+    '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
+    '<link rel="manifest" href="/site.webmanifest">',
+    '<meta name="theme-color" content="#1B4F8A">',
+    '<meta property="og:image" content="'+ORIGIN+'/og-image.png">',
+    '<meta property="og:image:width" content="1200">',
+    '<meta property="og:image:height" content="630">',
+    '<meta property="og:image:alt" content="'+esc(SITE.name)+': '+esc(SITE.tagline)+'">',
+    '<meta name="twitter:image" content="'+ORIGIN+'/og-image.png">'].join('\n');
+}
+
 // Header: brand, Certifications menu (a <details>, so it opens without JavaScript; /site.js
 // closes it on Escape or an outside click), Resources.
 function siteHeader(){
@@ -36,7 +55,7 @@ function siteHeader(){
       '<div class="sh-x sh-soon"><span>'+esc(v.note||'Coming soon')+'</span><i>Coming soon</i></div>')+
     (v.url&&v.exams.filter(live).length>1?'<a class="sh-all" href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>').join('');
   return '<header class="sh"><div class="sh-in">'+
-    '<a class="sh-brand" href="/"><span class="sh-logo" aria-hidden="true">CP</span>'+esc(SITE.name)+'</a>'+
+    brand()+
     '<nav class="sh-nav" aria-label="Site"><details class="sh-m"><summary>Certifications</summary><div class="sh-p">'+groups+'</div></details>'+
     '<a class="sh-a" href="/resources/">Resources</a></nav></div></header>';
 }
@@ -71,11 +90,11 @@ function certList(vendorId){
 function siteFooter(){
   const certs=exams().filter(live);
   return '<footer class="sf"><div class="sf-in">'+
-    '<div class="sf-b"><a class="sh-brand" href="/"><span class="sh-logo" aria-hidden="true">CP</span>'+esc(SITE.name)+'</a>'+
+    '<div class="sf-b">'+brand()+
     '<p>'+esc(SITE.tagline)+'. An independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p></div>'+
     '<div class="sf-c"><div class="sf-h">Certifications</div>'+certs.map(x=>'<a href="'+(x.learn||x.path)+'">'+esc(x.code)+' '+esc(x.level)+'</a>').join('')+'</div>'+
     '<div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a></div>'+
     '</div></footer>';
 }
 
-module.exports={SITE,ROOT,esc,exams,exam,live,siteHeader,examTabs,certList,siteFooter};
+module.exports={SITE,ROOT,esc,exams,exam,live,siteHeader,examTabs,certList,siteFooter,headIcons};
