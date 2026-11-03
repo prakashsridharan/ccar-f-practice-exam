@@ -173,7 +173,19 @@ async function loadData(){try{CQ=JSON.parse(localStorage.getItem(EX.storagePrefi
 async function saveData(){localStorage.setItem(EX.storagePrefix+'-cq',JSON.stringify(CQ));localStorage.setItem(EX.storagePrefix+'-cs',JSON.stringify(CS));}
 
 // Visit tracking
-async function trackVisit(){if(!hasSupa())return;try{const r=await fetch(SUPABASE_URL+'/rest/v1/visits',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({page:EX.visitPage||'home',ua:navigator.userAgent.substring(0,200)})});if(!r.ok)console.warn('Visit tracking:',r.status,await r.text());}catch(e){console.warn('Visit tracking error:',e);}}
+// Where the visit came from: utm_source/utm_campaign from a shared link (e.g. a LinkedIn post),
+// else the referring site. The utm_ tags are then removed from the address bar so a bookmark or
+// a re-shared link does not credit the same post again. Mirrored in learn.js.
+function visitMeta(){const q=new URLSearchParams(location.search),m={path:location.pathname.slice(0,200),src:(q.get('utm_source')||'').slice(0,40),campaign:(q.get('utm_campaign')||'').slice(0,60),ref:''};
+ try{const h=document.referrer&&new URL(document.referrer).hostname;if(h&&h!==location.hostname)m.ref=h.slice(0,80);}catch(e){}
+ const tags=[...q.keys()].filter(k=>k.startsWith('utm_'));
+ if(tags.length){tags.forEach(k=>q.delete(k));const s=q.toString();try{history.replaceState(history.state,'',location.pathname+(s?'?'+s:'')+location.hash);}catch(e){}}
+ return m;}
+async function trackVisit(){if(!hasSupa())return;try{const base={page:EX.visitPage||'home',ua:navigator.userAgent.substring(0,200)};
+ const post=b=>fetch(SUPABASE_URL+'/rest/v1/visits',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(b)});
+ let r=await post(Object.assign({},base,visitMeta()));
+ if(r.status===400)r=await post(base);// source columns not migrated yet: still count the visit
+ if(!r.ok)console.warn('Visit tracking:',r.status,await r.text());}catch(e){console.warn('Visit tracking error:',e);}}
 async function getVisitCount(){if(!hasSupa())return{total:0,today:0,unique:0};try{const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/visit_stats',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'}});if(r.ok){const d=await r.json();return d;}else{console.warn('Visit stats:',r.status,await r.text());}return{total:0,today:0,unique:0};}catch(e){console.warn('Visit stats error:',e);return{total:0,today:0,unique:0};}}
 function allQ(){return[...BUILTIN,...CQ];}
 function allS(){return{...BS,...CS};}

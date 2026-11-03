@@ -74,7 +74,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/hub.css?v=20261104b">
+<link rel="stylesheet" href="/hub.css?v=20261104c">
 </head>
 <body>
 
@@ -147,6 +147,10 @@
     <div class="adm-bd">
       <h3>Visitor metrics (all pages)</h3>
       <div class="adm-stats"><div class="adm-stat"><b id="adm-total">-</b><span>Total visits</span></div><div class="adm-stat"><b id="adm-today">-</b><span>Today</span></div><div class="adm-stat"><b id="adm-unique">-</b><span>Unique visitors</span></div></div>
+      <h3>Traffic sources (last 90 days)</h3>
+      <div class="adm-tw" id="adm-src">Loading...</div>
+      <h3>Top guide pages (last 90 days)</h3>
+      <div class="adm-tw" id="adm-pages">Loading...</div>
       <h3>Exam admin</h3>
       <div id="adm-list"></div>
       <p class="adm-note">Each exam has its own admin panel: add or upload questions, export and import backups, and (CCAR-F only) sync the question bank to Supabase. Your Supabase key is shared between them and stays in this browser.</p>
@@ -163,16 +167,30 @@ document.querySelectorAll('[data-until]').forEach(function(el){if(new Date()>=ne
 // exam pages already ship.
 (function(){
   var ov=document.getElementById('adm'),list=document.getElementById('adm-list'),loaded=false;
-  document.querySelectorAll('.exams a.exam').forEach(function(a){
+  // A card is either one link (a.exam) or a div with Learning guide + Practice tests buttons.
+  document.querySelectorAll('.exams .exam').forEach(function(a){
     var code=a.querySelector('.code'),name=a.querySelector('h2');
-    var l=document.createElement('a');l.className='adm-ex';l.href=a.getAttribute('href')+'#admin';
+    var t=a.tagName==='A'?a:a.querySelector('.acts a:not(.act-p)')||a.querySelector('a');if(!t)return;
+    var l=document.createElement('a');l.className='adm-ex';l.href=t.getAttribute('href')+'#admin';
     l.innerHTML='<b></b><span></span>';l.firstChild.textContent=code?code.textContent:'';l.lastChild.textContent=(name?name.textContent:'')+' admin →';
     list.appendChild(l);});
   function stats(){if(loaded)return;loaded=true;
     var K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1emR5cG1sZnBlc2xzZmV6YXBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjYyNDcsImV4cCI6MjEwMzk0MjI0N30.UGbcFwFLeKnTITJLQm8QO4YPn1hDhWe8ptz1-QJ19ik';
     fetch('https://vuzdypmlfpeslsfezapd.supabase.co/rest/v1/rpc/visit_stats',{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'}})
       .then(function(r){return r.ok?r.json():{}}).catch(function(){return {}})
-      .then(function(v){['total','today','unique'].forEach(function(k){document.getElementById('adm-'+k).textContent=v&&v[k]!=null?v[k]:'n/a';});});}
+      .then(function(v){['total','today','unique'].forEach(function(k){document.getElementById('adm-'+k).textContent=v&&v[k]!=null?v[k]:'n/a';});});
+    fetch('https://vuzdypmlfpeslsfezapd.supabase.co/rest/v1/rpc/visit_sources',{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json'},body:'{"p_days":90}'})
+      .then(function(r){return r.ok?r.json():null}).catch(function(){return null})
+      .then(function(v){
+        table('adm-src',v&&v.sources,['Source','Campaign','Visits','People','Last'],function(s){return [s.source,s.campaign||'-',s.visits,s.people,String(s.last||'').slice(0,10)];});
+        table('adm-pages',v&&v.pages,['Guide page','Visits'],function(p){return [p.path.replace(/^\/claude\//,'').replace(/\/$/,''),p.visits];});});}
+  // Builds a small table with textContent only: sources and campaigns come from visitors' URLs.
+  function table(id,rows,head,cells){var box=document.getElementById(id);box.textContent='';
+    if(!rows||!rows.length){box.textContent=rows?'No visits recorded yet.':'Not available.';return;}
+    var t=document.createElement('table');t.className='adm-tbl';
+    [head].concat(rows.map(cells)).forEach(function(r,i){var tr=t.insertRow();
+      r.forEach(function(c){var td=document.createElement(i?'td':'th');td.textContent=c;tr.appendChild(td);});});
+    box.appendChild(t);}
   function sync(){var on=location.hash==='#admin';ov.hidden=!on;if(on)stats();}
   function close(){history.replaceState(null,'',location.pathname+location.search);sync();}
   document.getElementById('adm-x').addEventListener('click',close);

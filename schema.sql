@@ -53,6 +53,14 @@ ALTER TABLE scenarios ADD COLUMN IF NOT EXISTS exam TEXT NOT NULL DEFAULT 'ccar-
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS exam TEXT NOT NULL DEFAULT 'ccar-f';
 ALTER TABLE visits    ADD COLUMN IF NOT EXISTS exam TEXT NOT NULL DEFAULT 'ccar-f';
 
+-- Visit sources (2026-11): the page path, utm_source / utm_campaign from a
+-- shared link, and the referring site's host. Rows from before this have
+-- path '' and are left out of visit_sources().
+ALTER TABLE visits    ADD COLUMN IF NOT EXISTS path     TEXT NOT NULL DEFAULT '';
+ALTER TABLE visits    ADD COLUMN IF NOT EXISTS src      TEXT NOT NULL DEFAULT '';
+ALTER TABLE visits    ADD COLUMN IF NOT EXISTS campaign TEXT NOT NULL DEFAULT '';
+ALTER TABLE visits    ADD COLUMN IF NOT EXISTS ref      TEXT NOT NULL DEFAULT '';
+
 -- Prompts for mapping/matching items. NULL for ordinary choice items.
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS prompts JSONB;
 
@@ -154,6 +162,27 @@ RETURNS JSON AS $$
     'total',  (SELECT COUNT(*) FROM visits WHERE p_exam IS NULL OR exam = p_exam),
     'today',  (SELECT COUNT(*) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND visited_at >= CURRENT_DATE),
     'unique', (SELECT COUNT(DISTINCT ua) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND ua != '')
+  );
+$$ LANGUAGE sql SECURITY DEFINER;
+
+-- Traffic sources for the site admin panel: visits per source + campaign
+-- (source = utm_source, else the referring host, else 'direct'), and the most
+-- visited learning-guide pages, over the last p_days days.
+DROP FUNCTION IF EXISTS visit_sources(INTEGER);
+CREATE FUNCTION visit_sources(p_days INTEGER DEFAULT 90)
+RETURNS JSON AS $$
+  SELECT json_build_object(
+    'sources', COALESCE((SELECT json_agg(t ORDER BY t.visits DESC) FROM (
+      SELECT COALESCE(NULLIF(src,''), NULLIF(ref,''), 'direct') AS source, campaign,
+             COUNT(*) AS visits, COUNT(DISTINCT ua) AS people, MAX(visited_at) AS last
+      FROM visits
+      WHERE path <> '' AND visited_at >= now() - make_interval(days => p_days)
+      GROUP BY 1, 2) t), '[]'::json),
+    'pages', COALESCE((SELECT json_agg(t ORDER BY t.visits DESC) FROM (
+      SELECT path, COUNT(*) AS visits
+      FROM visits
+      WHERE path LIKE '%/learn/%' AND visited_at >= now() - make_interval(days => p_days)
+      GROUP BY path ORDER BY 2 DESC LIMIT 15) t), '[]'::json)
   );
 $$ LANGUAGE sql SECURITY DEFINER;
 

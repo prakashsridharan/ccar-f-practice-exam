@@ -81,6 +81,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .adm-ex:hover{border-color:var(--ac);background:#f4f9fe}
 .adm-ex b{font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ac)}
 .adm-ex span{font-size:.8rem;color:var(--text-2)}
+.adm-tw{overflow-x:auto;margin-bottom:1.2rem;font-size:.75rem;color:var(--text-m)}
+.adm-tbl{width:100%;border-collapse:collapse;font-size:.75rem;color:var(--text-2)}
+.adm-tbl th,.adm-tbl td{text-align:left;padding:.3rem .4rem;border-bottom:1px solid var(--border);white-space:nowrap}
+.adm-tbl th{font-weight:700;color:var(--text-m)}
+.adm-tbl td:nth-child(n+3){font-family:'JetBrains Mono',monospace}
 .adm-note{font-size:.72rem;color:var(--text-m);line-height:1.55;margin-top:.8rem}
 
 /* Udemy coupon banner on the hub: the first thing under the header, in teal so it
