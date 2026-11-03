@@ -6,7 +6,7 @@
 // Sources, in <content-dir>/<vendor>/<exam>/:
 //   config.js            const EXAM={...}  domain names, weights, colours, blurbs, path, storagePrefix
 //   refs.json            the title-checked doc links; every lesson source must use one of these pages
-//   learn/outline.json   {title, intro, notice, domains:[{n, slug, lessons:[{id, slug, title, task}]}]}
+//   learn/outline.json   {title, intro, notice, outOfScope?:{intro, items}, domains:[{n, slug, lessons:[{id, slug, title, task}]}]}
 //   learn/<slug>.md      one per lesson; a lesson with no file is listed as "coming soon"
 //   learn/cases/*.md     fictional case studies used by the exercises (index.md = the cases page)
 //
@@ -19,7 +19,7 @@
 //   - https://github.com/anthropics/claude-cookbooks/blob/main/<path>|Label
 //   ---
 //   Markdown: ## and ### headings, paragraphs, - and 1. lists, | tables |, **bold**, *italic*,
-//   `code`, [text](url), and callouts:  > [!trap] Title / > [!rule] Title / > [!example] Title
+//   `code`, ```lang fenced blocks```, [text](url), and callouts:  > [!trap] Title / > [!rule] Title / > [!example] Title / > [!note] Title
 //   followed by "> " lines (which may hold lists).
 //   Check questions (original, written for the lesson; never questions from the tests):
 //     ?? Question stem
@@ -45,7 +45,7 @@ const fs=require('fs'),path=require('path'),vm=require('vm');
 const ROOT=path.resolve(__dirname,'..');
 const SITE='https://certprep.pratechlabs.com';
 const EM=String.fromCharCode(0x2014),EN=String.fromCharCode(0x2013);
-const CALLOUTS={trap:'Exam trap',rule:'Decision rule',example:'Example'};
+const CALLOUTS={trap:'Exam trap',rule:'Decision rule',example:'Example',note:'Note'};
 const COOKBOOK='https://github.com/anthropics/claude-cookbooks/blob/main/';
 const BANNED=[[/your notes|my notes/i,'"your/my notes"'],[/\blet's\b/i,'"Let\'s"'],[/\bcourse\s*[1-5]\b|\bcourse-0/i,'a course number'],
   [/\bS11\b/,'a course slide reference']];
@@ -179,6 +179,12 @@ function blocks(lines,file,toc){
       while(i<lines.length&&lines[i].trim().startsWith('|')){body.push(row(lines[i]));i++;}
       out+='<div class="tbl"><table><thead><tr>'+head.map(c=>'<th>'+inline(c)+'</th>').join('')+'</tr></thead><tbody>'+
         body.map(r=>'<tr>'+r.map(c=>'<td>'+inline(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>\n';continue;}
+    if(t.startsWith('```')){
+      const lang=t.slice(3).trim(),code=[];i++;
+      while(i<lines.length&&lines[i].trim()!=='```'){code.push(lines[i]);i++;}
+      if(i>=lines.length)fail(file+': code block not closed with ```');i++;
+      const ind=Math.min(...code.filter(c=>c.trim()).map(c=>c.match(/^\s*/)[0].length));
+      out+='<pre class="code"'+(lang?' data-lang="'+esc(lang)+'"':'')+'><code>'+esc(code.map(c=>c.slice(ind)).join('\n'))+'</code></pre>\n';continue;}
     if(t.startsWith('?? ')){out+=checkQuestion(lines,i,file);i=kcEnd;continue;}
     if(t.startsWith('::: exercise')){out+=exercise(lines,i,file);i=exEnd;continue;}
     if(t.startsWith(':::')){fail(file+': stray "'+t+'" outside an exercise');i++;continue;}
@@ -190,7 +196,7 @@ function blocks(lines,file,toc){
         else break;}
       out+=(ord?'<ol>':'<ul>')+items.map(x=>'<li>'+x.split('\n').map(inline).join('<br>')+'</li>').join('')+(ord?'</ol>':'</ul>')+'\n';continue;}
     const para=[];
-    while(i<lines.length&&lines[i].trim()&&!/^(#{2,3}\s|>|\||-\s|\d+\.\s|\?\?\s|:::)/.test(lines[i].trim())){para.push(lines[i].trim());i++;}
+    while(i<lines.length&&lines[i].trim()&&!/^(#{2,3}\s|>|\||-\s|\d+\.\s|\?\?\s|:::|```)/.test(lines[i].trim())){para.push(lines[i].trim());i++;}
     out+='<p>'+inline(para.join(' '))+'</p>\n';
   }
   return out;
@@ -255,6 +261,7 @@ function exercise(lines,i,file){
 
 // ---- page template ----
 const V=OUT.assetVersion||'1';
+const WORDS=['no','one','two','three','four','five','six','seven','eight','nine','ten'];
 function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld}){
   const canon=SITE+url;
   return `<!DOCTYPE html>
@@ -325,8 +332,8 @@ pages.push({url:learnPath,html:page({
  <div class="dc-top"><span class="dc-n">Domain ${d.n}</span><span class="dc-w">${d.weight}% of the exam</span></div>
  <h2>${esc(d.name)}</h2><p>${esc(d.blurb)}</p>
  <div class="dc-foot"><span>${d.lessons.length} lessons</span><span class="js-only" data-prog="d${d.n}" data-total="${d.lessons.length}"></span></div></a>`).join('\n')}</div>
-${casesIndex?'<p class="after">Every lesson ends with a short exercise set in one of four fictional companies. Their facts are on the <a href="'+casesPath+'">case studies</a> page.</p>':''}
-<p class="after">Ready to test yourself? The <a href="${examPath}">${esc(EXAM.code)} practice tests</a> cover the same seven domains, with a rationale and documentation link for every question.</p>`})});
+${casesIndex?'<p class="after">Every lesson ends with a short exercise set in one of '+WORDS[Object.keys(CASES).length]+' fictional companies. Their facts are on the <a href="'+casesPath+'">case studies</a> page.</p>':''}${OUT.outOfScope?'\n<section class="oos"><h2>Not on the exam</h2><p>'+inline(OUT.outOfScope.intro)+'</p><ul>'+OUT.outOfScope.items.map(t=>'<li>'+inline(t)+'</li>').join('')+'</ul></section>':''}
+<p class="after">Ready to test yourself? The <a href="${examPath}">${esc(EXAM.code)} practice tests</a> cover the same ${WORDS[OUT.domains.length]} domains, with a rationale and documentation link for every question.</p>`})});
 // Domain pages
 OUT.domains.forEach((d,di)=>{
   const prev=OUT.domains[di-1],next=OUT.domains[di+1];
@@ -353,6 +360,7 @@ written.forEach(l=>{
 <h1>${esc(l.title)}</h1>
 <div class="task"><span>Exam task</span>${esc(l.task)}</div>
 <p class="lead">${esc(l.summary)}</p>
+<nav class="jump" aria-label="On this page"><span>On this page</span>${l.toc.map(t=>'<a href="#'+t.id+'">'+t.txt.replace(/<[^>]+>/g,'').split(':')[0]+'</a>').join('')}<a href="#sources">Sources</a></nav>
 <article class="body">
 ${l.html}</article>
 <section class="sources"><h2 id="sources">Sources</h2><ul>${l.sources.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')}</ul>${l.handson.length?'<h3 class="ho">Go hands-on <span>optional, needs a Claude API key</span></h3><p class="ho-p">Runnable notebooks from Anthropic\'s Claude Cookbook that build the patterns in this lesson.</p><ul>'+l.handson.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')+'</ul>':''}</section>
