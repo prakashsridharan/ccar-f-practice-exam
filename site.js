@@ -33,6 +33,24 @@
   window.addEventListener('hashchange',function(){setTimeout(check,0);});
   check();
 
+  // Visit counting for the pages that have no tracker of their own (home, vendor, Resources).
+  // Exam pages (app.js, #app) and guide pages (learn.js, body[data-prefix]) count their own
+  // visits, so they are skipped here. Same table, fields and utm handling as learn.js.
+  if(!document.getElementById('app')&&!(document.body.hasAttribute&&document.body.hasAttribute('data-prefix'))&&window.fetch&&window.URLSearchParams)(function(){
+    var U='https://vuzdypmlfpeslsfezapd.supabase.co/rest/v1/visits',
+      K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1emR5cG1sZnBlc2xzZmV6YXBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjYyNDcsImV4cCI6MjEwMzk0MjI0N30.UGbcFwFLeKnTITJLQm8QO4YPn1hDhWe8ptz1-QJ19ik';
+    if(location.hash==='#admin')return;// the owner checking stats is not a visit
+    var p=new URLSearchParams(location.search),ref='';
+    try{var h=document.referrer&&new URL(document.referrer).hostname;if(h&&h!==location.hostname)ref=h.slice(0,80);}catch(e){}
+    var page=location.pathname==='/'?'hub':location.pathname.replace(/^\/|\/$/g,'').slice(0,40);
+    var full={page:page,ua:navigator.userAgent.substring(0,200),path:location.pathname.slice(0,200),
+      src:(p.get('utm_source')||'').slice(0,40),campaign:(p.get('utm_campaign')||'').slice(0,60),ref:ref};
+    var tags=[];p.forEach(function(v,k){if(k.indexOf('utm_')===0)tags.push(k);});
+    if(tags.length){tags.forEach(function(k){p.delete(k);});var s=p.toString();
+      try{history.replaceState(history.state,'',location.pathname+(s?'?'+s:'')+location.hash);}catch(e){}}
+    fetch(U,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(full)}).catch(function(){});
+  })();
+
   var q=document.querySelector('.cl-q');
   if(q)q.addEventListener('input',function(){
     var t=q.value.trim().toLowerCase();
