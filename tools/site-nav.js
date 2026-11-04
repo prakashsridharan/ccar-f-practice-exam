@@ -81,8 +81,8 @@ function certList(vendorId){
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
        '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span></div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
-       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+(x.cheat?'<a class="cr-cs" href="'+x.cheat+'">Cheat sheet</a>':'')+'</div></div>'+
-       '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'">Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a></div></div>':
+       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div></div>'+
+       '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'">Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'">Cheat sheet</a>':'')+'</div></div>':
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-s">Coming soon</span></div><h3>'+esc(x.name)+'</h3></div></div>').join(''):
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+
     '</section>').join('');
