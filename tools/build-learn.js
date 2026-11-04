@@ -124,7 +124,7 @@ if(fs.existsSync(CSF)){
     if(secs.some(s=>!s.startsWith('## ')))fail('cheat-sheet.md: text before the first ## heading');
     cheat=Object.assign(doc,{sections:secs.map(s=>{const lines=s.split('\n'),h=lines[0].slice(3).trim(),dm=h.match(/^Domain (\d+):/);
       const d=dm&&OUT.domains.find(x=>x.n===+dm[1]);if(dm&&!d)fail('cheat-sheet.md: unknown domain in "'+h+'"');
-      return{h,d,html:blocks(lines.slice(1),'learn/cheat-sheet.md',null).replace(/<a href="([^"]+)">(\d+\.\d+)<\/a>/g,'<a class="cs-l" href="$1" title="Lesson $2">$2</a>')};})});
+      return{h,d,src:lines.slice(1).join('\n'),html:blocks(lines.slice(1),'learn/cheat-sheet.md',null).replace(/<a href="([^"]+)">(\d+\.\d+)<\/a>/g,'<a class="cs-l" href="$1" title="Lesson $2">$2</a>')};})});
     const dn=new Set(cheat.sections.filter(s=>s.d).map(s=>s.d.n));
     for(const d of OUT.domains)if(!dn.has(d.n))fail('cheat-sheet.md: no "## Domain '+d.n+': ..." section');
   }
@@ -311,7 +311,7 @@ ${NAV.headIcons()}
 <link rel="stylesheet" href="/learn.css?v=${V}">
 <link rel="stylesheet" href="/site.css?v=${V}">
 </head>
-<body data-prefix="${esc(EXAM.storagePrefix)}"${lesson?' data-lesson="'+lesson+'"':''}${domainColor?' style="--dc:'+domainColor.color+';--dt:'+domainColor.tint+'"':''}>
+<body data-prefix="${esc(EXAM.storagePrefix)}" data-learn="${learnPath}" data-v="${V}"${lesson?' data-lesson="'+lesson+'"':''}${domainColor?' style="--dc:'+domainColor.color+';--dt:'+domainColor.tint+'"':''}>
 ${NAV.siteHeader()}
 ${NAV.examTabs(examId,tab)}
 <div class="wrap${side?'':' wrap-1'}${wrapCls?' '+wrapCls:''}">
@@ -329,9 +329,12 @@ ${NAV.siteFooter()}
 </html>
 `;
 }
+// Search box: learn.js fills the results (hidden without JavaScript). A result opens its page at
+// the matching section with ?hl=<words>, which learn.js highlights there.
+function searchBox(){return '<div class="ls js-only" role="search"><input type="search" class="ls-q" placeholder="Search the '+esc(EXAM.code)+' guide" aria-label="Search the '+esc(EXAM.code)+' learning guide" autocomplete="off" spellcheck="false"><kbd class="ls-k" aria-hidden="true">/</kbd><ul class="ls-r" role="listbox" hidden></ul></div>';}
 function sidebar(cur){
   const total=lessons.length;
-  return '<nav class="side" aria-label="Lessons"><details class="side-d" open><summary><span>All lessons</span> <span class="prog-txt" data-prog="all" data-total="'+total+'"></span></summary>'+
+  return '<nav class="side" aria-label="Lessons">'+searchBox()+'<details class="side-d" open><summary><span>All lessons</span> <span class="prog-txt" data-prog="all" data-total="'+total+'"></span></summary>'+
     '<a class="side-home" href="'+learnPath+'">Overview</a>'+(cheat?'<a class="side-home" href="'+csPath+'">Cheat sheet</a>':'')+(casesIndex?'<a class="side-home" href="'+casesPath+'">Case studies</a>':'')+
     OUT.domains.map(d=>'<div class="side-dom" style="--dc:'+d.color+'"><a class="side-dt" href="'+d.url+'"><b>'+d.n+'</b> '+esc(d.name)+'</a><ul>'+
       d.lessons.map(l=>'<li data-l="'+l.id+'"'+(l.id===cur?' class="cur"':'')+'>'+(l.html?'<a href="'+l.url+'"'+(l.id===cur?' aria-current="page"':'')+'>':'<span class="soon">')+
@@ -404,6 +407,7 @@ if(cheat){
     main:`<div class="tag">${esc(EXAM.code)} Learning Guide &middot; Cheat sheet</div>
 <h1>${esc(cheat.title)}</h1>
 <p class="lead">${esc(cheat.summary)}</p>
+${searchBox().replace('class="ls js-only"','class="ls ls-wide js-only"')}
 <div class="cs-act js-only"><button type="button" class="btn" data-print>Print or save as PDF</button><span>Numbers like <a class="cs-l" href="${written[0].url}">${written[0].id}</a> open the lesson behind each point.</span></div>
 <div class="cs-glance"><div><b>${bp.questionCount}</b>items</div><div><b>${Math.round(bp.durationSec/60)}</b>minutes</div><div><b>${bp.passScaled}</b>to pass, of ${bp.scaledMax}</div>
 <ul>${OUT.domains.map(d=>`<li style="--dc:${d.color}"><b>D${d.n}</b> ${esc(d.name)} <i>${d.weight}%</i></li>`).join('')}</ul></div>
@@ -456,6 +460,44 @@ ${ho.length?'<section class="res-s"><h2 id="hands-on"><span>Go hands-on</span>Cl
 <p class="after">Learning the topics? Start with the <a href="${learnPath}">${esc(EXAM.code)} learning guide</a>.${cheat?` Revising before the exam? Read the <a href="${csPath}">cheat sheet</a>.`:''} Ready to test yourself? Take the <a href="${examPath}">practice tests</a>.</p>`})});
 }
 
+// ---- search index (<learn>/search.json, read by learn.js) ----
+// One entry per ## / ### section of every lesson, case study and cheat-sheet section, plus one
+// per lesson for its title, task and summary. Check questions are left out (they test the reader,
+// they do not teach), and practice-test questions are never indexed.
+const search=[];
+function plain(s){return s.replace(/\[\[([\d.]+)\]\]/g,'$1').replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/[`*|]/g,' ').replace(/^>\s?/gm,'').replace(/\s+/g,' ').trim();}
+function sections(md,url){
+  const out=[];let cur={h:'',a:'',c:[],x:[]},skip=false,inQ=false;
+  const push=()=>{if(cur.x.length||cur.h)out.push(cur);};
+  for(const raw of md.replace(/\r\n/g,'\n').split('\n')){
+    const t=raw.trim(),hm=t.match(/^(#{2,3})\s+(.*)$/);
+    if(hm){push();if(hm[1]==='##')skip=/^Check your understanding/i.test(hm[2]);cur={h:plain(hm[2]),a:slugify(inline(hm[2])),c:[],x:[]};inQ=false;continue;}
+    if(skip)continue;
+    if(/^\?\? /.test(t)){inQ=true;continue;}// a check question runs until the next blank line after its "= " explanation
+    if(inQ){if(!t&&cur.qDone){inQ=false;cur.qDone=false;}else if(/^= /.test(t))cur.qDone=true;continue;}
+    if(/^:::/.test(t)||/^\|?\s*:?-{2,}/.test(t)||/^```/.test(t))continue;
+    const co=t.match(/^>\s*\[!(\w+)\]\s*(.*)$/);
+    if(co){if(co[2])cur.c.push(plain(co[2]));continue;}
+    if(t)cur.x.push(plain(t));
+  }
+  push();
+  return out.map(s=>({u:url+(s.a?'#'+s.a:''),h:s.h,c:s.c.join(' · '),x:s.x.join(' ')}));
+}
+for(const l of written){
+  const md=fs.readFileSync(path.join(LSRC,l.slug+'.md'),'utf8').replace(/\r\n/g,'\n').replace(/^---\n[\s\S]*?\n---\n/,'');
+  search.push({k:'lesson',u:l.url,l:l.id,t:l.title,d:l.domain.n,h:'',c:'',x:plain(l.task+'. '+l.summary)});
+  for(const s of sections(md,l.url))search.push(Object.assign({k:'lesson',l:l.id,t:l.title,d:l.domain.n},s));
+}
+if(cheat)for(const s of cheat.sections){const md=s.src.split('\n').filter(l=>!/^\|?\s*:?-{2,}/.test(l.trim())).join('\n');
+  search.push({k:'cheat',u:csPath+'#'+slugify(s.h),l:'',t:'Cheat sheet',d:s.d?s.d.n:0,h:s.d?s.d.name:s.h,c:'',x:plain(md)});}
+for(const c of Object.values(CASES)){
+  const md=fs.readFileSync(c.file,'utf8').replace(/\r\n/g,'\n').replace(/^---\n[\s\S]*?\n---\n/,'');
+  search.push({k:'case',u:c.url,l:'',t:c.title,d:0,h:'',c:'',x:plain(c.summary)});
+  for(const s of sections(md,c.url))search.push(Object.assign({k:'case',l:'',t:c.title,d:0},s));
+}
+search.forEach((e,i)=>{e.id=i;if(!e.x&&!e.c)e.x=e.h;});
+const searchJson={v:1,synonyms:OUT.synonyms||{},domains:Object.fromEntries(OUT.domains.map(d=>[d.n,{name:d.name,color:d.color}])),docs:search};
+
 // ---- internal link check ----
 // /resources/ (site-wide) is written by tools/build-site.js, which runs after this.
 const known=new Set([...pages.map(p=>p.url),'/resources/']);
@@ -467,11 +509,15 @@ for(const p of pages){
     if(!fs.existsSync(f))fail(p.url+': broken internal link '+u);
   }
 }
+// every search result must land on a real page and a real anchor
+for(const e of search){const [u,a]=e.u.split('#'),p=pages.find(x=>x.url===u);
+  if(!p)fail('search: no page '+u);else if(a&&!p.html.includes('id="'+a+'"'))fail('search: no #'+a+' on '+u);}
 if(errors.length){console.error('build-learn: '+errors.length+' error(s)\n  '+errors.join('\n  '));process.exit(1);}
 
 // ---- write ----
 fs.rmSync(outDir,{recursive:true,force:true});
 for(const p of pages){const f=path.join(ROOT,p.url,'index.html');fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,p.html);}
+fs.writeFileSync(path.join(outDir,'search.json'),JSON.stringify(searchJson));
 // sitemap: drop this guide's old entries, append the current ones
 const smf=path.join(ROOT,'sitemap.xml'),today=new Date().toISOString().slice(0,10);
 let sm=fs.readFileSync(smf,'utf8').replace(/\r\n/g,'\n');

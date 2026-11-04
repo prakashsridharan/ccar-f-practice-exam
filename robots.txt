@@ -7,5 +7,6 @@ Disallow: /README.md
 Disallow: /PROMPT.md
 Disallow: /schema.sql
 Disallow: /tools/
+Disallow: /claude/*/learn/search.json
 
 Sitemap: https://certprep.pratechlabs.com/sitemap.xml
