@@ -31,6 +31,7 @@
     });
   }
   document.addEventListener('click',function(e){
+    if(e.target.closest('[data-print]')){window.print();return;}// cheat sheet
     var b=e.target.closest('[data-done]');if(!b)return;
     var id=b.getAttribute('data-done');
     P=load();

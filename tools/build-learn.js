@@ -9,6 +9,8 @@
 //   learn/outline.json   {title, intro, notice, outOfScope?:{intro, items}, domains:[{n, slug, lessons:[{id, slug, title, task}]}]}
 //   learn/<slug>.md      one per lesson; a lesson with no file is listed as "coming soon"
 //   learn/cases/*.md     fictional case studies used by the exercises (index.md = the cases page)
+//   learn/cheat-sheet.md optional: title/summary front matter, then ## sections (one "## Domain <n>: ..."
+//                        per domain, others allowed); [[1.3]] links to lesson 1.3. Kept to 2-3 printed pages.
 //
 // Lesson file format:
 //   ---
@@ -107,6 +109,26 @@ for(const d of OUT.domains){
 }
 const ids=new Set();for(const l of lessons){if(ids.has(l.id))fail('duplicate lesson id '+l.id);ids.add(l.id);}
 const written=lessons.filter(l=>l.html);
+
+// ---- cheat sheet (learn/cheat-sheet.md, optional): one ## section per topic; a heading that
+// starts "Domain <n>:" takes that domain's colour. [[1.3]] links to lesson 1.3. ----
+const csPath=learnPath+'cheat-sheet/',CSF=path.join(LSRC,'cheat-sheet.md');
+let cheat=null;
+if(fs.existsSync(CSF)){
+  const src=fs.readFileSync(CSF,'utf8').replace(/\[\[([\d.]+)\]\]/g,(_,id)=>{const l=lessons.find(x=>x.id===id&&x.html);
+    if(!l){fail('cheat-sheet.md: [['+id+']] is not a written lesson');return id;}return '['+id+']('+l.url+')';});
+  const m=src.replace(/\r\n/g,'\n').match(/^(---\n[\s\S]*?\n---\n)([\s\S]*)$/);
+  const doc=parseDoc(src,'learn/cheat-sheet.md');
+  if(m&&doc.title){
+    const secs=('\n'+m[2]).split(/\n(?=## )/).map(s=>s.trim()).filter(Boolean);
+    if(secs.some(s=>!s.startsWith('## ')))fail('cheat-sheet.md: text before the first ## heading');
+    cheat=Object.assign(doc,{sections:secs.map(s=>{const lines=s.split('\n'),h=lines[0].slice(3).trim(),dm=h.match(/^Domain (\d+):/);
+      const d=dm&&OUT.domains.find(x=>x.n===+dm[1]);if(dm&&!d)fail('cheat-sheet.md: unknown domain in "'+h+'"');
+      return{h,d,html:blocks(lines.slice(1),'learn/cheat-sheet.md',null).replace(/<a href="([^"]+)">(\d+\.\d+)<\/a>/g,'<a class="cs-l" href="$1" title="Lesson $2">$2</a>')};})});
+    const dn=new Set(cheat.sections.filter(s=>s.d).map(s=>s.d.n));
+    for(const d of OUT.domains)if(!dn.has(d.n))fail('cheat-sheet.md: no "## Domain '+d.n+': ..." section');
+  }
+}
 
 // ---- markdown ----
 function parseLesson(src,file){
@@ -263,7 +285,7 @@ function exercise(lines,i,file){
 // ---- page template ----
 const V=OUT.assetVersion||'1';
 const WORDS=['no','one','two','three','four','five','six','seven','eight','nine','ten'];
-function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',side=true}){
+function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',side=true,wrapCls=''}){
   const canon=SITE+url;
   return `<!DOCTYPE html>
 <html lang="en">
@@ -292,7 +314,7 @@ ${NAV.headIcons()}
 <body data-prefix="${esc(EXAM.storagePrefix)}"${lesson?' data-lesson="'+lesson+'"':''}${domainColor?' style="--dc:'+domainColor.color+';--dt:'+domainColor.tint+'"':''}>
 ${NAV.siteHeader()}
 ${NAV.examTabs(examId,tab)}
-<div class="wrap${side?'':' wrap-1'}">
+<div class="wrap${side?'':' wrap-1'}${wrapCls?' '+wrapCls:''}">
 ${side?sidebar(lesson):''}
 <main class="main">
 <nav class="crumbs" aria-label="Breadcrumb">${crumbs.map((c,i)=>i<crumbs.length-1?'<a href="'+c[1]+'">'+esc(c[0])+'</a>':'<span>'+esc(c[0])+'</span>').join('<i>/</i>')}</nav>
@@ -310,7 +332,7 @@ ${NAV.siteFooter()}
 function sidebar(cur){
   const total=lessons.length;
   return '<nav class="side" aria-label="Lessons"><details class="side-d" open><summary><span>All lessons</span> <span class="prog-txt" data-prog="all" data-total="'+total+'"></span></summary>'+
-    '<a class="side-home" href="'+learnPath+'">Overview</a>'+(casesIndex?'<a class="side-home" href="'+casesPath+'">Case studies</a>':'')+
+    '<a class="side-home" href="'+learnPath+'">Overview</a>'+(cheat?'<a class="side-home" href="'+csPath+'">Cheat sheet</a>':'')+(casesIndex?'<a class="side-home" href="'+casesPath+'">Case studies</a>':'')+
     OUT.domains.map(d=>'<div class="side-dom" style="--dc:'+d.color+'"><a class="side-dt" href="'+d.url+'"><b>'+d.n+'</b> '+esc(d.name)+'</a><ul>'+
       d.lessons.map(l=>'<li data-l="'+l.id+'"'+(l.id===cur?' class="cur"':'')+'>'+(l.html?'<a href="'+l.url+'"'+(l.id===cur?' aria-current="page"':'')+'>':'<span class="soon">')+
         '<span class="lid">'+l.id+'</span>'+esc(l.title)+(l.html?'</a>':' <em>soon</em></span>')+'</li>').join('')+'</ul></div>').join('')+
@@ -330,6 +352,7 @@ pages.push({url:learnPath,html:page({
 <h1>${esc(OUT.title)}</h1>
 <p class="lead">${esc(OUT.intro)}</p>
 <div class="progress js-only"><div class="bar"><i data-bar="all"></i></div><span data-prog="all" data-total="${lessons.length}"></span> lessons complete</div>
+${cheat?`<a class="cs-card" href="${csPath}"><span class="cs-ck">Before the exam</span><b>Cheat sheet</b><span>${esc(cheat.summary)}</span></a>`:''}
 <div class="dgrid">${OUT.domains.map(d=>`<a class="dcard" href="${d.url}" style="--dc:${d.color};--dt:${d.tint}">
  <div class="dc-top"><span class="dc-n">Domain ${d.n}</span><span class="dc-w">${d.weight}% of the exam</span></div>
  <h2>${esc(d.name)}</h2><p>${esc(d.blurb)}</p>
@@ -369,6 +392,24 @@ ${l.html}</article>
 <div class="done-row js-only"><button type="button" class="btn done-btn" data-done="${l.id}">Mark complete</button></div>
 <nav class="pn">${prev?'<a class="prev" href="'+prev.url+'"><small>Previous lesson</small>'+prev.id+' '+esc(prev.title)+'</a>':'<span></span>'}${next?'<a class="next" href="'+next.url+'"><small>Next lesson</small>'+next.id+' '+esc(next.title)+'</a>':'<a class="next" href="'+examPath+'"><small>Finished</small>Take a practice test</a>'}</nav>`})});
 });
+
+// Cheat sheet: full width, prints on two or three pages (print rules in learn.css).
+if(cheat){
+  const bp=EXAM.blueprint;
+  pages.push({url:csPath,html:page({
+    title:EXAM.code+' Cheat Sheet - '+EXAM.name,desc:cheat.summary,url:csPath,side:false,wrapCls:'wrap-cs',
+    crumbs:[[EXAM.code,examPath],['Learning guide',learnPath],['Cheat sheet']],
+    jsonld:orgJson('LearningResource',EXAM.code+' Cheat Sheet',csPath,cheat.summary,{learningResourceType:'Cheat sheet',
+      isPartOf:{'@type':'Course',name:EXAM.code+' Learning Guide',url:SITE+learnPath}}),
+    main:`<div class="tag">${esc(EXAM.code)} Learning Guide &middot; Cheat sheet</div>
+<h1>${esc(cheat.title)}</h1>
+<p class="lead">${esc(cheat.summary)}</p>
+<div class="cs-act js-only"><button type="button" class="btn" data-print>Print or save as PDF</button><span>Numbers like <a class="cs-l" href="${written[0].url}">${written[0].id}</a> open the lesson behind each point.</span></div>
+<div class="cs-glance"><div><b>${bp.questionCount}</b>items</div><div><b>${Math.round(bp.durationSec/60)}</b>minutes</div><div><b>${bp.passScaled}</b>to pass, of ${bp.scaledMax}</div>
+<ul>${OUT.domains.map(d=>`<li style="--dc:${d.color}"><b>D${d.n}</b> ${esc(d.name)} <i>${d.weight}%</i></li>`).join('')}</ul></div>
+${cheat.sections.map(s=>`<section class="cs-s${s.d?'':' cs-x'}"${s.d?` style="--dc:${s.d.color};--dt:${s.d.tint}"`:''}><h2 id="${slugify(s.h)}">${s.d?`<span>Domain ${s.d.n} &middot; ${s.d.weight}%</span>`+esc(s.d.name):esc(s.h)}</h2><div class="cs-b body">${s.html}</div></section>`).join('\n')}
+<p class="after">Unsure about a point? Open its lesson from the number beside it. Ready to check yourself? Take the <a href="${examPath}">${esc(EXAM.code)} practice tests</a>.</p>`})});
+}
 
 // Case pages
 if(casesIndex){
@@ -412,7 +453,7 @@ const resPath=examPath+'resources/';
 ${official.length?'<section class="res-s"><h2 id="official">Official exam information</h2><ul class="res">'+official.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')+'</ul></section>':''}
 ${doms.map(({d,g})=>`<section class="res-s" style="--dc:${d.color}"><h2 id="domain-${d.n}"><span>Domain ${d.n}</span>${esc(d.name)}</h2>${list(g)}</section>`).join('\n')}
 ${ho.length?'<section class="res-s"><h2 id="hands-on"><span>Go hands-on</span>Claude Cookbook notebooks</h2><p class="ho-p">Optional and needs a Claude API key. Each notebook builds a pattern from the lessons listed beside it.</p>'+list(ho)+'</section>':''}
-<p class="after">Learning the topics? Start with the <a href="${learnPath}">${esc(EXAM.code)} learning guide</a>. Ready to test yourself? Take the <a href="${examPath}">practice tests</a>.</p>`})});
+<p class="after">Learning the topics? Start with the <a href="${learnPath}">${esc(EXAM.code)} learning guide</a>.${cheat?` Revising before the exam? Read the <a href="${csPath}">cheat sheet</a>.`:''} Ready to test yourself? Take the <a href="${examPath}">practice tests</a>.</p>`})});
 }
 
 // ---- internal link check ----
