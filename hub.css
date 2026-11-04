@@ -97,7 +97,7 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .hdr h1{font-size:1.45rem}
 .how,.faq{margin:1.8rem 0 0}
 .how h2,.faq h2{font-size:1.05rem;font-weight:800;color:var(--ac-h);margin-bottom:.65rem}
-.how ol{list-style:none;counter-reset:how;display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.how ol{list-style:none;counter-reset:how;display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem}
 .how li{counter-increment:how;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem}
 .how li b{display:flex;align-items:center;gap:.5rem;font-size:.95rem;color:var(--ac-h);margin-bottom:.25rem}
 .how li b::before{content:counter(how);display:inline-grid;place-items:center;width:1.5rem;height:1.5rem;border-radius:50%;background:var(--ac);color:#fff;font-size:.78rem}
@@ -109,5 +109,6 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .res-g{list-style:none;margin:0 0 1.5rem}
 .res-g li{padding:.6rem 0;border-bottom:1px solid var(--border)}
 .res-g a{font-weight:600;color:var(--ac);text-decoration:none}.res-g a:hover{text-decoration:underline}
-@media(max-width:720px){.how ol{grid-template-columns:1fr}}
+@media(max-width:960px){.how ol{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.how ol{grid-template-columns:1fr}}
 @media(max-width:500px){.hdr{padding:1.2rem 1rem 1.1rem}.hdr h1{font-size:1.2rem}}

@@ -18,6 +18,7 @@ for(const v of SITE.vendors)for(const x of v.exams){
   const c={};vm.createContext(c);
   vm.runInContext(fs.readFileSync(f,'utf8')+';this.EXAM=EXAM;this.BQ=BQ;this.TESTS=typeof TESTS!=="undefined"?TESTS:[];this.LEARN=typeof LEARN!=="undefined"?LEARN:null;',c);
   x.path=c.EXAM.path;x.learn=c.LEARN?c.LEARN.u:null;x.resources=x.path+'resources/';
+  x.cheat=x.learn&&fs.existsSync(path.join(ROOT,x.learn,'cheat-sheet','index.html'))?x.learn+'cheat-sheet/':null;
   x.counts={lessons:c.LEARN?c.LEARN.lessons.length:0,questions:c.BQ.length,tests:c.TESTS.length,domains:Object.keys(c.EXAM.domains).length,
     items:c.EXAM.blueprint.questionCount,minutes:Math.round(c.EXAM.blueprint.durationSec/60)};
 }
@@ -80,7 +81,7 @@ function certList(vendorId){
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
        '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span></div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
-       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span></div></div>'+
+       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+(x.cheat?'<a class="cr-cs" href="'+x.cheat+'">Cheat sheet</a>':'')+'</div></div>'+
        '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'">Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a></div></div>':
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-s">Coming soon</span></div><h3>'+esc(x.name)+'</h3></div></div>').join(''):
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+
