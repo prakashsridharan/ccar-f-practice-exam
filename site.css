@@ -115,3 +115,37 @@ html:not(.js) .js-only{display:none!important}
  .cr-f span{font-size:.76rem}
 }
 @media print{.sh,.xt,.sf{display:none}}
+/* Account (site.js + account.js): header button, account menu and the sign-in dialog. */
+.sh-acct{position:relative;margin-left:.25rem}
+.sh-in-btn{display:inline-flex;align-items:center;gap:.4rem;min-height:2.2rem;padding:0 .8rem;border-radius:8px;border:1.5px solid rgba(255,255,255,.55);background:transparent;color:#fff;font:600 .86rem Inter,system-ui,sans-serif;cursor:pointer;white-space:nowrap}
+.sh-in-btn:hover{background:rgba(255,255,255,.14);border-color:#fff}
+.sh-in-btn:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.sh-in-i{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.sh-in-btn.is-in{border-color:transparent;padding:0 .5rem 0 .25rem}
+.ac-av{display:inline-grid;place-items:center;width:1.7rem;height:1.7rem;border-radius:50%;background:#5fd3e0;color:#1A2E45;font-weight:800;font-size:.85rem}
+.ac-m{position:absolute;right:0;top:calc(100% + .45rem);z-index:60;width:min(300px,calc(100vw - 24px));background:#fff;color:#2C3E50;border:1px solid #dce1e8;border-radius:10px;box-shadow:0 12px 32px -8px rgba(26,46,69,.35);padding:.4rem;font:400 .86rem Inter,system-ui,sans-serif}
+.ac-who{padding:.55rem .65rem .35rem}.ac-who span{display:block;font-size:.72rem;color:#8b90a0}.ac-who b{display:block;overflow:hidden;text-overflow:ellipsis;color:#1A2E45}
+.ac-st{margin:0 .65rem .45rem;font-size:.76rem;color:#8b90a0}.ac-st.is-synced{color:#0E7C66}.ac-st.is-synced::before{content:"\2713  "}.ac-st.is-error{color:#C0522A}
+.ac-mi{display:block;width:100%;text-align:left;padding:.55rem .65rem;border:0;border-top:1px solid #eef1f5;background:none;color:#1A2E45;font:inherit;font-weight:600;text-decoration:none;cursor:pointer}
+.ac-mi:hover{background:#EEF5FB}.ac-del{color:#C0522A;font-weight:500}
+.ac-d{border:0;border-radius:14px;padding:0;width:min(420px,calc(100vw - 24px));box-shadow:0 24px 64px -12px rgba(26,46,69,.5);font-family:Inter,system-ui,sans-serif;color:#2C3E50}
+.ac-d::backdrop{background:rgba(26,46,69,.55)}
+.ac-step{padding:1.6rem 1.5rem 1.3rem}
+.ac-d h2{font-size:1.3rem;font-weight:800;color:#1A2E45;margin:0 0 .4rem;letter-spacing:-.01em}
+.ac-sub{font-size:.88rem;color:#4a5568;line-height:1.55;margin:0 0 1.1rem}
+.ac-x{position:absolute;top:.5rem;right:.6rem;width:2rem;height:2rem;border:0;background:none;font-size:1.5rem;line-height:1;color:#8b90a0;cursor:pointer;border-radius:6px}.ac-x:hover{background:#f1f4f8;color:#1A2E45}
+.ac-g{display:flex;align-items:center;justify-content:center;gap:.6rem;width:100%;min-height:2.75rem;border:1.5px solid #dce1e8;border-radius:8px;background:#fff;color:#1A2E45;font:600 .92rem Inter,system-ui,sans-serif;cursor:pointer}
+.ac-g:hover{border-color:#1B4F8A;background:#f7f9fc}.ac-g svg{width:1.15rem;height:1.15rem}
+.ac-or{display:flex;align-items:center;gap:.75rem;margin:1rem 0;color:#8b90a0;font-size:.78rem}.ac-or::before,.ac-or::after{content:"";flex:1;height:1px;background:#dce1e8}
+.ac-f label,.ac-cf label{display:block;font-size:.78rem;font-weight:600;color:#4a5568;margin-bottom:.3rem}
+.ac-f input,.ac-cf input{width:100%;box-sizing:border-box;min-height:2.6rem;padding:0 .8rem;border:1.5px solid #dce1e8;border-radius:8px;font:inherit;font-size:.95rem;color:#1A2E45}
+.ac-cf input{font-family:'JetBrains Mono',monospace;font-size:1.25rem;letter-spacing:.3em;text-align:center}
+.ac-f input:focus,.ac-cf input:focus{outline:none;border-color:#1B4F8A;box-shadow:0 0 0 3px rgba(27,79,138,.15)}
+.ac-p{width:100%;min-height:2.75rem;margin-top:.6rem;border:0;border-radius:8px;background:#1B4F8A;color:#fff;font:700 .92rem Inter,system-ui,sans-serif;cursor:pointer}
+.ac-p:hover{background:#1A2E45}.ac-p:disabled{opacity:.6;cursor:wait}
+.ac-err{margin:.75rem 0 0;padding:.55rem .7rem;border-radius:8px;background:#FDF0EB;color:#9a3f1f;font-size:.82rem;line-height:1.45}
+.ac-fine{margin:.9rem 0 0;font-size:.76rem;color:#8b90a0;line-height:1.5}.ac-fine a{color:#1B4F8A}
+.ac-l{border:0;background:none;padding:0;font:inherit;font-weight:600;color:#1B4F8A;cursor:pointer;text-decoration:underline}.ac-l:disabled{color:#8b90a0;text-decoration:none;cursor:default}
+@media(max-width:560px){.sh-in-t{display:none}.sh-in-btn{padding:0 .55rem}.sh-in-btn.is-in{padding:0 .3rem}.sh-acct{margin-left:0}}
+@media print{.sh-acct,.ac-d{display:none}}
+.ac-d[open]{margin:auto;max-height:calc(100vh - 24px);overflow:auto}

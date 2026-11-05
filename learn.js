@@ -7,7 +7,7 @@
   var root=document.documentElement;root.classList.add('js');
   var body=document.body,key=(body.getAttribute('data-prefix')||'learn')+'-learn';
   function load(){try{var p=JSON.parse(localStorage.getItem(key)||'null');if(p&&p.v===1&&p.done)return p;}catch(e){}return{v:1,done:{}};}
-  function save(p){try{localStorage.setItem(key,JSON.stringify(p));}catch(e){}}
+  function save(p){try{localStorage.setItem(key,JSON.stringify(p));}catch(e){}if(window.cpSync)window.cpSync(key);}
   var P=load();
 
   function paint(){
@@ -40,6 +40,9 @@
   });
   // Another tab marked something complete: repaint.
   window.addEventListener('storage',function(e){if(e.key===key){P=load();paint();}});
+  // Signed-in sync (account.js) merged in lessons completed on another device.
+  window.addEventListener('cp-sync',function(e){if(((e.detail&&e.detail.keys)||[]).indexOf(key)>=0){P=load();paint();
+    document.querySelectorAll('.ex [data-ck]').forEach(function(cb){cb.checked=!!(P.ck&&P.ck[cb.getAttribute('data-ck')]);});}});
 
   // Came here from the practice tests ("Read lesson")? The exam app saved where the reader
   // was in '<prefix>-back'; the Practice tests tab then goes back to it (#/back restores it).

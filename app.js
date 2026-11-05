@@ -89,7 +89,12 @@ function selectTest(n){homeTest=n;try{localStorage.setItem(TKEY,String(n));}catc
 const PKEY=EX.storagePrefix+'-progress';
 function freshProgress(){return{v:1,attempts:[],cur:null,ql:{}};}
 function loadProgress(){try{const p=JSON.parse(localStorage.getItem(PKEY)||'null');if(p&&p.v===1&&Array.isArray(p.attempts)){if(!p.ql||typeof p.ql!=='object')p.ql=qlFromProgress(p);return p;}}catch(e){}return freshProgress();}
-function saveProgress(){try{localStorage.setItem(PKEY,JSON.stringify(PROG));}catch(e){}}
+function saveProgress(){try{localStorage.setItem(PKEY,JSON.stringify(PROG));}catch(e){}if(window.cpSync)window.cpSync(PKEY);}
+// Signed-in sync (account.js) merged in progress from another device: reload it, and redraw
+// the home page, the only view that summarises it (an exam in progress is left alone).
+window.addEventListener('cp-sync',e=>{const ks=(e.detail&&e.detail.keys)||[];
+ if(ks.indexOf(PKEY)>=0)PROG=loadProgress();
+ if(view==='home'&&(ks.indexOf(PKEY)>=0||ks.indexOf(EX.storagePrefix+'-learn')>=0))render();});
 let PROG=loadProgress();
 // A test's time limit: its own secs, else the blueprint's scaled to its length
 // (a 40-question test of a 60-question, 120-minute exam gets 80 minutes).

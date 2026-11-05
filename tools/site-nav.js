@@ -58,7 +58,9 @@ function siteHeader(){
   return '<header class="sh"><div class="sh-in">'+
     brand()+
     '<nav class="sh-nav" aria-label="Site"><details class="sh-m"><summary>Certifications</summary><div class="sh-p">'+groups+'</div></details>'+
-    '<a class="sh-a" href="/resources/">Resources</a></nav></div></header>';
+    '<a class="sh-a" href="/resources/">Resources</a></nav>'+
+    // Filled by site.js / account.js ("Sign in", or the account menu); hidden without JavaScript.
+    '<div class="sh-acct"><button type="button" class="sh-in-btn" aria-label="Sign in" hidden><svg class="sh-in-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="sh-in-t">Sign in</span></button></div></div></header>';
 }
 
 // Tab bar for every page of one exam. active: 'learn' | 'tests' | 'resources'.
@@ -94,7 +96,7 @@ function siteFooter(){
     '<div class="sf-b">'+brand()+
     '<p>'+esc(SITE.tagline)+'. An independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p></div>'+
     '<div class="sf-c"><div class="sf-h">Certifications</div>'+certs.map(x=>'<a href="'+(x.learn||x.path)+'">'+esc(x.code)+' '+esc(x.level)+'</a>').join('')+'</div>'+
-    '<div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a></div>'+
+    '<div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a><a href="/privacy/">Privacy</a></div>'+
     '</div></footer>';
 }
 

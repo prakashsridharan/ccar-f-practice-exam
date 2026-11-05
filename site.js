@@ -51,6 +51,32 @@
     fetch(U,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(full)}).catch(function(){});
   })();
 
+  // Account (header "Sign in"): account.js and the sign-in library load only when they are
+  // needed: a saved session, a return from Google or an email link (?code=, error=), or a click.
+  // window.cpSync(key) is how app.js and learn.js report a saved change; it is a no-op until an
+  // account is signed in, and account.js reads the browser's copy at its first sync anyway.
+  (function(){
+    var box=document.querySelector('.sh-acct'),btn=box&&box.querySelector('.sh-in-btn');
+    window.cpSync=function(k){if(window.CPAccount)window.CPAccount.changed(k);};
+    // Launch switch: until the Google, email and database setup is done, sign-in shows only in a
+    // browser that opened a page with ?auth=preview (remembered; ?auth=off forgets it).
+    var AUTH_LIVE=false,pv=false;
+    try{if(/[?&]auth=preview/.test(location.search))localStorage.setItem('cp-auth-preview','1');
+      if(/[?&]auth=off/.test(location.search))localStorage.removeItem('cp-auth-preview');pv=localStorage.getItem('cp-auth-preview')==='1';}catch(e){}
+    if(!btn||!(AUTH_LIVE||pv))return;
+    var me=document.querySelector('script[src*="/site.js"]'),v=(String(me&&me.getAttribute('src')||'').split('?v=')[1]||''),loading=null;
+    function load(){
+      if(window.CPAccount)return Promise.resolve();
+      return loading||(loading=new Promise(function(res,rej){var s=document.createElement('script');s.src='/account.js?v='+v;
+        s.onload=res;s.onerror=function(){loading=null;rej();};document.head.appendChild(s);}));
+    }
+    btn.hidden=false;
+    btn.addEventListener('click',function(){load().then(function(){window.CPAccount.click();}).catch(function(){});});
+    var has=false;try{has=!!localStorage.getItem('sb-vuzdypmlfpeslsfezapd-auth-token');}catch(e){}
+    if(has||/[?&](code|error_description)=/.test(location.search)||/error_description=/.test(location.hash))
+      load().then(function(){window.CPAccount.init();}).catch(function(){});
+  })();
+
   var q=document.querySelector('.cl-q');
   if(q)q.addEventListener('input',function(){
     var t=q.value.trim().toLowerCase();

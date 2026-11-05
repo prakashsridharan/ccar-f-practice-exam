@@ -87,8 +87,89 @@ ${SITE.general.map(g=>`    <li><a href="${esc(g.url)}" target="_blank" rel="noop
 fs.mkdirSync(path.join(ROOT,'resources'),{recursive:true});
 fs.writeFileSync(path.join(ROOT,'resources','index.html'),resHtml);
 
+// ---- privacy policy (/privacy/): linked from the footer, the sign-in dialog and the account menu ----
+const PRIV_DATE='5 November 2026',CONTACT='contact@pratechlabs.com';// a GoDaddy alias; nothing can receive mail @certprep (its DNS name is a CNAME to GitHub Pages)
+const privHtml=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy - ${esc(SITE.name)}</title>
+<meta name="description" content="What ${esc(SITE.name)} collects, why, where it is stored, and how to delete your account.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="PraTech Labs">
+<link rel="canonical" href="${URL_}/privacy/">
+<!--site-icons--><!--/site-icons-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/hub.css?v=${V}">
+<link rel="stylesheet" href="/site.css?v=${V}">
+</head>
+<body>
+<!--site-header--><!--/site-header-->
+<div class="hdr">
+  <h1>Privacy Policy</h1>
+  <div class="sub">Last updated ${PRIV_DATE}</div>
+</div>
+<div class="container legal">
+  <p>${esc(SITE.name)} is a free study site for certification exams. You can use all of it without an account. This page explains what we collect, why, where it is kept, and how to remove it. Questions: <a href="mailto:${CONTACT}">${CONTACT}</a>.</p>
+
+  <h2>Without an account</h2>
+  <ul>
+    <li><b>Your progress stays in your browser.</b> Practice test scores, study answers and completed lessons are saved in your browser's local storage. They never leave your device unless you sign in. Clearing your browser data removes them.</li>
+    <li><b>Visit counts.</b> When a page opens we record the page, your browser type (user agent), the site that linked to us and any campaign tags in the link (such as utm_source). We do not record your name or email, and we do not use this to identify you. It tells us which pages and which shared posts are useful.</li>
+    <li><b>No advertising or tracking cookies.</b> We do not set cookies.</li>
+  </ul>
+
+  <h2>With an account</h2>
+  <p>Signing in is optional. It keeps your progress in step across your devices.</p>
+  <ul>
+    <li><b>What we store:</b> your email address; if you sign in with Google, the name and profile picture address Google shares; the dates you signed up and last signed in; and your study progress (practice test attempts and scores, your latest answer to each question, study mode answers, completed lessons and exercise ticks).</li>
+    <li><b>What we do not store:</b> passwords (there are none), payment details, or your Google contacts, files or any other Google data.</li>
+    <li><b>How it is used:</b> to sign you in and to show your progress on any device. In future it may power features for you, such as a progress dashboard or study suggestions. We will not sell it, share it for advertising, or send you marketing email without asking first.</li>
+    <li><b>Sign-in emails:</b> when you ask for a sign-in link, we send one email with a link and a 6-digit code.</li>
+  </ul>
+
+  <h2>Services we use</h2>
+  <ul>
+    <li><b>Supabase</b> stores accounts, saved progress and visit counts, and runs sign-in.</li>
+    <li><b>Resend</b> sends the sign-in emails.</li>
+    <li><b>Google</b> handles "Continue with Google" if you choose it, and serves the fonts on these pages.</li>
+    <li><b>GitHub Pages</b> hosts the site. Like any web host, it keeps standard server logs.</li>
+  </ul>
+  <p>These providers may process data in countries other than yours. Each acts under its own privacy terms.</p>
+
+  <h2>How long we keep it</h2>
+  <p>Account data and saved progress are kept until you delete your account. Visit counts are kept as aggregate statistics.</p>
+
+  <h2>Your choices</h2>
+  <ul>
+    <li><b>Delete your account</b> at any time: sign in, open the account menu in the header and choose "Delete my account". This deletes your account and the progress saved to it straight away. Progress stored in your browser stays there until you clear it.</li>
+    <li><b>See or correct your data, or ask any question:</b> email <a href="mailto:${CONTACT}">${CONTACT}</a>.</li>
+  </ul>
+
+  <h2>Children</h2>
+  <p>${esc(SITE.name)} is meant for adults preparing for professional certifications. It is not directed at children under 16, and we do not knowingly create accounts for them.</p>
+
+  <h2>Changes</h2>
+  <p>If this policy changes, we will update this page and the date at the top.</p>
+
+  <div class="notice">
+    <strong>Important Note</strong>
+    <p>${esc(SITE.name)} is an independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p>
+  </div>
+</div>
+<!--site-footer--><!--/site-footer-->
+<script src="/site.js?v=${V}"></script>
+</body>
+</html>
+`;
+fs.mkdirSync(path.join(ROOT,'privacy'),{recursive:true});
+fs.writeFileSync(path.join(ROOT,'privacy','index.html'),privHtml);
+
 // ---- fill the marked regions ----
-const pages=['index.html','resources/index.html',
+const pages=['index.html','resources/index.html','privacy/index.html',
   ...SITE.vendors.filter(v=>v.url).map(v=>v.url.replace(/^\//,'')+'index.html'),
   ...liveExams.map(x=>x.path.replace(/^\//,'')+'index.html')];
 const RE=/<!--(site-icons|site-header|site-footer|exam-tabs|cert-list)([^>]*?)-->[\s\S]*?<!--\/\1-->/g;
@@ -105,8 +186,8 @@ for(const p of pages){
     else{if(!N.exam(a[0])){errors.push(p+': exam-tabs for unknown exam '+a[0]);return _;}body=N.examTabs(a[0],a[1]);}
     return '<!--'+kind+args+'-->'+body+'<!--/'+kind+'-->';});
   if(!out.includes('<!--site-header-->'))errors.push(p+': no <!--site-header--> marker');
-  // The author meta and the site's own domain (certprep.pratechlabs.com) are the allowed mentions.
-  const scan=out.replace(/<meta name="author"[^>]*>/,'').split('certprep.pratechlabs.com').join('');
+  // The author meta, the site's own domain and the privacy contact address are the allowed mentions.
+  const scan=out.replace(/<meta name="author"[^>]*>/,'').split('certprep.pratechlabs.com').join('').split(CONTACT).join('');
   if(scan.includes(EM)||scan.includes(EN))errors.push(p+': contains an em or en dash');
   for(const t of banned)if(new RegExp(t,'i').test(scan))errors.push(p+': contains a banned term');
   if(out!==src)fs.writeFileSync(f,out);
@@ -115,8 +196,9 @@ for(const p of pages){
 // ---- sitemap: /resources/ ----
 const smf=path.join(ROOT,'sitemap.xml');
 let sm=fs.readFileSync(smf,'utf8').replace(/\r\n/g,'\n');
-if(!sm.includes('<loc>'+URL_+'/resources/</loc>'))
-  sm=sm.replace('</urlset>','  <url>\n    <loc>'+URL_+'/resources/</loc>\n    <lastmod>'+new Date().toISOString().slice(0,10)+'</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n</urlset>');
+for(const [p,pr] of [['/resources/','0.6'],['/privacy/','0.2']])
+  if(!sm.includes('<loc>'+URL_+p+'</loc>'))
+    sm=sm.replace('</urlset>','  <url>\n    <loc>'+URL_+p+'</loc>\n    <lastmod>'+new Date().toISOString().slice(0,10)+'</lastmod>\n    <changefreq>'+(pr==='0.2'?'yearly':'monthly')+'</changefreq>\n    <priority>'+pr+'</priority>\n  </url>\n</urlset>');
 fs.writeFileSync(smf,sm);
 
 if(errors.length){console.error('build-site: '+errors.length+' error(s)\n  '+errors.join('\n  '));process.exit(1);}

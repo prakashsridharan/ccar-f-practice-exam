@@ -499,8 +499,8 @@ search.forEach((e,i)=>{e.id=i;if(!e.x&&!e.c)e.x=e.h;});
 const searchJson={v:1,synonyms:OUT.synonyms||{},domains:Object.fromEntries(OUT.domains.map(d=>[d.n,{name:d.name,color:d.color}])),docs:search};
 
 // ---- internal link check ----
-// /resources/ (site-wide) is written by tools/build-site.js, which runs after this.
-const known=new Set([...pages.map(p=>p.url),'/resources/']);
+// /resources/ and /privacy/ (site-wide) are written by tools/build-site.js, which runs after this.
+const known=new Set([...pages.map(p=>p.url),'/resources/','/privacy/']);
 for(const p of pages){
   for(const m of p.html.matchAll(/href="(\/[^"#?]*)/g)){
     const u=m[1];

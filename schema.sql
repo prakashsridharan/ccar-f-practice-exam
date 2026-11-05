@@ -216,3 +216,61 @@ GRANT ALL ON questions TO authenticated;
 GRANT ALL ON visits TO authenticated;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO anon;
 GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+
+-- ============================================
+-- 5. ACCOUNTS (2026-11): saved progress for signed-in learners
+-- Sign-in itself is Supabase Auth (Google, email link + 6-digit code); this
+-- adds one row per user per browser-storage key ('ccar-f-progress',
+-- 'ccar-p-learn', ...). The site merges rows with the browser's copy, so the
+-- table only ever holds a learner's own study data. RLS: a user reads and
+-- writes only their own rows; deleting the account deletes them (cascade).
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_progress (
+  user_id    UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  key        TEXT NOT NULL CHECK (key ~ '^[a-z0-9-]{2,40}-(progress|learn)$'),
+  data       JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, key)
+);
+-- One learner's progress is a few tens of KB; refuse anything far larger.
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_progress_size') THEN
+    ALTER TABLE user_progress ADD CONSTRAINT user_progress_size CHECK (pg_column_size(data) < 1000000);
+  END IF;
+END $$;
+
+ALTER TABLE user_progress ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Own progress: read"   ON user_progress;
+DROP POLICY IF EXISTS "Own progress: insert" ON user_progress;
+DROP POLICY IF EXISTS "Own progress: update" ON user_progress;
+DROP POLICY IF EXISTS "Own progress: delete" ON user_progress;
+CREATE POLICY "Own progress: read"   ON user_progress FOR SELECT TO authenticated USING (user_id = auth.uid());
+CREATE POLICY "Own progress: insert" ON user_progress FOR INSERT TO authenticated WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Own progress: update" ON user_progress FOR UPDATE TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Own progress: delete" ON user_progress FOR DELETE TO authenticated USING (user_id = auth.uid());
+REVOKE ALL ON user_progress FROM anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON user_progress TO authenticated;
+
+-- "Delete my account" in the account menu: removes the signed-in user, and with
+-- them (cascade) their progress rows. Runs as the owner because auth.users is
+-- not writable by the authenticated role; it can only ever delete auth.uid().
+CREATE OR REPLACE FUNCTION delete_my_account()
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth AS $$
+BEGIN
+  IF auth.uid() IS NULL THEN RAISE EXCEPTION 'not signed in'; END IF;
+  DELETE FROM auth.users WHERE id = auth.uid();
+END $$;
+REVOKE ALL ON FUNCTION delete_my_account() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION delete_my_account() TO authenticated;
+
+-- Counts for the site admin panel (/#admin): no emails or ids, just numbers.
+CREATE OR REPLACE FUNCTION account_stats()
+RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $$
+  SELECT json_build_object(
+    'accounts', (SELECT count(*) FROM auth.users),
+    'new_7d',   (SELECT count(*) FROM auth.users WHERE created_at > now() - interval '7 days'),
+    'active_7d',(SELECT count(*) FROM auth.users WHERE last_sign_in_at > now() - interval '7 days'),
+    'synced',   (SELECT count(DISTINCT user_id) FROM user_progress)
+  );
+$$;
+GRANT EXECUTE ON FUNCTION account_stats() TO anon, authenticated;
