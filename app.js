@@ -93,7 +93,7 @@ function saveProgress(){try{localStorage.setItem(PKEY,JSON.stringify(PROG));}cat
 // Signed-in sync (account.js) merged in progress from another device: reload it, and redraw
 // the home page, the only view that summarises it (an exam in progress is left alone).
 // Signed in or out (account.js): the home page's "Saved in this browser / to your account" line changes.
-window.addEventListener('cp-auth',()=>{if(view==='home')render();});
+window.addEventListener('cp-auth',()=>{ADM=null;if(view==='home')render();});
 window.addEventListener('cp-sync',e=>{const ks=(e.detail&&e.detail.keys)||[];
  if(ks.indexOf(PKEY)>=0)PROG=loadProgress();
  if(view==='home'&&(ks.indexOf(PKEY)>=0||ks.indexOf(EX.storagePrefix+'-learn')>=0))render();});
@@ -193,7 +193,6 @@ async function trackVisit(){if(!hasSupa())return;try{const base={page:EX.visitPa
  let r=await post(Object.assign({},base,visitMeta()));
  if(r.status===400)r=await post(base);// source columns not migrated yet: still count the visit
  if(!r.ok)console.warn('Visit tracking:',r.status,await r.text());}catch(e){console.warn('Visit tracking error:',e);}}
-async function getVisitCount(){if(!hasSupa())return{total:0,today:0,unique:0};try{const r=await fetch(SUPABASE_URL+'/rest/v1/rpc/visit_stats',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json'}});if(r.ok){const d=await r.json();return d;}else{console.warn('Visit stats:',r.status,await r.text());}return{total:0,today:0,unique:0};}catch(e){console.warn('Visit stats error:',e);return{total:0,today:0,unique:0};}}
 function allQ(){return[...BUILTIN,...CQ];}
 function allS(){return{...BS,...CS};}
 function nextId(sn){const p='C'+sn+'.';const ex=CQ.filter(q=>q.id.startsWith(p)).map(q=>parseInt(q.id.split('.')[1])||0);return p+((ex.length?Math.max(...ex):0)+1);}
@@ -637,7 +636,21 @@ function renderStudy(){saveStudy();const app=document.getElementById('app');app.
 // Admin modals
 function renderModals(){if(st.modal==='admin')adminModal();else if(st.modal==='q')qModal(null);else if(st.modal==='s')sModal();else if(st.modal==='u')uModal();else if(st.modal&&st.modal.t==='eq')qModal(st.modal.q);}
 
+// The admin panel opens only for a signed-in admin account (window.cpAdmin from site.js, admins
+// table in schema.sql). ADM caches the answer: {state:'admin'|'signin'|'denied'|'error', rpc}.
+let ADM=null,ADMcheck=false;
+function checkAdmin(){if(ADMcheck)return;ADMcheck=true;
+ // #admin can open at boot, before site.js (which defines cpAdmin) has run.
+ const go=()=>(window.cpAdmin?window.cpAdmin():Promise.resolve({state:'error'})).catch(()=>({state:'error'}))
+  .then(a=>{ADM=a;ADMcheck=false;if(st.modal==='admin')render();});
+ if(window.cpAdmin||document.readyState!=='loading')go();else document.addEventListener('DOMContentLoaded',go,{once:true});}
+function adminGate(bd){const msg=!ADM?'Checking access...':ADM.state==='signin'?'Sign in with an admin account to open this panel.':
+  ADM.state==='denied'?'You are signed in as '+(ADM.email||'this account')+', which is not an admin account.':'Could not check admin access. Try again later.';
+ const g=E('div',{style:{textAlign:'center',padding:'1.2rem .5rem',color:'var(--text-2)'}},E('p',null,msg));
+ if(ADM&&ADM.state==='signin')g.appendChild(E('button',{className:'btn btn-p',style:{marginTop:'.8rem'},onClick:()=>{if(window.cpSignIn)window.cpSignIn();}},'Sign in'));
+ bd.appendChild(g);if(!ADM)checkAdmin();}
 function adminModal(){const ov=E('div',{className:'modal-ov',onClick:e=>{if(e.target===e.currentTarget){st.modal=null;window.location.hash='';render();}}});const m=E('div',{className:'modal'});m.appendChild(E('div',{className:'modal-hd'},E('h2',null,'Admin Panel'),E('button',{className:'modal-x',innerHTML:IC.x,onClick:()=>{st.modal=null;window.location.hash='';render();}})));const bd=E('div',{className:'modal-bd'});
+ if(!ADM||ADM.state!=='admin'){adminGate(bd);m.appendChild(bd);ov.appendChild(m);document.getElementById('app').appendChild(ov);return;}
  bd.appendChild(E('div',{className:'u-st info'},'The '+EX.code+' question bank ships with the site (exams/'+EX.id+'.js). Questions you add here are saved in this browser only: export a backup to keep them.'));
  const acts=E('div',{style:{display:'grid',gap:'.5rem',marginTop:'1rem'}});
   acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{st.modal='q';render();}},E('span',{innerHTML:IC.plus}),'Add Question'));
@@ -652,7 +665,7 @@ function adminModal(){const ov=E('div',{className:'modal-ov',onClick:e=>{if(e.ta
  vstats.appendChild(E('div',{style:{fontWeight:'700',marginBottom:'.4rem',color:'var(--text)'}},'📊 Visitor Metrics'));
  vstats.appendChild(E('div',{style:{color:'var(--text-m)'}},'Loading...'));
  bd.appendChild(vstats);
- getVisitCount().then(v=>{const el=document.getElementById('vstats');if(!el)return;el.innerHTML='';
+ ADM.rpc('visit_stats').catch(()=>null).then(v=>{v=v||{};const el=document.getElementById('vstats');if(!el)return;el.innerHTML='';
  el.appendChild(E('div',{style:{fontWeight:'700',marginBottom:'.5rem',color:'var(--text)'}},'📊 Visitor Metrics'));
  const grid=E('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'.5rem'}});
  const metric=(label,value)=>{const d=E('div',{style:{textAlign:'center',padding:'.5rem',background:'var(--surface)',borderRadius:'6px',border:'1px solid var(--border)'}});d.appendChild(E('div',{style:{fontSize:'1.2rem',fontWeight:'800',color:'var(--ac)'}},String(value)));d.appendChild(E('div',{style:{fontSize:'.7rem',color:'var(--text-m)',marginTop:'.15rem'}},label));return d;};

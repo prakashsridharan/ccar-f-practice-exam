@@ -134,7 +134,9 @@ DROP POLICY IF EXISTS "Anyone can log a visit"      ON visits;
 -- questions as static files and no longer reads these tables, and a public read
 -- would expose anything stored here (e.g. questions held back for a paid course).
 -- With RLS on and no SELECT policy, the anon key reads zero rows.
-CREATE POLICY "Public read visits"    ON visits    FOR SELECT USING (true);
+-- visits has NO public read since 2026-11-05: the admin panels read only the
+-- aggregates below, and only for an admin. The site inserts with
+-- Prefer: return=minimal, which needs no SELECT.
 
 -- Admin writes (service_role only)
 CREATE POLICY "Admin insert scenarios" ON scenarios FOR INSERT WITH CHECK (auth.role() = 'service_role');
@@ -152,26 +154,46 @@ CREATE POLICY "Anyone can log a visit" ON visits FOR INSERT WITH CHECK (true);
 -- 4. FUNCTIONS
 -- ============================================
 
+-- Admins (2026-11-05): the /#admin panels open only for a signed-in account
+-- listed here. Nobody can read or change this table through the API; add an
+-- admin in the SQL Editor:
+--   INSERT INTO admins (user_id) SELECT id FROM auth.users WHERE email = '<email>';
+CREATE TABLE IF NOT EXISTS admins (
+  user_id  UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  added_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON admins FROM anon, authenticated;
+
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
+  SELECT auth.uid() IS NOT NULL AND EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid());
+$;
+GRANT EXECUTE ON FUNCTION is_admin() TO anon, authenticated;
+
+-- The stats functions below return NULL unless is_admin(). They still answer
+-- 200 to anyone, which the keep-alive workflow relies on.
+
 -- Dropped and recreated rather than CREATE OR REPLACE: adding a parameter
 -- would create an overload and make the PostgREST rpc call ambiguous.
 DROP FUNCTION IF EXISTS visit_stats();
 DROP FUNCTION IF EXISTS visit_stats(TEXT);
 CREATE FUNCTION visit_stats(p_exam TEXT DEFAULT NULL)
-RETURNS JSON AS $$
-  SELECT json_build_object(
+RETURNS JSON AS $
+  SELECT CASE WHEN is_admin() THEN json_build_object(
     'total',  (SELECT COUNT(*) FROM visits WHERE p_exam IS NULL OR exam = p_exam),
     'today',  (SELECT COUNT(*) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND visited_at >= CURRENT_DATE),
     'unique', (SELECT COUNT(DISTINCT ua) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND ua != '')
-  );
-$$ LANGUAGE sql SECURITY DEFINER;
+  ) END;
+$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
 -- Traffic sources for the site admin panel: visits per source + campaign
 -- (source = utm_source, else the referring host, else 'direct'), and the most
 -- visited learning-guide pages, over the last p_days days.
 DROP FUNCTION IF EXISTS visit_sources(INTEGER);
 CREATE FUNCTION visit_sources(p_days INTEGER DEFAULT 90)
-RETURNS JSON AS $$
-  SELECT json_build_object(
+RETURNS JSON AS $
+  SELECT CASE WHEN is_admin() THEN json_build_object(
     'sources', COALESCE((SELECT json_agg(t ORDER BY t.visits DESC) FROM (
       SELECT COALESCE(NULLIF(src,''), NULLIF(ref,''), 'direct') AS source, campaign,
              COUNT(*) AS visits, COUNT(DISTINCT ua) AS people, MAX(visited_at) AS last
@@ -183,8 +205,8 @@ RETURNS JSON AS $$
       FROM visits
       WHERE path LIKE '%/learn/%' AND visited_at >= now() - make_interval(days => p_days)
       GROUP BY path ORDER BY 2 DESC LIMIT 15) t), '[]'::json)
-  );
-$$ LANGUAGE sql SECURITY DEFINER;
+  ) END;
+$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
 -- ============================================
 -- 5. SEED DATA (skip if already exists)
@@ -263,14 +285,14 @@ END $$;
 REVOKE ALL ON FUNCTION delete_my_account() FROM PUBLIC, anon;
 GRANT EXECUTE ON FUNCTION delete_my_account() TO authenticated;
 
--- Counts for the site admin panel (/#admin): no emails or ids, just numbers.
+-- Counts for the site admin panel (/#admin): no emails or ids, just numbers. Admins only.
 CREATE OR REPLACE FUNCTION account_stats()
-RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $$
-  SELECT json_build_object(
+RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $
+  SELECT CASE WHEN is_admin() THEN json_build_object(
     'accounts', (SELECT count(*) FROM auth.users),
     'new_7d',   (SELECT count(*) FROM auth.users WHERE created_at > now() - interval '7 days'),
     'active_7d',(SELECT count(*) FROM auth.users WHERE last_sign_in_at > now() - interval '7 days'),
     'synced',   (SELECT count(DISTINCT user_id) FROM user_progress)
-  );
-$$;
+  ) END;
+$;
 GRANT EXECUTE ON FUNCTION account_stats() TO anon, authenticated;

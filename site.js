@@ -63,13 +63,16 @@
     var AUTH_LIVE=true,pv=false;
     try{if(/[?&]auth=preview/.test(location.search))localStorage.setItem('cp-auth-preview','1');
       if(/[?&]auth=off/.test(location.search))localStorage.removeItem('cp-auth-preview');pv=localStorage.getItem('cp-auth-preview')==='1';}catch(e){}
-    if(!btn||!(AUTH_LIVE||pv))return;
     var me=document.querySelector('script[src*="/site.js"]'),v=(String(me&&me.getAttribute('src')||'').split('?v=')[1]||''),loading=null;
     function load(){
       if(window.CPAccount)return Promise.resolve();
       return loading||(loading=new Promise(function(res,rej){var s=document.createElement('script');s.src='/account.js?v='+v;
         s.onload=res;s.onerror=function(){loading=null;rej();};document.head.appendChild(s);}));
     }
+    // For the admin panels: is the signed-in account an admin (see CPAccount.admin), and open sign-in.
+    window.cpAdmin=function(){return load().then(function(){return window.CPAccount.admin();});};
+    window.cpSignIn=function(){load().then(function(){window.CPAccount.click();}).catch(function(){});};
+    if(!btn||!(AUTH_LIVE||pv))return;
     btn.hidden=false;
     btn.addEventListener('click',function(){load().then(function(){window.CPAccount.click();}).catch(function(){});});
     var has=false;try{has=!!localStorage.getItem('sb-vuzdypmlfpeslsfezapd-auth-token');}catch(e){}

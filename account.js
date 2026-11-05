@@ -272,5 +272,19 @@
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&user&&Date.now()-lastSync>60000)syncAll();
     if(document.visibilityState==='hidden')pushNow();});
 
-  window.CPAccount={init:init,click:click,changed:changed,_merge:merge,_signOut:signOut};// _merge, _signOut: for tests
+  // Admin panels (/#admin and each exam's #admin) open only for an account in the admins table.
+  // Resolves {state:'signin'|'denied'|'error'} or {state:'admin', email, rpc(name,args)}, where
+  // rpc runs as the signed-in admin (the stats functions return nothing for anyone else).
+  function admin(){
+    return init().then(function(){return sb.auth.getSession();}).then(function(r){
+      var s=r.data&&r.data.session;if(!s)return {state:'signin'};
+      return sb.rpc('is_admin').then(function(x){
+        if(x.error)return {state:'error',email:s.user.email};
+        return {state:x.data===true?'admin':'denied',email:s.user.email,rpc:function(n,a){
+          return sb.rpc(n,a||{}).then(function(y){if(y.error)throw y.error;return y.data;});}};
+      });
+    });
+  }
+
+  window.CPAccount={init:init,click:click,changed:changed,admin:admin,_merge:merge,_signOut:signOut};// _merge, _signOut: for tests
 })();
