@@ -271,3 +271,9 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 .body pre.code mark.hl{background:#B7861A;color:#fff}
 .ls-r li.cur a{background:var(--dt,#EEF5FB);box-shadow:inset 3px 0 0 var(--ac)}
 .ls-r li.cur .ls-m b::after{content:"Viewing";margin-left:.4rem;font:500 .62rem 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--ac);vertical-align:.1em}
+.ls-g{font:500 .64rem 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.06em;color:var(--text-m);padding:.45rem .5rem .15rem}
+.ls-g:not(:first-child){border-top:1px solid var(--border);margin-top:.25rem;padding-top:.55rem}
+.side .ls-r{max-height:42vh}
+.side-home.cur{color:var(--ac);background:var(--ac-s);box-shadow:inset 3px 0 0 var(--ac)}
+.ls-wide .ls-r{position:absolute;left:0;right:0;top:100%;z-index:20;margin-top:.35rem}
+.cs-s h2{scroll-margin-top:calc(var(--chrome-h,6.25rem) + 3.5rem)}
