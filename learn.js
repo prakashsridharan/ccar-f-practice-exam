@@ -126,7 +126,12 @@
   document.querySelectorAll('.ls').forEach(function(box){
     var q=box.querySelector('.ls-q'),ul=box.querySelector('.ls-r'),items=[],on=-1,timer;
     function show(html){ul.innerHTML=html;ul.hidden=!html;items=[].slice.call(ul.querySelectorAll('a'));on=-1;}
-    function mark(i){items.forEach(function(a,k){a.parentNode.classList.toggle('on',k===i);});on=i;if(items[i])items[i].scrollIntoView({block:'nearest'});}
+    function inView(li){var t=li.offsetTop-ul.offsetTop;if(t<ul.scrollTop)ul.scrollTop=t;else if(t+li.offsetHeight>ul.scrollTop+ul.clientHeight)ul.scrollTop=t+li.offsetHeight-ul.clientHeight;}
+    function mark(i){items.forEach(function(a,k){a.parentNode.classList.toggle('on',k===i);});on=i;if(items[i])inView(items[i].parentNode);}
+    // The result for the page being read (same path and section) is marked "Viewing".
+    function markCurrent(){var here=location.pathname+location.hash;items.forEach(function(a){
+      var u=new URL(a.href,location.href),is=u.pathname+u.hash===here||(!u.hash&&u.pathname===location.pathname&&!location.hash);
+      a.parentNode.classList.toggle('cur',is);if(is){a.setAttribute('aria-current','page');inView(a.parentNode);}});}
     function go(){
       var v=q.value.trim();if(v.length<2){show('');return;}
       loadIndex().then(function(){
@@ -139,9 +144,12 @@
           var tag=r.k==='lesson'?r.l:r.k==='cheat'?'Sheet':'Case';
           return '<li role="option"><a href="'+escH(href)+'"><span class="ls-id"'+(dom?' style="--dc:'+dom.color+'"':'')+'>'+escH(tag)+'</span><span class="ls-m"><b>'+escH(r.t)+'</b>'+
             (r.h?'<i>'+escH(r.h)+'</i>':'')+'<small>'+snippet(r.x||'',terms)+'</small></span></a></li>';}).join(''));
+        markCurrent();
       }).catch(function(){show('<li class="ls-none">Search is unavailable right now.</li>');});
     }
-    q.addEventListener('focus',function(){loadIndex().catch(function(){});});
+    q.addEventListener('focus',function(){loadIndex().catch(function(){});if(q.value.trim().length>1&&ul.hidden)go();});
+    // Clearing the box with its x button empties the results too.
+    q.addEventListener('search',function(){if(!q.value)show('');});
     q.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(go,90);});
     q.addEventListener('keydown',function(e){
       if(e.key==='ArrowDown'&&items.length){e.preventDefault();mark(Math.min(on+1,items.length-1));}
@@ -149,7 +157,10 @@
       else if(e.key==='Enter'&&items.length){e.preventDefault();location.href=items[on<0?0:on].href;}
       else if(e.key==='Escape'){q.value='';show('');q.blur();}
     });
-    document.addEventListener('click',function(e){if(!box.contains(e.target))show('');});
+    // The cheat-sheet box floats over the page, so it closes on an outside click; the sidebar
+    // list stays open while the reader moves between matches.
+    if(box.classList.contains('ls-wide'))document.addEventListener('click',function(e){if(!box.contains(e.target))show('');});
+    box._ls={set:function(v,open){q.value=v;if(open)go();else show('');}};
   });
   // "/" jumps to the search box (unless the reader is typing somewhere).
   document.addEventListener('keydown',function(e){
@@ -176,8 +187,14 @@
     var bar=document.createElement('div');bar.className='hl-bar';
     bar.innerHTML='<span>'+count+' match'+(count===1?'':'es')+' for <b></b></span><button type="button">Clear highlights</button>';
     bar.querySelector('b').textContent='"'+(p.get('q')||hl)+'"';
+    var qv=(p.get('q')||'').trim(),boxes=[].slice.call(document.querySelectorAll('.ls')).filter(function(b){return b._ls;});
+    // Carry the search over: the box keeps the query and, where there is room, the results list
+    // reopens with this page marked, so the reader can step to the next match. On phones it stays
+    // closed so the lesson is not pushed down; tapping the box shows it again.
+    if(qv)boxes.forEach(function(b){b._ls.set(qv,window.matchMedia('(min-width:901px)').matches);});
     bar.querySelector('button').addEventListener('click',function(){
-      main.querySelectorAll('mark.hl').forEach(function(m){m.parentNode.replaceChild(document.createTextNode(m.textContent),m);});main.normalize();bar.remove();});
+      main.querySelectorAll('mark.hl').forEach(function(m){m.parentNode.replaceChild(document.createTextNode(m.textContent),m);});main.normalize();bar.remove();
+      boxes.forEach(function(b){b._ls.set('',false);});});
     var cr=main.querySelector('.crumbs');if(cr)cr.parentNode.insertBefore(bar,cr.nextSibling);else main.insertBefore(bar,main.firstChild);
     p.delete('hl');p.delete('q');var rest=p.toString();
     try{history.replaceState(history.state,'',location.pathname+(rest?'?'+rest:'')+location.hash);}catch(e){}

@@ -269,3 +269,5 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 @media print{.ls,.hl-bar{display:none!important}mark.hl{background:none}}
 .side .ls{position:sticky;top:0;z-index:2;background:var(--surface);border-radius:var(--r) var(--r) 0 0}
 .body pre.code mark.hl{background:#B7861A;color:#fff}
+.ls-r li.cur a{background:var(--dt,#EEF5FB);box-shadow:inset 3px 0 0 var(--ac)}
+.ls-r li.cur .ls-m b::after{content:"Viewing";margin-left:.4rem;font:500 .62rem 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.05em;color:var(--ac);vertical-align:.1em}
