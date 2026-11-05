@@ -148,17 +148,28 @@
       if(!last)return;f.appendChild(document.createTextNode(s.slice(last)));t.parentNode.replaceChild(f,t);
     });
     var bar=document.createElement('div');bar.className='hl-bar';
-    bar.innerHTML='<span>'+count+' match'+(count===1?'':'es')+' for <b></b></span><button type="button">Clear highlights</button>';
+    // "All results" reopens the same search from any page (the cheat sheet has no sidebar, and on
+    // phones the sidebar is collapsed), so the reader can step from match to match.
+    bar.innerHTML='<span>'+count+' match'+(count===1?'':'es')+' for <b></b></span><span class="hl-act">'+
+      (label?'<span class="ls ls-pop"><input type="hidden" class="ls-q"><button type="button" class="hl-res" aria-expanded="false">All results</button><ul class="ls-r" role="listbox" hidden></ul></span>':'')+
+      '<button type="button" class="hl-clear">Clear highlights</button></span>';
     bar.querySelector('b').textContent='"'+label+'"';
-    bar.querySelector('button').addEventListener('click',function(){clearMarks(main);boxes.forEach(function(b){b.set('',false);});});
+    bar.querySelector('.hl-clear').addEventListener('click',function(){clearMarks(main);boxes.forEach(function(b){b.set('',false);});});
+    var pop=bar.querySelector('.ls-pop');
+    if(pop){var ctl=initBox(pop),btn=pop.querySelector('.hl-res');pop.querySelector('.ls-q').value=label;
+      btn.addEventListener('click',function(){if(ctl.open())ctl.set(label,false);else ctl.set(label,true);});
+      ctl.onToggle=function(open){btn.setAttribute('aria-expanded',open?'true':'false');btn.classList.toggle('on',open);};}
     var cr=main.querySelector('.crumbs');if(cr)cr.parentNode.insertBefore(bar,cr.nextSibling);else main.insertBefore(bar,main.firstChild);
   }
   function scrollToHash(){var t=location.hash&&document.getElementById(decodeURIComponent(location.hash.slice(1))),first=document.querySelector('.main mark.hl');
     if(t)t.scrollIntoView();else if(first)first.scrollIntoView({block:'center'});}
 
-  document.querySelectorAll('.ls').forEach(function(box){
-    var q=box.querySelector('.ls-q'),ul=box.querySelector('.ls-r'),items=[],on=-1,timer,wide=box.classList.contains('ls-wide');
-    function show(html){ul.innerHTML=html;ul.hidden=!html;items=[].slice.call(ul.querySelectorAll('a'));on=-1;}
+  // One search box: the sidebar box, the cheat-sheet box (.ls-wide) and the "All results" list in
+  // the highlight bar (.ls-pop, which has a hidden input holding the query) all work this way.
+  function initBox(box){
+    var q=box.querySelector('.ls-q'),ul=box.querySelector('.ls-r'),items=[],on=-1,timer,ctl={},
+      wide=box.classList.contains('ls-wide')||box.classList.contains('ls-pop');
+    function show(html){ul.innerHTML=html;ul.hidden=!html;items=[].slice.call(ul.querySelectorAll('a'));on=-1;if(ctl.onToggle)ctl.onToggle(!!html);}
     function inView(li){var t=li.offsetTop-ul.offsetTop;if(t<ul.scrollTop)ul.scrollTop=t;else if(t+li.offsetHeight>ul.scrollTop+ul.clientHeight)ul.scrollTop=t+li.offsetHeight-ul.clientHeight;}
     function mark(i){items.forEach(function(a,k){a.parentNode.classList.toggle('on',k===i);});on=i;if(items[i])inView(items[i].parentNode);}
     // The result for the page being read (same path and section) is marked "Viewing".
@@ -203,11 +214,15 @@
       else if(e.key==='Enter'&&items.length){e.preventDefault();items[on<0?0:on].click();}
       else if(e.key==='Escape'){q.value='';show('');q.blur();}
     });
-    // The cheat-sheet box floats over the page, so it closes on an outside click; the sidebar
-    // list stays open while the reader moves between matches.
-    if(wide)document.addEventListener('click',function(e){if(!box.contains(e.target))show('');});
-    boxes.push({set:function(v,open,done){q.value=v;if(open)go(done);else show('');}});
-  });
+    // The cheat-sheet box and the bar's list float over the page, so they close on an outside
+    // click (and on Esc); the sidebar list stays open while the reader moves between matches.
+    if(wide){document.addEventListener('click',function(e){if(box.isConnected&&!box.contains(e.target))show('');});
+      box.addEventListener('keydown',function(e){if(e.key==='Escape')show('');});}
+    ctl.set=function(v,open,done){q.value=v;if(open)go(done);else show('');};
+    ctl.open=function(){return !ul.hidden;};
+    return ctl;
+  }
+  document.querySelectorAll('.ls').forEach(function(box){boxes.push(initBox(box));});
   // "/" jumps to the search box (unless the reader is typing somewhere).
   document.addEventListener('keydown',function(e){
     if(e.key!=='/'||e.ctrlKey||e.metaKey||e.altKey||/^(INPUT|TEXTAREA|SELECT)$/.test((e.target.tagName||''))||e.target.isContentEditable)return;

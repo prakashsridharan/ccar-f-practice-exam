@@ -277,3 +277,10 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 .side-home.cur{color:var(--ac);background:var(--ac-s);box-shadow:inset 3px 0 0 var(--ac)}
 .ls-wide .ls-r{position:absolute;left:0;right:0;top:100%;z-index:20;margin-top:.35rem}
 .cs-s h2{scroll-margin-top:calc(var(--chrome-h,6.25rem) + 3.5rem)}
+/* "All results" in the highlight bar: the search results as a list floating under the bar. */
+.hl-act{display:flex;align-items:center;gap:.9rem}
+.hl-bar .ls-pop{position:static;padding:0;border:0}
+.hl-bar .hl-res{text-decoration:none;border:1px solid #E5C76B;border-radius:6px;padding:.2rem .6rem;background:#fff}
+.hl-bar .hl-res::after{content:" \25BE"}.hl-bar .hl-res.on{background:var(--ac);border-color:var(--ac);color:#fff}
+.hl-bar .ls-pop .ls-r{position:absolute;right:.5rem;top:calc(100% + .35rem);width:min(480px,calc(100vw - 2rem));max-height:60vh;z-index:30;margin:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.3rem;box-shadow:var(--sh-m);text-align:left}
+@media(max-width:560px){.hl-bar{flex-wrap:wrap;gap:.35rem}.hl-bar .ls-pop .ls-r{right:auto;left:0;width:calc(100vw - 2rem)}}
