@@ -92,6 +92,8 @@ function loadProgress(){try{const p=JSON.parse(localStorage.getItem(PKEY)||'null
 function saveProgress(){try{localStorage.setItem(PKEY,JSON.stringify(PROG));}catch(e){}if(window.cpSync)window.cpSync(PKEY);}
 // Signed-in sync (account.js) merged in progress from another device: reload it, and redraw
 // the home page, the only view that summarises it (an exam in progress is left alone).
+// Signed in or out (account.js): the home page's "Saved in this browser / to your account" line changes.
+window.addEventListener('cp-auth',()=>{if(view==='home')render();});
 window.addEventListener('cp-sync',e=>{const ks=(e.detail&&e.detail.keys)||[];
  if(ks.indexOf(PKEY)>=0)PROG=loadProgress();
  if(view==='home'&&(ks.indexOf(PKEY)>=0||ks.indexOf(EX.storagePrefix+'-learn')>=0))render();});
@@ -435,9 +437,9 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const hasData=PROG.attempts.length>0||!!PROG.cur||(PROG.study&&Object.keys(PROG.study).length>0);
  const pl=E('div',{className:'prog-links'});
  const dataBtn=E('button',{type:'button','aria-expanded':'false'},'Move or reset progress');
- pl.appendChild(E('span',null,'Saved in this browser'));pl.appendChild(E('span',{className:'pl-sep','aria-hidden':'true'},'·'));pl.appendChild(dataBtn);
+ pl.appendChild(E('span',null,document.documentElement.hasAttribute('data-cp-in')?'Saved to your account':'Saved in this browser'));pl.appendChild(E('span',{className:'pl-sep','aria-hidden':'true'},'·'));pl.appendChild(dataBtn);
  const dp=E('div',{className:'data-panel'});
- dp.appendChild(E('p',null,'Your scores and study progress are kept only in this browser. To continue on another device, download a backup here and restore it there.'));
+ dp.appendChild(E('p',null,document.documentElement.hasAttribute('data-cp-in')?'You are signed in, so your scores and study progress are saved to your account and appear on any device where you sign in. You can also download a backup file.':'Your scores and study progress are kept in this browser. To continue on another device, sign in (top right), or download a backup here and restore it there.'));
  const acts=E('div',{className:'dp-acts'});
  acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:exportProgress},E('span',{innerHTML:IC.download}),'Download backup'));
  acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:importProgress},E('span',{innerHTML:IC.upload}),'Restore from backup'));

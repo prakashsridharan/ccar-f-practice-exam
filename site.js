@@ -60,7 +60,7 @@
     window.cpSync=function(k){if(window.CPAccount)window.CPAccount.changed(k);};
     // Launch switch: until the Google, email and database setup is done, sign-in shows only in a
     // browser that opened a page with ?auth=preview (remembered; ?auth=off forgets it).
-    var AUTH_LIVE=false,pv=false;
+    var AUTH_LIVE=true,pv=false;
     try{if(/[?&]auth=preview/.test(location.search))localStorage.setItem('cp-auth-preview','1');
       if(/[?&]auth=off/.test(location.search))localStorage.removeItem('cp-auth-preview');pv=localStorage.getItem('cp-auth-preview')==='1';}catch(e){}
     if(!btn||!(AUTH_LIVE||pv))return;

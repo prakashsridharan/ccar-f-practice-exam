@@ -128,6 +128,7 @@ const privHtml=`<!DOCTYPE html>
     <li><b>What we store:</b> your email address; if you sign in with Google, the name and profile picture address Google shares; the dates you signed up and last signed in; and your study progress (practice test attempts and scores, your latest answer to each question, study mode answers, completed lessons and exercise ticks).</li>
     <li><b>What we do not store:</b> passwords (there are none), payment details, or your Google contacts, files or any other Google data.</li>
     <li><b>How it is used:</b> to sign you in and to show your progress on any device. In future it may power features for you, such as a progress dashboard or study suggestions. We will not sell it, share it for advertising, or send you marketing email without asking first.</li>
+    <li><b>Signing out</b> removes your progress from that browser. It stays in your account and comes back when you sign in again.</li>
     <li><b>Sign-in emails:</b> when you ask for a sign-in link, we send one email with a link and a 6-digit code.</li>
   </ul>
 

@@ -71,6 +71,8 @@
 
   // ---- header button and menu ----
   function paint(){
+    var was=document.documentElement.hasAttribute('data-cp-in');
+    if(!!user!==was){document.documentElement.toggleAttribute('data-cp-in',!!user);window.dispatchEvent(new CustomEvent('cp-auth'));}
     if(!btn)return;
     if(user){
       var m=user.user_metadata||{},name=m.full_name||m.name||user.email||'',ini=(name.trim()[0]||'?').toUpperCase();

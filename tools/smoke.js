@@ -17,7 +17,7 @@ const scripts=[...html.matchAll(/<script(?![^>]*application\/ld\+json)([^>]*)>([
 function el(tag){const n={tagName:String(tag).toUpperCase(),children:[],style:{setProperty(){}},attrs:{},className:'',_t:'',
  classList:{add(){},remove(){},toggle(){},contains(){return false}},
  appendChild(c){this.children.push(c);c.parentNode=this;return c},insertBefore(c){this.children.unshift(c);return c},removeChild(c){this.children=this.children.filter(x=>x!==c);return c},remove(){},replaceWith(){},
- setAttribute(k,v){this.attrs[k]=String(v)},getAttribute(k){return this.attrs[k]},removeAttribute(k){delete this.attrs[k]},
+ setAttribute(k,v){this.attrs[k]=String(v)},getAttribute(k){return this.attrs[k]},removeAttribute(k){delete this.attrs[k]},hasAttribute(k){return k in this.attrs},
  addEventListener(){},removeEventListener(){},querySelector(){return el('div')},querySelectorAll(){return []},
  focus(){},click(){},scrollIntoView(){},getBoundingClientRect(){return{top:0,left:0,width:0,height:0}},
  set innerHTML(v){this._h=v;this.children=[]},get innerHTML(){return this._h||''},
