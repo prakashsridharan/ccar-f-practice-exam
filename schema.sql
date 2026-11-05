@@ -166,9 +166,9 @@ ALTER TABLE admins ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON admins FROM anon, authenticated;
 
 CREATE OR REPLACE FUNCTION is_admin()
-RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $
+RETURNS BOOLEAN LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
   SELECT auth.uid() IS NOT NULL AND EXISTS (SELECT 1 FROM admins WHERE user_id = auth.uid());
-$;
+$$;
 GRANT EXECUTE ON FUNCTION is_admin() TO anon, authenticated;
 
 -- The stats functions below return NULL unless is_admin(). They still answer
@@ -179,20 +179,20 @@ GRANT EXECUTE ON FUNCTION is_admin() TO anon, authenticated;
 DROP FUNCTION IF EXISTS visit_stats();
 DROP FUNCTION IF EXISTS visit_stats(TEXT);
 CREATE FUNCTION visit_stats(p_exam TEXT DEFAULT NULL)
-RETURNS JSON AS $
+RETURNS JSON AS $$
   SELECT CASE WHEN is_admin() THEN json_build_object(
     'total',  (SELECT COUNT(*) FROM visits WHERE p_exam IS NULL OR exam = p_exam),
     'today',  (SELECT COUNT(*) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND visited_at >= CURRENT_DATE),
     'unique', (SELECT COUNT(DISTINCT ua) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND ua != '')
   ) END;
-$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
 -- Traffic sources for the site admin panel: visits per source + campaign
 -- (source = utm_source, else the referring host, else 'direct'), and the most
 -- visited learning-guide pages, over the last p_days days.
 DROP FUNCTION IF EXISTS visit_sources(INTEGER);
 CREATE FUNCTION visit_sources(p_days INTEGER DEFAULT 90)
-RETURNS JSON AS $
+RETURNS JSON AS $$
   SELECT CASE WHEN is_admin() THEN json_build_object(
     'sources', COALESCE((SELECT json_agg(t ORDER BY t.visits DESC) FROM (
       SELECT COALESCE(NULLIF(src,''), NULLIF(ref,''), 'direct') AS source, campaign,
@@ -206,7 +206,7 @@ RETURNS JSON AS $
       WHERE path LIKE '%/learn/%' AND visited_at >= now() - make_interval(days => p_days)
       GROUP BY path ORDER BY 2 DESC LIMIT 15) t), '[]'::json)
   ) END;
-$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
+$$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
 -- ============================================
 -- 5. SEED DATA (skip if already exists)
@@ -287,12 +287,12 @@ GRANT EXECUTE ON FUNCTION delete_my_account() TO authenticated;
 
 -- Counts for the site admin panel (/#admin): no emails or ids, just numbers. Admins only.
 CREATE OR REPLACE FUNCTION account_stats()
-RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $
+RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth AS $$
   SELECT CASE WHEN is_admin() THEN json_build_object(
     'accounts', (SELECT count(*) FROM auth.users),
     'new_7d',   (SELECT count(*) FROM auth.users WHERE created_at > now() - interval '7 days'),
     'active_7d',(SELECT count(*) FROM auth.users WHERE last_sign_in_at > now() - interval '7 days'),
     'synced',   (SELECT count(DISTINCT user_id) FROM user_progress)
   ) END;
-$;
+$$;
 GRANT EXECUTE ON FUNCTION account_stats() TO anon, authenticated;
