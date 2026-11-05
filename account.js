@@ -15,7 +15,7 @@
   'use strict';
   var SUPA='https://vuzdypmlfpeslsfezapd.supabase.co',
     ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1emR5cG1sZnBlc2xzZmV6YXBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjYyNDcsImV4cCI6MjEwMzk0MjI0N30.UGbcFwFLeKnTITJLQm8QO4YPn1hDhWe8ptz1-QJ19ik',
-    LIB='/vendor/supabase-2.45.4.min.js',KEYRE=/^[a-z0-9-]{2,40}-(progress|learn)$/,RET='cp-return';
+    LIB='/vendor/supabase-2.45.4.min.js',KEYRE=/^[a-z0-9-]{2,40}-(progress|learn)$/,RET='cp-return',OWNER='cp-owner';
   var sb=null,user=null,syncedFor=null,chain=Promise.resolve(),dirty={},timer=null,lastSync=0,state='';
   var box=document.querySelector('.sh-acct'),btn=box&&box.querySelector('.sh-in-btn');
   var dlg=null,menu=null;
@@ -35,7 +35,7 @@
         user=session&&session.user||null;paint();
         if(user&&syncedFor!==user.id){syncedFor=user.id;syncAll();}
         if(ev==='SIGNED_IN'){if(dlg&&dlg.open)dlg.close();returnTo();}
-        if(ev==='SIGNED_OUT'){syncedFor=null;setState('');}
+        if(ev==='SIGNED_OUT'){syncedFor=null;setState('');reloadPages(known);}
       });
       return sb.auth.getSession();
     }).then(function(r){
@@ -102,13 +102,24 @@
   function setState(s){state=s;stateText();}
   function stateText(){if(!menu)return;var t={syncing:'Saving your progress...',synced:'Progress saved to your account',error:'Could not reach the server. Your progress is safe in this browser and will be saved when you are back online.'}[state]||'';
     var st=menu.querySelector('.ac-st');st.textContent=t;st.className='ac-st'+(state?' is-'+state:'');}
+  // Signing out saves the latest progress to the account, then clears it from this browser, so
+  // the next person (or the next account) starts fresh. Signing back in brings it back.
   function signOut(){
-    pushNow().then(function(){return sb.auth.signOut({scope:'local'});}).then(function(){user=null;paint();});
+    pushNow().then(function(){
+      if(state==='error'&&!confirm('Your latest progress could not be saved to your account (no connection?). Sign out anyway? Progress not yet saved will be lost from this browser.'))return;
+      return sb.auth.signOut({scope:'local'}).then(function(){user=null;clearLocal();paint();});
+    });
   }
+  // Remove the synced keys and the owner mark, and tell open pages to reload (now empty).
+  function clearLocal(){var ks=localKeys();ks.forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+    try{localStorage.removeItem(OWNER);}catch(e){}reloadPages(ks.concat(known));}
+  function reloadPages(ks){if(ks&&ks.length)window.dispatchEvent(new CustomEvent('cp-sync',{detail:{keys:ks}}));}
   function delAccount(){
     if(!confirm('Delete your CertPrep account and the progress saved to it?\n\nThe progress kept in this browser stays here. This cannot be undone.'))return;
     sb.rpc('delete_my_account').then(function(r){
       if(r.error){alert('Your account could not be deleted right now. Please try again, or email contact@pratechlabs.com.');return;}
+      // The browser keeps its copy (as the message says); it is now signed-out progress.
+      try{localStorage.removeItem(OWNER);}catch(e){}
       return sb.auth.signOut({scope:'local'}).then(function(){user=null;paint();alert('Your account has been deleted.');});
     });
   }
@@ -159,6 +170,7 @@
     if(/rate limit|too many|security purposes/i.test(m))return 'Too many attempts. Please wait a minute and try again.';
     if(/expired|invalid|otp/i.test(m))return 'That code is not valid or has expired. Check the latest email, or send a new code.';
     if(/fetch|network/i.test(m))return 'Could not reach the server. Check your connection and try again.';
+    if(/error sending|sending.*email/i.test(m))return 'We could not send the email right now. Please try again in a few minutes, or use Continue with Google.';
     return 'Something went wrong. Please try again.';}
   function google(){
     saveReturn();
@@ -218,10 +230,15 @@
   function merge(k,l,r){if(r==null)return l;if(l==null)return r;return /-learn$/.test(k)?mergeLearn(l,r):mergeProg(l,r);}
   // Read the account's rows for these keys (all of them when keys is null), merge with the
   // browser, write back whichever side changed. Queued, so syncs never overlap.
+  // Browser progress is merged into the account only if it was made signed out (no owner mark)
+  // or by this same account. Progress left by a different account is replaced, never merged.
+  var known=[];
   function sync(keys){
     chain=chain.then(function(){
       if(!user)return;
       setState('syncing');
+      var owner=null;try{owner=localStorage.getItem(OWNER);}catch(e){}
+      var foreign=!keys&&owner&&owner!==user.id;
       var q=sb.from('user_progress').select('key,data');if(keys)q=q.in('key',keys);
       return q.then(function(res){
         if(res.error)throw res.error;
@@ -230,13 +247,16 @@
         var changed=[],rows=[];
         ks.forEach(function(k){
           if(!KEYRE.test(k))return;
-          var l=read(k),m=merge(k,l,remote[k]);if(m==null)return;
+          if(known.indexOf(k)<0)known.push(k);
+          var l=foreign?null:read(k),m=merge(k,l,remote[k]);
+          if(m==null){if(foreign){try{localStorage.removeItem(k);}catch(e){}changed.push(k);}return;}
+          l=read(k);
           if(JSON.stringify(m)!==JSON.stringify(l)){write(k,m);changed.push(k);}
           if(JSON.stringify(m)!==JSON.stringify(remote[k]))rows.push({user_id:user.id,key:k,data:m,updated_at:new Date().toISOString()});
         });
         return (rows.length?sb.from('user_progress').upsert(rows):Promise.resolve({})).then(function(u){
           if(u&&u.error)throw u.error;
-          lastSync=Date.now();setState('synced');
+          lastSync=Date.now();setState('synced');try{localStorage.setItem(OWNER,user.id);}catch(e){}
           if(changed.length)window.dispatchEvent(new CustomEvent('cp-sync',{detail:{keys:changed}}));
         });
       }).catch(function(){setState('error');});
@@ -250,5 +270,5 @@
   document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&user&&Date.now()-lastSync>60000)syncAll();
     if(document.visibilityState==='hidden')pushNow();});
 
-  window.CPAccount={init:init,click:click,changed:changed,_merge:merge};// _merge: for tests
+  window.CPAccount={init:init,click:click,changed:changed,_merge:merge,_signOut:signOut};// _merge, _signOut: for tests
 })();
