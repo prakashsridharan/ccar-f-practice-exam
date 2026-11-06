@@ -91,6 +91,11 @@ ok('review filters',()=>{// the last run above answered nothing, then one correc
  run("st.sel[st.pq[0].id]=st.pq[0].answer.slice();st.rf='wrong';renderReview()");const n=run('st.pq.filter(q=>!isCorrect(q)).length');
  if(n!==run('st.pq.length')-1)throw new Error('wrong count '+n);
  if(!find(byId.app,n=>/^Incorrect/.test(n.textContent||'')))throw new Error('no Incorrect tab');run("st.rf='all'");});
+// Discard and submit stamp curU so account sync keeps the newer side (a discarded run
+// used to come back from the account on the next sync).
+ok('discard and submit stamp curU',()=>{run("PROG.cur=null;startPractice(1);saveCur()");const u1=run('PROG.curU');if(!u1||!run('PROG.cur'))throw new Error('saveCur did not stamp');
+ run('discardCur()');if(run('PROG.cur')!==null||!(run('PROG.curU')>=u1))throw new Error('discard did not stamp');
+ run('startPractice(1);submitPractice()');if(run('PROG.cur')!==null||!run('PROG.curU'))throw new Error('submit did not stamp');run("go('home')");});
 ok('resume: exit saves, reload and Forward restore, discard clears',()=>{const T=run('FIXED.length?FIXED.length:0');
  run("PROG.cur=null;startPractice("+T+");st.pi=3;st.sel[st.pq[2].id]=['A'];st.pflag[st.pq[1].id]=true;st.psec=4000;renderPractice()");
  const ids=run('st.pq.map(q=>q.id)');

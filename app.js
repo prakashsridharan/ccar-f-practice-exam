@@ -107,15 +107,18 @@ function pctOf(a){return a.n?Math.round(a.c/a.n*100):0;}
 function fmtTime(sec){const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
 function isCorrect(q,S){S=S||st;return(S.sel[q.id]||[]).slice().sort().join(',')===q.answer.slice().sort().join(',');}
 function saveCur(){if(!st.pq.length||st.pdone)return;const sel={};st.pq.forEach(q=>{if(st.sel[q.id])sel[q.id]=st.sel[q.id];});
- PROG.cur={t:st.ptest,ids:st.pq.map(q=>q.id),pi:st.pi,psec:st.psec,sel,flag:Object.keys(st.pflag).filter(k=>st.pflag[k])};saveProgress();}
+ PROG.cur={t:st.ptest,ids:st.pq.map(q=>q.id),pi:st.pi,psec:st.psec,sel,flag:Object.keys(st.pflag).filter(k=>st.pflag[k])};PROG.curU=new Date().toISOString();saveProgress();}
+// Every change to the unfinished run (saved, discarded, submitted) stamps PROG.curU, so
+// account sync keeps the newer side. Without it a discarded run came back from the account.
+function clearCur(){PROG.cur=null;PROG.curU=new Date().toISOString();}
 // Rebuild st from the saved unfinished run. False if nothing usable is saved.
 function restoreCur(){const c=PROG.cur;if(!c)return false;const by=new Map(allQ().map(q=>[q.id,q]));const pq=c.ids.map(id=>by.get(id)).filter(Boolean);
- if(!pq.length){PROG.cur=null;saveProgress();return false;}
+ if(!pq.length){clearCur();saveProgress();return false;}
  st.pq=pq;st.pi=Math.min(c.pi||0,pq.length-1);st.psec=c.psec;st.ptest=c.t||0;st.pdone=false;st.sel={...c.sel};st.sub={};st.rev={};st.pflag={};(c.flag||[]).forEach(id=>st.pflag[id]=true);st.rf='all';
  startTimer();return true;}
 const EXIT_MSG='Leave this exam? Your answers are saved and the timer pauses. You can resume from the home page.';
 function resumePractice(){if(restoreCur())go('practice');else render();}
-function discardCur(){PROG.cur=null;saveProgress();}
+function discardCur(){clearCur();saveProgress();}
 // Study mode state per test, kept in PROG.study[n] = {sel, sub:[ids], rev:[ids], as, y}.
 // Saved on every change (renderStudy runs on each option click; Submit, Show
 // Answer and Hide call saveStudy themselves), never "on leave": by then st may
@@ -218,7 +221,7 @@ function submitPractice(){if(st.pdone)return;clearInterval(timerInt);st.pdone=tr
  const sc=calcScore(st.pq),ds={};Object.entries(sc.ds).forEach(([d,x])=>{if(x.t)ds[d]=[x.c,x.t];});
  PROG.attempts.push({t:st.ptest,d:now,c:sc.c,n:sc.tot,ds,...(st.ptest?{}:{ids:st.pq.map(q=>q.id)}),wrong:st.pq.filter(q=>!isCorrect(q)).map(q=>q.id),flag:Object.keys(st.pflag).filter(k=>st.pflag[k]),secs:testSecs(st.ptest)-st.psec});
  if(PROG.attempts.length>300)PROG.attempts=PROG.attempts.slice(-300);
- PROG.cur=null;saveProgress();go('report');}
+ clearCur();saveProgress();go('report');}
 function calcScore(questions){let c=0,at=0;const ds={};Object.keys(DM).forEach(d=>ds[d]={c:0,t:0,a:0});questions.forEach(q=>{if(ds[q.domain])ds[q.domain].t++;if(st.sub[q.id]){at++;if(ds[q.domain])ds[q.domain].a++;const s=(st.sel[q.id]||[]).slice().sort().join(',');if(s===q.answer.slice().sort().join(',')){c++;if(ds[q.domain])ds[q.domain].c++;}}});return{c,at,tot:questions.length,ds};}
 function E(tag,a,...ch){const e=document.createElement(tag);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='className')e.className=v;else if(k==='innerHTML')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else e.setAttribute(k,v);});ch.flat().forEach(c=>{if(typeof c==='string')e.appendChild(document.createTextNode(c));else if(c)e.appendChild(c);});return e;}
 // Rich text for exams that opt in (EXAM.richText): **bold** and `code` only. Returns text strings and
@@ -505,7 +508,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const acts=E('div',{className:'dp-acts'});
  acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:exportProgress},E('span',{innerHTML:IC.download}),'Download backup'));
  acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:importProgress},E('span',{innerHTML:IC.upload}),'Restore from backup'));
- if(hasData)acts.appendChild(E('button',{className:'btn btn-g dp-reset',type:'button',onClick:()=>{if(confirm('Delete all saved scores, study progress and any unfinished exam for '+EX.code+' in this browser?')){PROG=freshProgress();saveProgress();render();}}},E('span',{innerHTML:IC.reset}),'Reset'));
+ if(hasData)acts.appendChild(E('button',{className:'btn btn-g dp-reset',type:'button',onClick:()=>{if(confirm('Delete all saved scores, study progress and any unfinished exam for '+EX.code+' in this browser?')){PROG=freshProgress();PROG.rs=PROG.curU=new Date().toISOString();saveProgress();render();}}},E('span',{innerHTML:IC.reset}),'Reset'));
  dp.appendChild(acts);
  const setDp=open=>{if(open)homeOpen.add('data');else homeOpen.delete('data');dp.style.display=open?'block':'none';dataBtn.setAttribute('aria-expanded',String(open));};
  setDp(homeOpen.has('data'));dataBtn.addEventListener('click',()=>setDp(!homeOpen.has('data')));

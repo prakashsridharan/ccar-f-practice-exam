@@ -210,13 +210,24 @@
   function localKeys(){var ks=[];try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(KEYRE.test(k))ks.push(k);}}catch(e){}return ks;}
   function validProg(p){return p&&p.v===1&&Array.isArray(p.attempts);}
   function validLearn(p){return p&&p.v===1&&p.done&&typeof p.done==='object';}
+  // Only what a side recorded after time t: attempts and answers dated later; study state
+  // (undated) and the unfinished run only if that side changed them after t.
+  function since(p,t){var o=JSON.parse(JSON.stringify(p));o.attempts=o.attempts.filter(function(a){return String(a.d||'')>t;});
+    if(o.ql)Object.keys(o.ql).forEach(function(id){var v=o.ql[id];if(!Array.isArray(v)||!(String(v[1]||'')>t))delete o.ql[id];});
+    if(String(o.rs||'')<t)delete o.study;if(String(o.curU||'')<t){o.cur=null;delete o.curU;}return o;}
   function mergeProg(l,r){
     if(!validProg(r))return l;if(!validProg(l))return r;
-    var o=JSON.parse(JSON.stringify(l)),have={};
+    // Reset (rs = when) wins over everything recorded before it, on either side.
+    var rs=String(l.rs||'')>String(r.rs||'')?l.rs:(r.rs||'');
+    if(rs){if(l.rs!==rs)l=since(l,rs);if(r.rs!==rs)r=since(r,rs);}
+    var o=JSON.parse(JSON.stringify(l)),have={};if(rs)o.rs=rs;
     o.attempts.forEach(function(a){have[a.t+'|'+a.d]=1;});
     r.attempts.forEach(function(a){if(a&&typeof a.t==='number'&&a.d&&!have[a.t+'|'+a.d]){o.attempts.push(a);have[a.t+'|'+a.d]=1;}});
     o.attempts.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:0;});
-    if(!o.cur&&r.cur)o.cur=r.cur;
+    // The unfinished run: the side that changed it last wins, including a discard (cur null,
+    // curU set). Rows from before curU existed fall back to keeping any run.
+    if(l.curU||r.curU){if(String(r.curU||'')>String(l.curU||'')){o.cur=r.cur||null;o.curU=r.curU;}}
+    else if(!o.cur&&r.cur)o.cur=r.cur;
     if(r.study&&typeof r.study==='object'){o.study=o.study||{};Object.keys(r.study).forEach(function(k){if(!o.study[k])o.study[k]=r.study[k];});}
     if(r.ql&&typeof r.ql==='object'){o.ql=o.ql||{};Object.keys(r.ql).forEach(function(id){var v=r.ql[id];
       if(Array.isArray(v)&&(!o.ql[id]||String(v[1]||'')>String(o.ql[id][1]||'')))o.ql[id]=v;});}
