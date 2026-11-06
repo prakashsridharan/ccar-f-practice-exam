@@ -210,6 +210,15 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 .cs-s h2 span{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--dc)}
 .cs-b{font-size:.92rem}
 .cs-b .tbl,.cs-b li,.cs-b p{break-inside:avoid}
+/* The domain's one-liner and its "If the question says | Pick | Not" table span both columns */
+.cs-b .cs-rem,.cs-b .tbl.cue,.cs-b .tbl.wide{column-span:all}
+.cs-b .cs-rem{background:var(--dt,#f5f7fa);border-left:3px solid var(--dc,#1B4F8A);padding:.45rem .7rem;border-radius:0 6px 6px 0;margin:0 0 .6rem}
+.cs-b .tbl.cue{margin-bottom:.8rem}
+/* Long full-width tables may break between rows when printing, so they never push a whole table to a new page */
+.cs-b .tbl.cue,.cs-b .tbl.wide{break-inside:auto}.cs-b .cue tr,.cs-b .wide tr{break-inside:avoid}
+.cs-b .cue th:nth-child(1),.cs-b .cue td:nth-child(1){width:30%}
+.cs-b .cue th:nth-child(2),.cs-b .cue td:nth-child(2){width:40%}
+.cs-b .cue td:nth-child(1){font-weight:600}
 .cs-b table{font-size:.82rem}
 .cs-b th,.cs-b td{padding:.45rem .6rem}
 .cs-b li{margin-bottom:.45rem}
@@ -232,6 +241,8 @@ td:first-child{font-weight:600;color:var(--ac-h)}
  .cs-s h2 span{font-size:6.4pt}
  .cs-b{columns:2;column-gap:6mm;font-size:8pt}
  .cs-b p{margin-bottom:3pt}
+ .cs-b .cs-rem{padding:2pt 5pt;margin:0 0 3pt;border-left-width:2pt}
+ .cs-b .tbl.cue{margin-bottom:4pt}
  .cs-b ul,.cs-b ol{margin:0 0 3pt 9pt}.cs-b li{margin-bottom:2pt}
  .cs-b .tbl{margin:0 0 4pt;border-radius:3pt}
  .cs-b table{font-size:7.2pt;line-height:1.3}

@@ -11,6 +11,8 @@
 //   learn/cases/*.md     fictional case studies used by the exercises (index.md = the cases page)
 //   learn/cheat-sheet.md optional: title/summary front matter, then ## sections (one "## Domain <n>: ..."
 //                        per domain, others allowed); [[1.3]] links to lesson 1.3. Kept to 2-3 printed pages.
+//                        "If the question says | Pick | Not" tables and "**Remember:**" lines span both columns;
+//                        a line {wide} right after any other table makes that table span them too.
 //
 // Lesson file format:
 //   ---
@@ -124,7 +126,7 @@ if(fs.existsSync(CSF)){
     if(secs.some(s=>!s.startsWith('## ')))fail('cheat-sheet.md: text before the first ## heading');
     cheat=Object.assign(doc,{sections:secs.map(s=>{const lines=s.split('\n'),h=lines[0].slice(3).trim(),dm=h.match(/^Domain (\d+):/);
       const d=dm&&OUT.domains.find(x=>x.n===+dm[1]);if(dm&&!d)fail('cheat-sheet.md: unknown domain in "'+h+'"');
-      return{h,d,src:lines.slice(1).join('\n'),html:blocks(lines.slice(1),'learn/cheat-sheet.md',null).replace(/<a href="([^"]+)">(\d+\.\d+)<\/a>/g,'<a class="cs-l" href="$1" title="Lesson $2">$2</a>')};})});
+      return{h,d,src:lines.slice(1).join('\n'),html:blocks(lines.slice(1),'learn/cheat-sheet.md',null).split('<p><strong>Remember:</strong>').join('<p class="cs-rem"><strong>Remember:</strong>').replace(/<a href="([^"]+)">(\d+\.\d+)<\/a>/g,'<a class="cs-l" href="$1" title="Lesson $2">$2</a>')};})});
     const dn=new Set(cheat.sections.filter(s=>s.d).map(s=>s.d.n));
     for(const d of OUT.domains)if(!dn.has(d.n))fail('cheat-sheet.md: no "## Domain '+d.n+': ..." section');
   }
@@ -200,7 +202,10 @@ function blocks(lines,file,toc){
       const row=r=>r.trim().replace(/^\||\|$/g,'').split('|').map(c=>c.trim());
       const head=row(t);i+=2;const body=[];
       while(i<lines.length&&lines[i].trim().startsWith('|')){body.push(row(lines[i]));i++;}
-      out+='<div class="tbl"><table><thead><tr>'+head.map(c=>'<th>'+inline(c)+'</th>').join('')+'</tr></thead><tbody>'+
+      // "If the question says | Pick | Not" tables (cheat sheets) span the full width; so does a
+      // table followed by a {wide} line.
+      const cue=/^if the question says/i.test(head[0]),wide=i<lines.length&&lines[i].trim()==='{wide}';if(wide)i++;
+      out+='<div class="tbl'+(cue?' cue':'')+(wide?' wide':'')+'"><table><thead><tr>'+head.map(c=>'<th>'+inline(c)+'</th>').join('')+'</tr></thead><tbody>'+
         body.map(r=>'<tr>'+r.map(c=>'<td>'+inline(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>\n';continue;}
     if(t.startsWith('```')){
       const lang=t.slice(3).trim(),code=[];i++;
