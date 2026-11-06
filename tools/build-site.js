@@ -11,6 +11,8 @@
 //   <!--exam-tabs <exam-id> <learn|tests|resources>-->...<!--/exam-tabs-->
 //   <!--cert-list [vendor-id]-->...<!--/cert-list-->
 //   <!--site-footer-->...<!--/site-footer-->
+//   <!--exam-faq <exam-id>-->...<!--/exam-faq-->   (exam shells' crawler block: EXAM.copy.faq as
+//                                                 static text plus FAQPage JSON-LD; the app renders the same list)
 // Pages: index.html, every <vendor>/index.html and every live exam shell. Writes /resources/
 // and its sitemap entry. Fails on an em or en dash, on a term from the content repo's
 // outline.json bannedTerms (when content-dir is given; the <meta name="author"> line and the
@@ -173,7 +175,14 @@ fs.writeFileSync(path.join(ROOT,'privacy','index.html'),privHtml);
 const pages=['index.html','resources/index.html','privacy/index.html',
   ...SITE.vendors.filter(v=>v.url).map(v=>v.url.replace(/^\//,'')+'index.html'),
   ...liveExams.map(x=>x.path.replace(/^\//,'')+'index.html')];
-const RE=/<!--(site-icons|site-header|site-footer|exam-tabs|cert-list)([^>]*?)-->[\s\S]*?<!--\/\1-->/g;
+// The exam FAQ comes from the generated exams/<id>.js, so the crawler copy can never drift
+// from what the app shows.
+function examFaq(id){const f=path.join(ROOT,'exams',id+'.js');if(!fs.existsSync(f))return null;
+  const EX=new Function(fs.readFileSync(f,'utf8')+';return EXAM;')(),F=EX.copy&&EX.copy.faq;if(!F||!F.length)return '';
+  const ld={'@context':'https://schema.org','@type':'FAQPage',mainEntity:F.map(x=>({'@type':'Question',name:x.q,acceptedAnswer:{'@type':'Answer',text:x.a}}))};
+  return '\n  <h2>'+esc(EX.code)+' exam FAQ</h2>\n'+F.map(x=>'  <h3>'+esc(x.q)+'</h3>\n  <p>'+esc(x.a)+'</p>\n').join('')+
+    '  <script type="application/ld+json">'+JSON.stringify(ld).split('<').join('\\u003c')+'</script>\n  ';}
+const RE=/<!--(site-icons|site-header|site-footer|exam-tabs|exam-faq|cert-list)([^>]*?)-->[\s\S]*?<!--\/\1-->/g;
 for(const p of pages){
   const f=path.join(ROOT,p);
   if(!fs.existsSync(f)){errors.push(p+': missing');continue;}
@@ -184,6 +193,7 @@ for(const p of pages){
     else if(kind==='site-header')body=N.siteHeader();
     else if(kind==='site-footer')body=N.siteFooter();
     else if(kind==='cert-list')body=N.certList(a[0]);
+    else if(kind==='exam-faq'){const b=examFaq(a[0]);if(b===null){errors.push(p+': exam-faq for unknown exam '+a[0]);return _;}body=b;}
     else{if(!N.exam(a[0])){errors.push(p+': exam-tabs for unknown exam '+a[0]);return _;}body=N.examTabs(a[0],a[1]);}
     return '<!--'+kind+args+'-->'+body+'<!--/'+kind+'-->';});
   if(!out.includes('<!--site-header-->'))errors.push(p+': no <!--site-header--> marker');

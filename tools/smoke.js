@@ -38,6 +38,24 @@ ok('load scripts ('+scripts.map(s=>s.name).join(', ')+')',()=>scripts.forEach(s=
 const text=n=>!n?'':(n.textContent||'');
 const find=(n,pred)=>{if(!n)return null;if(pred(n))return n;for(const c of n.children||[]){const r=find(c,pred);if(r)return r;}return null;};
 ok('renderHome',()=>run('renderHome()'));
+// Exam overview: stats derived from the data, a sample question from published
+// Test 1 only, domain cards, what's included, and an FAQ that the shell mirrors.
+ok('home overview: stats, try a question, domains, FAQ',()=>{run('renderHome()');const app=run("document.getElementById('app')"),t=text(app);
+ ['Try a question','Exam Domains',"What's included, free"].forEach(s=>{if(!t.includes(s))throw new Error('missing '+s)});
+ const st_=find(app,n=>n.className==='ov-stats');if(!st_)throw new Error('no stats strip');const sv=text(st_);
+ [run('BQ.length'),run('FIXED.length'),run('EX.blueprint.questionCount'),run('EX.blueprint.passScaled')].forEach(v=>{if(!sv.includes(String(v)))throw new Error('stats lack '+v)});
+ if(run('LESSONS.length')&&!sv.includes(String(run('LESSONS.length'))))throw new Error('stats lack lesson count');
+ const t1=new Set(run('FIXED[0].ids'));if(!t1.has(run('tryId')))throw new Error('sample '+run('tryId')+' not in Test 1');
+ if(run('tryPool().some(q=>!FIXED[0].ids.includes(q.id))'))throw new Error('sample pool outside Test 1');
+ for(let i=0;i<20;i++){const id=run('tryId=pickTry(tryId)');if(!t1.has(id))throw new Error('picked '+id);}
+ run("tryS.sel[tryId]=[allQ().find(q=>q.id===tryId).answer[0]];renderHome()");if(run('st.sel[tryId]'))throw new Error('sample answer leaked into st');run('tryS.sel={}');
+ const faq=run('EX.copy.faq||[]');let nd=0;const cnt=n=>{if(n.tagName==='DETAILS')nd++;(n.children||[]).forEach(cnt);};cnt(app);
+ if(nd!==faq.length)throw new Error('FAQ items '+nd+' != '+faq.length);
+ if(faq.length){const m=html.match(/<script type="application\/ld\+json">\s*(\{[^<]*"FAQPage"[^<]*\})\s*<\/script>/);if(!m)throw new Error('shell has no FAQPage JSON-LD');
+  const ld=JSON.parse(m[1]).mainEntity.map(x=>[x.name,x.acceptedAnswer.text]);
+  if(JSON.stringify(ld)!==JSON.stringify(faq.map(f=>[f.q,f.a])))throw new Error('shell FAQPage JSON-LD differs from EX.copy.faq');
+  faq.forEach(f=>{if(!html.includes(f.q))throw new Error('crawler block lacks FAQ question: '+f.q)});}
+ run('renderHome()');});
 // Navigation lives in the static site header and exam tabs above #app (tools/build-site.js).
 ok('shell has site header and exam tabs',()=>{
  if(!/<header class="sh">[\s\S]*?href="\/"/.test(html))throw new Error('no site header with a link to /');

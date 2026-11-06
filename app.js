@@ -105,7 +105,7 @@ function testLabel(t){return t&&FIXED[t-1]?FIXED[t-1].title:'Random Mix';}
 function attemptsFor(t){return PROG.attempts.filter(a=>a.t===t);}
 function pctOf(a){return a.n?Math.round(a.c/a.n*100):0;}
 function fmtTime(sec){const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
-function isCorrect(q){return(st.sel[q.id]||[]).slice().sort().join(',')===q.answer.slice().sort().join(',');}
+function isCorrect(q,S){S=S||st;return(S.sel[q.id]||[]).slice().sort().join(',')===q.answer.slice().sort().join(',');}
 function saveCur(){if(!st.pq.length||st.pdone)return;const sel={};st.pq.forEach(q=>{if(st.sel[q.id])sel[q.id]=st.sel[q.id];});
  PROG.cur={t:st.ptest,ids:st.pq.map(q=>q.id),pi:st.pi,psec:st.psec,sel,flag:Object.keys(st.pflag).filter(k=>st.pflag[k])};saveProgress();}
 // Rebuild st from the saved unfinished run. False if nothing usable is saved.
@@ -233,35 +233,35 @@ function parseUploadRows(rows){if(rows.length<2)return{questions:[],errors:['No 
 
 // Shared question card renderer
 function renderQCard(q,opts){
-  var showAns=opts.showAnswer===true;var allowSel=opts.allowSelect!==false;var showAdmin=opts.showAdmin;
+  var S=opts.state||st;var showAns=opts.showAnswer===true;var allowSel=opts.allowSelect!==false;var showAdmin=opts.showAdmin;
   var card=E('div',{className:'qc'+(q.custom?' cust':''),'data-q':q.id});var d=DM[q.domain];var tl=q.type==='multi'?'Select '+(q.select||2):'Select one';
   var qh=E('div',{className:'qh'},E('span',{className:'qn'},q.id),E('span',{className:'badge',style:{background:domainTint(q.domain),color:domainColor(q.domain)}},'D'+q.domain),E('span',{className:'badge b-type'},tl));
   if(q.difficulty)qh.appendChild(E('span',{className:'badge b-type'},q.difficulty.charAt(0).toUpperCase()+q.difficulty.slice(1)));
   if(q.custom&&showAdmin){qh.appendChild(E('span',{className:'badge b-custom'},'Custom'));var rt=E('div',{className:'qhr'});rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.edit,onClick:()=>{st.modal={t:'eq',q};render();}}));rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.trash,style:{color:'var(--danger)'},onClick:()=>{if(confirm('Delete?')){CQ=CQ.filter(c=>c.id!==q.id);saveData();render();}}}));qh.appendChild(rt);}
-  if(opts.flaggable){var isFl=st.pflag[q.id];qh.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.flag,style:isFl?{color:'#C0522A'}:{},onClick:()=>{st.pflag[q.id]=!st.pflag[q.id];render();}}));}
+  if(opts.flaggable){var isFl=S.pflag[q.id];qh.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.flag,style:isFl?{color:'#C0522A'}:{},onClick:()=>{S.pflag[q.id]=!S.pflag[q.id];render();}}));}
   card.appendChild(qh);
 
   // Two independent states, deliberately kept apart:
-  //   graded (st.sub)  - set ONLY by Submit. Permanent: it is the user's
+  //   graded (S.sub)  - set ONLY by Submit. Permanent: it is the user's
   //                      result, counts in calcScore, and survives Hide.
-  //   revealed (st.rev)- set by Show Answer. A peek, not an attempt. It is
+  //   revealed (S.rev)- set by Show Answer. A peek, not an attempt. It is
   //                      fully undone by Hide and never reaches calcScore.
   // Keyed strictly by this card's own q.id, so one card can never affect
   // another. Merging these two was what made Hide leave the correct answer
   // highlighted and made peeking silently score a question as wrong.
-  var graded=st.sub[q.id]===true;
-  var revealed=showAns||(!!q.id&&st.rev[q.id]===true);
+  var graded=S.sub[q.id]===true;
+  var revealed=showAns||(!!q.id&&S.rev[q.id]===true);
   var locked=graded||revealed;
 
   var body=E('div',{className:'qb'},E('p',null,rich(q.question)));
   var ol=E('ul',{className:'opts'});
-  q.options.forEach(function(opt){var sel=st.sel[q.id]||[];var isSel=sel.includes(opt.l);var isCor=q.answer.includes(opt.l);
+  q.options.forEach(function(opt){var sel=S.sel[q.id]||[];var isSel=sel.includes(opt.l);var isCor=q.answer.includes(opt.l);
     var cls='';
     if(graded&&isCor)cls=' ok';else if(graded&&isSel&&!isCor)cls=' wrong';
     else if(revealed&&isCor)cls=' ok'+(isSel?' sel':'');
     else if(isSel)cls=' sel';
     if(!allowSel||locked)cls+=' disabled';
-    ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||st.sub[q.id]||(!!q.id&&st.rev[q.id]===true))return;if(q.type==='multi'){var s=st.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);st.sel[q.id]=s;}else st.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' ',rich(opt.t)));
+    ol.appendChild(E('li',{className:cls,onClick:function(){if(!allowSel||S.sub[q.id]||(!!q.id&&S.rev[q.id]===true))return;if(q.type==='multi'){var s=S.sel[q.id]||[];if(s.includes(opt.l))s=s.filter(function(x){return x!==opt.l;});else if(s.length<(q.select||2))s=s.concat([opt.l]);S.sel[q.id]=s;}else S.sel[q.id]=[opt.l];render();}},E('span',{className:'ol'},opt.l+'.'),' ',rich(opt.t)));
   });body.appendChild(ol);card.appendChild(body);
 
   var ab=E('div',{className:'ans-b',style:{display:revealed?'block':'none'}});
@@ -278,13 +278,13 @@ function renderQCard(q,opts){
   if(!showAns&&!opts.hideActions){
     var actions=E('div',{className:'qa'});
     var submitBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:function(){
-      st.sub[q.id]=true;recordResult(q,isCorrect(q));saveStudy();saveProgress();
+      S.sub[q.id]=true;recordResult(q,isCorrect(q,S));saveStudy();saveProgress();
       // Highlight correct/wrong options
       var lis=ol.querySelectorAll('li');
       lis.forEach(function(li){
         var label=li.querySelector('.ol').textContent.replace('.','').trim();
         var isCorrect=q.answer.includes(label);
-        var isSelected=(st.sel[q.id]||[]).includes(label);
+        var isSelected=(S.sel[q.id]||[]).includes(label);
         li.classList.remove('sel');li.classList.add('disabled');
         if(isCorrect)li.classList.add('ok');
         else if(isSelected)li.classList.add('wrong');
@@ -295,7 +295,7 @@ function renderQCard(q,opts){
     }},'Submit');
 
     // Peeking marks the correct option and locks the list, but never sets
-    // st.sub, so it is not an attempt and never reaches calcScore.
+    // S.sub, so it is not an attempt and never reaches calcScore.
     function applyPeek(){
       ol.querySelectorAll('li').forEach(function(li){
         var label=li.querySelector('.ol').textContent.replace('.','').trim();
@@ -312,10 +312,10 @@ function renderQCard(q,opts){
     }
     function reveal(){
       ab.style.display='block';
-      if(q.id)st.rev[q.id]=true;saveStudy();
+      if(q.id)S.rev[q.id]=true;saveStudy();
       submitBtn.style.display='none';showAnsBtn.style.display='none';skipBtn.style.display='none';
       hideBtn.style.display='inline-flex';
-      if(!st.sub[q.id])applyPeek();
+      if(!S.sub[q.id])applyPeek();
     }
 
     var showAnsBtn=E('button',{className:'btn btn-p',style:{display:'none'},onClick:reveal},'Show Answer');
@@ -323,16 +323,16 @@ function renderQCard(q,opts){
 
     var hideBtn=E('button',{className:'btn btn-g',style:{display:'none'},onClick:function(){
       ab.style.display='none';
-      if(q.id)delete st.rev[q.id];saveStudy();
+      if(q.id)delete S.rev[q.id];saveStudy();
       hideBtn.style.display='none';
-      if(st.sub[q.id]){
+      if(S.sub[q.id]){
         // Graded: Submit's ok/wrong marking is the user's result, so it stays.
         showAnsBtn.style.display='inline-flex';
       }else{
         // Only peeked: undo the reveal completely, back to the user's own
         // selection, and let them still answer the question properly.
         clearPeek();
-        if((st.sel[q.id]||[]).length>0)submitBtn.style.display='inline-flex';
+        if((S.sel[q.id]||[]).length>0)submitBtn.style.display='inline-flex';
         skipBtn.style.display='inline-flex';
       }
     }},'Hide');
@@ -343,10 +343,10 @@ function renderQCard(q,opts){
     // Submit. That is why Submit was previously unreachable.
     if(revealed){
       hideBtn.style.display='inline-flex';
-    }else if(st.sub[q.id]){
+    }else if(S.sub[q.id]){
       showAnsBtn.style.display='inline-flex';
     }else{
-      if((st.sel[q.id]||[]).length>0)submitBtn.style.display='inline-flex';
+      if((S.sel[q.id]||[]).length>0)submitBtn.style.display='inline-flex';
       skipBtn.style.display='inline-flex';
     }
     actions.appendChild(submitBtn);actions.appendChild(showAnsBtn);actions.appendChild(skipBtn);actions.appendChild(hideBtn);
@@ -366,10 +366,73 @@ function learnStrip(){const {n,next}=learnProgress();
  return E('div',{className:'learn-strip'},E('div',{className:'ls-t'},E('span',{className:'ls-k'},'Learning guide'),
    E('span',{className:'ls-p'},n+' of '+LESSONS.length+' lessons complete')),
   E('a',{className:'ls-go',href:go.href},go.t+' →'));}
+// Exam overview pieces for the home page. Every number is derived from the
+// data (blueprint, tests, bank, guide index), never typed into copy.
+function lessonsIn(d){return LESSONS.filter(l=>String(l.id).split('.')[0]===String(d));}
+function domainUrl(d){const l=lessonsIn(d)[0];return l?l.u.replace(/[^/]+\/$/,''):null;}
+function renderStats(){const B=EX.blueprint,s=E('div',{className:'ov-stats','aria-label':'At a glance'});
+ const tile=(v,l)=>s.appendChild(E('div',{className:'ov-t'},E('span',{className:'ov-v'},v),E('span',{className:'ov-l'},l)));
+ if(LESSONS.length)tile(String(LESSONS.length),'Lessons');
+ tile(String(BQ.length),'Practice questions');
+ if(FIXED.length)tile(String(FIXED.length),FIXED.length===1?'Practice test':'Practice tests');
+ tile(B.questionCount+' / '+Math.round(B.durationSec/60)+' min','Exam items / time');
+ tile(B.passScaled+' / '+B.scaledMax,'Pass mark');
+ if(B.fee)tile(B.fee,'Exam fee');
+ return s;}
+// One real question from published Test 1, answered in place. It keeps its own
+// state (tryS), so it can never touch a study or exam run's answers, but a
+// submitted answer is graded like any other and counts in Readiness.
+let tryId=null;const tryS={sel:{},sub:{},rev:{},pflag:{}};
+function tryPool(){const T=FIXED[0];if(!T)return[];const by=new Map(allQ().map(q=>[q.id,q]));return T.ids.map(id=>by.get(id)).filter(Boolean);}
+function pickTry(skip){const pool=tryPool();if(!pool.length)return null;const ql=PROG.ql||{};
+ let c=pool.filter(q=>!ql[q.id]&&q.id!==skip);if(!c.length)c=pool.filter(q=>q.id!==skip);if(!c.length)c=pool;
+ return c[Math.floor(Math.random()*c.length)].id;}
+function renderTryCard(){const pool=tryPool();if(!pool.length)return null;
+ if(!tryId||!pool.some(q=>q.id===tryId))tryId=pickTry();const q=pool.find(q=>q.id===tryId);
+ const p=E('section',{className:'panel try-card','aria-label':'Try a question'});
+ p.appendChild(E('div',{className:'try-h'},E('h2',null,'Try a question'),E('span',null,'From '+FIXED[0].title)));
+ p.appendChild(renderQCard(q,{state:tryS}));
+ const acts=E('div',{className:'try-acts'});
+ acts.appendChild(E('button',{type:'button',className:'btn btn-g',onClick:()=>{const old=tryId;delete tryS.sel[old];delete tryS.sub[old];delete tryS.rev[old];tryId=pickTry(old);render();}},'Another question'));
+ acts.appendChild(E('button',{type:'button',className:'btn btn-p',onClick:()=>PROG.cur&&PROG.cur.t===1?resumePractice():startPractice(1)},(PROG.cur&&PROG.cur.t===1?'Resume ':'Start ')+FIXED[0].title+' (Exam mode)'));
+ p.appendChild(acts);return p;}
+function renderDomainCards(){const p=E('section',{className:'panel',style:{margin:'0 0 1rem'}});
+ p.appendChild(E('h2',{className:'ov-h'},'Exam Domains'));
+ p.appendChild(E('p',{className:'ov-p'},EX.copy.domainsIntro));
+ const g=E('div',{className:'dom-cards'});
+ Object.keys(EX.domains).forEach((k,i)=>{const D=EX.domains[k],c=domainColor(k,i),n=lessonsIn(k).length,u=domainUrl(k);
+  const card=E('div',{className:'dom-card',style:{borderTopColor:c}});
+  card.appendChild(E('div',{className:'dc-top'},E('span',{className:'dc-d',style:{color:c}},'D'+k),E('span',{className:'dc-w',style:{color:c}},D.weightPct+'%')));
+  card.appendChild(E('div',{className:'dc-n'},D.n));
+  card.appendChild(E('div',{className:'dc-bar'},E('span',{style:{width:D.weightPct+'%',background:c}})));
+  card.appendChild(E('p',{className:'dc-b'},D.blurb));
+  if(u&&n)card.appendChild(E('a',{className:'dc-l',href:u},'Read the '+n+(n===1?' lesson':' lessons')+' →'));
+  g.appendChild(card);});
+ p.appendChild(g);return p;}
+function renderIncluded(){const p=E('section',{className:'panel',style:{margin:'0 0 1rem'}});
+ p.appendChild(E('h2',{className:'ov-h'},'What\'s included, free'));
+ const ul=E('ul',{className:'incl'}),li=(...k)=>ul.appendChild(E('li',null,...k));
+ if(LESSONS.length){li(E('a',{href:LEARN.u},'Learning guide'),': '+LESSONS.length+' lessons, one per exam task, with check questions and exercises');
+  li(E('a',{href:LEARN.u+'cheat-sheet/'},'Cheat sheet'),': every domain on three printable pages or fewer');}
+ const nt=FIXED.length;
+ li(BQ.length+' original practice questions'+(nt?' in '+nt+' fixed '+(nt===1?'test':'tests')+' of '+FIXED[0].ids.length+', plus Random Mix':''));
+ li('Study mode (self-paced) and Exam mode (timed, scored by domain)');
+ li('Every answer explained, with a documentation link'+(LESSONS.length?' and the matching lesson':''));
+ li('Readiness by domain and a retry list of the questions you missed');
+ li('Progress saved as you go; sign in (optional) to continue on another device');
+ p.appendChild(ul);
+ p.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6',marginTop:'.6rem'}},EX.copy.disclaimer));
+ return p;}
+function renderFaq(){const F=EX.copy.faq;if(!F||!F.length)return null;
+ const p=E('section',{className:'panel',style:{margin:'0 0 1rem'}});
+ p.appendChild(E('h2',{className:'ov-h'},'Exam FAQ'));
+ F.forEach((f,i)=>{const d=E('details',{className:'faq'}),key='faq'+i;if(homeOpen.has(key))d.open=true;d.addEventListener('toggle',()=>{if(d.open)homeOpen.add(key);else homeOpen.delete(key);});d.appendChild(E('summary',null,f.q));d.appendChild(E('p',null,f.a));p.appendChild(d);});
+ return p;}
 function renderHome(){const app=document.getElementById('app');app.innerHTML='';const aq=allQ();
  // The site header and exam tabs above #app (static in the shell) handle navigation.
  app.appendChild(E('div',{className:'hdr'},E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
+ ct.appendChild(renderStats());
  if(LESSONS.length&&learnProgress().n)ct.appendChild(learnStrip());
 
  // Tests come first so a returning user can start without scrolling; the exam
@@ -448,17 +511,24 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  setDp(homeOpen.has('data'));dataBtn.addEventListener('click',()=>setDp(!homeOpen.has('data')));
  ct.appendChild(pl);ct.appendChild(dp);
 
- // Exam overview card
+ // A real question to try, then the exam reference material.
+ const tc=renderTryCard();if(tc)ct.appendChild(tc);
+
+ // About the exam
  const info=E('div',{className:'panel',style:{margin:'1rem 0'}});
  info.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'About the '+EX.code+' Exam'));
  info.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.6rem'}},EX.copy.aboutExam));
  // Columns live in app.css (.exam-facts) so they can drop to one on phones.
  const details=E('div',{className:'exam-facts'});
  const dt=(label,value)=>{const d=E('div',{className:'exam-fact'});d.appendChild(E('span',{style:{color:'var(--text-2)'}},label));d.appendChild(E('span',{style:{fontWeight:'600'}},value));return d;};
- details.appendChild(dt('Format',EX.blueprint.format));details.appendChild(dt('Questions',String(EX.blueprint.questionCount)));details.appendChild(dt('Duration',Math.round(EX.blueprint.durationSec/60)+' minutes'));details.appendChild(dt('Passing Score',EX.blueprint.passScaled+' / '+EX.blueprint.scaledMax));details.appendChild(dt('Scoring',EX.blueprint.scoring));details.appendChild(dt('Delivery',EX.blueprint.delivery));
+ details.appendChild(dt('Format',EX.blueprint.format));details.appendChild(dt('Questions',String(EX.blueprint.questionCount)));details.appendChild(dt('Duration',Math.round(EX.blueprint.durationSec/60)+' minutes'));details.appendChild(dt('Passing Score',EX.blueprint.passScaled+' / '+EX.blueprint.scaledMax));details.appendChild(dt('Scoring',EX.blueprint.scoring));details.appendChild(dt('Delivery',EX.blueprint.delivery));if(EX.blueprint.fee)details.appendChild(dt('Exam fee',EX.blueprint.fee));
  info.appendChild(details);
  info.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.scoringNote));
  ct.appendChild(info);
+
+ ct.appendChild(renderDomainCards());
+ ct.appendChild(renderIncluded());
+ const fq=renderFaq();if(fq)ct.appendChild(fq);
 
  // Collapsible section: a button row that shows and hides `body` by direct DOM
  // toggling, never render(). homeOpen remembers what is open in case
@@ -466,33 +536,6 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const collapsible=(key,head,body,cls)=>{const row=E('button',{className:'dom-btn'+(cls?' '+cls:''),type:'button','aria-expanded':'false'});head.forEach(h=>row.appendChild(h));row.appendChild(E('span',{className:'dom-chev','aria-hidden':'true'},'›'));
   const t={row,isOpen:()=>homeOpen.has(key),set:open=>{if(open)homeOpen.add(key);else homeOpen.delete(key);body.style.display=open?'block':'none';row.setAttribute('aria-expanded',String(open));row.classList.toggle('open',open);}};
   t.set(t.isOpen());return t;};
-
- // Domain weights card. Descriptions start collapsed to keep the page short.
- const dw=E('div',{className:'panel',style:{margin:'0 0 1rem'}});
- const allBtn=E('button',{className:'dom-all',type:'button'});
- dw.appendChild(E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:'.5rem',marginBottom:'.4rem'}},E('h2',{style:{fontSize:'1rem',fontWeight:'700'}},'Exam Domains'),allBtn));
- dw.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.85rem'}},EX.copy.domainsIntro));
- const dwData=Object.keys(EX.domains).map((k,i)=>({d:Number(k),n:EX.domains[k].n,w:EX.domains[k].weightPct+'%',c:domainColor(k,i),desc:EX.domains[k].blurb}));
- const toggles=[];
- const syncAll=()=>{allBtn.textContent=toggles.every(t=>t.isOpen())?'Hide all':'Show all';};
- allBtn.addEventListener('click',()=>{const open=!toggles.every(t=>t.isOpen());toggles.forEach(t=>t.set(open));syncAll();});
- dwData.forEach(d=>{const wrap=E('div',{style:{marginBottom:'.35rem'}});
- const bar=E('div',{style:{width:'80px',height:'6px',background:'var(--bg)',borderRadius:'3px',overflow:'hidden'}});
- bar.appendChild(E('div',{className:'gbar',style:{width:d.w,height:'100%',background:d.c,borderRadius:'3px'}}));
- const desc=E('p',{style:{fontSize:'.76rem',color:'var(--text-2)',lineHeight:'1.6',margin:'.1rem 1.6rem .4rem 2rem'}},d.desc);
- const t=collapsible(d.d,[E('span',{style:{fontWeight:'700',color:d.c,width:'1.5rem',fontFamily:'"JetBrains Mono",monospace'}},'D'+d.d),E('span',{style:{flex:'1',color:'var(--text)',fontWeight:'600'}},d.n),bar,E('span',{style:{fontWeight:'600',width:'2.5rem',textAlign:'right',fontFamily:'"JetBrains Mono",monospace',fontSize:'.75rem'}},d.w)],desc);
- toggles.push(t);t.row.addEventListener('click',()=>{t.set(!t.isOpen());syncAll();});
- wrap.appendChild(t.row);wrap.appendChild(desc);
- dw.appendChild(wrap);});
- syncAll();
- ct.appendChild(dw);
-
- // About this app. The mode cards above already list the features.
- const about=E('div',{className:'panel',style:{margin:'0 0 1rem'}});
- about.appendChild(E('h2',{style:{fontSize:'1rem',fontWeight:'700',marginBottom:'.5rem'}},'What This App Offers'));
- about.appendChild(E('p',{style:{fontSize:'.82rem',color:'var(--text-2)',lineHeight:'1.65',marginBottom:'.5rem'}},aq.length+EX.copy.appOffers));
- about.appendChild(E('p',{style:{fontSize:'.76rem',color:'var(--text-m)',lineHeight:'1.6'}},EX.copy.disclaimer));
- ct.appendChild(about);
 
  // Tips, collapsed by default.
  const ft=(icon,text)=>{const f=E('div',{style:{display:'flex',gap:'.4rem',marginBottom:'.25rem'}});f.appendChild(E('span',null,icon));f.appendChild(E('span',null,text));return f;};
