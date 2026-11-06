@@ -115,6 +115,18 @@ const written=lessons.filter(l=>l.html);
 // ---- cheat sheet (learn/cheat-sheet.md, optional): one ## section per topic; a heading that
 // starts "Domain <n>:" takes that domain's colour. [[1.3]] links to lesson 1.3. ----
 const csPath=learnPath+'cheat-sheet/',CSF=path.join(LSRC,'cheat-sheet.md');
+// A section body is cut into runs: full-width blocks (the "**Remember:**" line, "If the question says"
+// tables, and any table followed by {wide}) go in .cs-w; everything between them goes in a
+// two-column .cs-b. Keeping spanning blocks out of the column container lets print break pages
+// normally (a spanner inside it pushed a whole domain to the next page and split its heading).
+function cheatHtml(lines){const groups=[];let blk=[];
+  const flush=()=>{if(!blk.length)return;const t=blk[0].trim();
+    const wide=t.startsWith('**Remember:**')||/^\|\s*If the question says/i.test(t)||(t.startsWith('|')&&blk[blk.length-1].trim()==='{wide}');
+    const g=groups[groups.length-1];if(g&&g.wide===wide)g.lines.push('',...blk);else groups.push({wide,lines:blk.slice()});blk=[];};
+  for(const l of lines){if(l.trim()==='')flush();else blk.push(l);}flush();
+  return groups.map(g=>'<div class="'+(g.wide?'cs-w':'cs-b')+' body">'+blocks(g.lines,'learn/cheat-sheet.md',null)+'</div>').join('\n')
+    .split('<p><strong>Remember:</strong>').join('<p class="cs-rem"><strong>Remember:</strong>')
+    .replace(/<a href="([^"]+)">(\d+\.\d+)<\/a>/g,'<a class="cs-l" href="$1" title="Lesson $2">$2</a>');}
 let cheat=null;
 if(fs.existsSync(CSF)){
   const src=fs.readFileSync(CSF,'utf8').replace(/\[\[([\d.]+)\]\]/g,(_,id)=>{const l=lessons.find(x=>x.id===id&&x.html);
@@ -126,7 +138,7 @@ if(fs.existsSync(CSF)){
     if(secs.some(s=>!s.startsWith('## ')))fail('cheat-sheet.md: text before the first ## heading');
     cheat=Object.assign(doc,{sections:secs.map(s=>{const lines=s.split('\n'),h=lines[0].slice(3).trim(),dm=h.match(/^Domain (\d+):/);
       const d=dm&&OUT.domains.find(x=>x.n===+dm[1]);if(dm&&!d)fail('cheat-sheet.md: unknown domain in "'+h+'"');
-      return{h,d,src:lines.slice(1).join('\n'),html:blocks(lines.slice(1),'learn/cheat-sheet.md',null).split('<p><strong>Remember:</strong>').join('<p class="cs-rem"><strong>Remember:</strong>').replace(/<a href="([^"]+)">(\d+\.\d+)<\/a>/g,'<a class="cs-l" href="$1" title="Lesson $2">$2</a>')};})});
+      return{h,d,src:lines.slice(1).join('\n'),html:cheatHtml(lines.slice(1))};})});
     const dn=new Set(cheat.sections.filter(s=>s.d).map(s=>s.d.n));
     for(const d of OUT.domains)if(!dn.has(d.n))fail('cheat-sheet.md: no "## Domain '+d.n+': ..." section');
   }
@@ -416,7 +428,7 @@ ${searchBox().replace('class="ls js-only"','class="ls ls-wide js-only"')}
 <div class="cs-act js-only"><button type="button" class="btn" data-print>Print or save as PDF</button><span>Numbers like <a class="cs-l" href="${written[0].url}">${written[0].id}</a> open the lesson behind each point.</span></div>
 <div class="cs-glance"><div><b>${bp.questionCount}</b>items</div><div><b>${Math.round(bp.durationSec/60)}</b>minutes</div><div><b>${bp.passScaled}</b>to pass, of ${bp.scaledMax}</div>
 <ul>${OUT.domains.map(d=>`<li style="--dc:${d.color}"><b>D${d.n}</b> ${esc(d.name)} <i>${d.weight}%</i></li>`).join('')}</ul></div>
-${cheat.sections.map(s=>`<section class="cs-s${s.d?'':' cs-x'}"${s.d?` style="--dc:${s.d.color};--dt:${s.d.tint}"`:''}><h2 id="${slugify(s.h)}">${s.d?`<span>Domain ${s.d.n} &middot; ${s.d.weight}%</span>`+esc(s.d.name):esc(s.h)}</h2><div class="cs-b body">${s.html}</div></section>`).join('\n')}
+${cheat.sections.map(s=>`<section class="cs-s${s.d?'':' cs-x'}"${s.d?` style="--dc:${s.d.color};--dt:${s.d.tint}"`:''}><h2 id="${slugify(s.h)}">${s.d?`<span>Domain ${s.d.n} &middot; ${s.d.weight}%</span>`+esc(s.d.name):esc(s.h)}</h2>${s.html}</section>`).join('\n')}
 <p class="after">Unsure about a point? Open its lesson from the number beside it. Ready to check yourself? Take the <a href="${examPath}">${esc(EXAM.code)} practice tests</a>.</p>`})});
 }
 

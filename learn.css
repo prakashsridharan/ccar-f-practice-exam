@@ -208,20 +208,20 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 .cs-s{margin:0 0 1.6rem}
 .cs-s h2{display:flex;flex-direction:column;gap:.1rem;font-size:1.2rem;font-weight:800;letter-spacing:-.01em;color:var(--ac-h);padding-top:.9rem;margin-bottom:.8rem;border-top:3px solid var(--dc);scroll-margin-top:calc(var(--chrome-h,6.25rem) + 1rem)}
 .cs-s h2 span{font-family:'JetBrains Mono',monospace;font-size:.7rem;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--dc)}
-.cs-b{font-size:.92rem}
-.cs-b .tbl,.cs-b li,.cs-b p{break-inside:avoid}
+.cs-b,.cs-w{font-size:.92rem}
+:is(.cs-b,.cs-w) .tbl,:is(.cs-b,.cs-w) li,:is(.cs-b,.cs-w) p{break-inside:avoid}
 /* The domain's one-liner and its "If the question says | Pick | Not" table span both columns */
-.cs-b .cs-rem,.cs-b .tbl.cue,.cs-b .tbl.wide{column-span:all}
-.cs-b .cs-rem{background:var(--dt,#f5f7fa);border-left:3px solid var(--dc,#1B4F8A);padding:.45rem .7rem;border-radius:0 6px 6px 0;margin:0 0 .6rem}
-.cs-b .tbl.cue{margin-bottom:.8rem}
+/* (Remember lines and cue/wide tables are rendered outside the columns, in .cs-w) */
+:is(.cs-b,.cs-w) .cs-rem{background:var(--dt,#f5f7fa);border-left:3px solid var(--dc,#1B4F8A);padding:.45rem .7rem;border-radius:0 6px 6px 0;margin:0 0 .6rem}
+:is(.cs-b,.cs-w) .tbl.cue{margin-bottom:.8rem}
 /* Long full-width tables may break between rows when printing, so they never push a whole table to a new page */
-.cs-b .tbl.cue,.cs-b .tbl.wide{break-inside:auto}.cs-b .cue tr,.cs-b .wide tr{break-inside:avoid}
-.cs-b .cue th:nth-child(1),.cs-b .cue td:nth-child(1){width:30%}
-.cs-b .cue th:nth-child(2),.cs-b .cue td:nth-child(2){width:40%}
-.cs-b .cue td:nth-child(1){font-weight:600}
-.cs-b table{font-size:.82rem}
-.cs-b th,.cs-b td{padding:.45rem .6rem}
-.cs-b li{margin-bottom:.45rem}
+:is(.cs-b,.cs-w) .tbl.cue,:is(.cs-b,.cs-w) .tbl.wide{break-inside:auto}:is(.cs-b,.cs-w) .cue tr,:is(.cs-b,.cs-w) .wide tr{break-inside:avoid}
+:is(.cs-b,.cs-w) .cue th:nth-child(1),:is(.cs-b,.cs-w) .cue td:nth-child(1){width:30%}
+:is(.cs-b,.cs-w) .cue th:nth-child(2),:is(.cs-b,.cs-w) .cue td:nth-child(2){width:40%}
+:is(.cs-b,.cs-w) .cue td:nth-child(1){font-weight:600}
+:is(.cs-b,.cs-w) table{font-size:.82rem}
+:is(.cs-b,.cs-w) th,:is(.cs-b,.cs-w) td{padding:.45rem .6rem}
+:is(.cs-b,.cs-w) li{margin-bottom:.45rem}
 @media(min-width:1000px){.cs-b{columns:2;column-gap:2.2rem}}
 @media print{
  @page{margin:6mm}
@@ -240,14 +240,16 @@ td:first-child{font-weight:600;color:var(--ac-h)}
  .cs-s h2{font-size:10pt;padding-top:3pt;margin-bottom:3pt;border-top-width:2pt;break-after:avoid}
  .cs-s h2 span{font-size:6.4pt}
  .cs-b{columns:2;column-gap:6mm;font-size:8pt}
- .cs-b p{margin-bottom:3pt}
- .cs-b .cs-rem{padding:2pt 5pt;margin:0 0 3pt;border-left-width:2pt}
- .cs-b .tbl.cue{margin-bottom:4pt}
- .cs-b ul,.cs-b ol{margin:0 0 3pt 9pt}.cs-b li{margin-bottom:2pt}
- .cs-b .tbl{margin:0 0 4pt;border-radius:3pt}
- .cs-b table{font-size:7.2pt;line-height:1.3}
- .cs-b th,.cs-b td{padding:1.5pt 3.5pt}
- .cs-b code{font-size:7pt;padding:0 1.5pt}
+ .cs-w{font-size:8pt}
+ .cs-s h2{break-inside:avoid}
+ :is(.cs-b,.cs-w) p{margin-bottom:3pt}
+ :is(.cs-b,.cs-w) .cs-rem{padding:2pt 5pt;margin:0 0 3pt;border-left-width:2pt}
+ :is(.cs-b,.cs-w) .tbl.cue{margin-bottom:4pt}
+ :is(.cs-b,.cs-w) ul,:is(.cs-b,.cs-w) ol{margin:0 0 3pt 9pt}:is(.cs-b,.cs-w) li{margin-bottom:2pt}
+ :is(.cs-b,.cs-w) .tbl{margin:0 0 4pt;border-radius:3pt}
+ :is(.cs-b,.cs-w) table{font-size:7.2pt;line-height:1.3}
+ :is(.cs-b,.cs-w) th,:is(.cs-b,.cs-w) td{padding:1.5pt 3.5pt}
+ :is(.cs-b,.cs-w) code{font-size:7pt;padding:0 1.5pt}
  .wrap-cs a{color:inherit;text-decoration:none}
  .cs-l{font-size:6.4pt;padding:0 2pt;color:var(--dc)!important}
  .wrap-cs .notice{margin-top:5pt;padding:3pt 6pt;font-size:6.4pt;border-radius:3pt}
