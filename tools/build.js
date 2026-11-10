@@ -49,19 +49,23 @@ function parseQuestions(src,file){
     const dm=l.match(/^##\s+Domain\s+(\d+)/i);
     if(dm){flush();domain=+dm[1];continue;}
     const hm=l.match(/^\*\*Q(\d+)\.\*\*\s*(.*)$/);
-    if(hm){flush();cur={n:+hm[1],stem:[],o:[],d:domain};
+    if(hm){flush();cur={n:+hm[1],stem:[],o:[],st:[],d:domain};
       for(const tok of hm[2].split('·').map(t=>t.trim()).filter(Boolean)){
         let m;
         if((m=tok.match(/^`([^`]+)`$/))){cur.code=m[1];const d=m[1].match(/D(\d+)-/);if(d)cur.d=+d[1];}
         else if((m=tok.match(/^Select\s+(\w+)$/i))){cur.se=NUM[m[1].toUpperCase()]||parseInt(m[1],10);}
+        else if(/^Yes\/No$/i.test(tok))cur.ty='yn';
+        else if(/^Match$/i.test(tok))cur.ty='match';
         else if(/^(easy|medium|hard)$/i.test(tok))cur.df=tok.toLowerCase();
         else if((m=tok.match(/^Scenario\s+(\d+)$/i)))cur.s=+m[1];
         else throw new Error(file+' Q'+cur.n+': unknown header token "'+tok+'"');}
       continue;}
     if(!cur||!l||l==='---'||l.startsWith('#'))continue;
-    const om=l.match(/^- \*\*([A-F])\.\*\*\s+(.*)$/);
+    const om=l.match(/^- \*\*([A-F])\.\*\*\s+(.*)$/),sm=l.match(/^- \*\*(\d)\.\*\*\s+(.*)$/);
     if(om)cur.o.push({l:om[1],t:clean(om[2])});
-    else if(cur.o.length)throw new Error(file+' Q'+cur.n+': text after options: '+l);
+    // Numbered statements: the rows of a Yes/No grid, or the items a Match maps onto options A-D.
+    else if(sm)cur.st.push({n:+sm[1],t:clean(sm[2])});
+    else if(cur.o.length||cur.st.length)throw new Error(file+' Q'+cur.n+': text after options: '+l);
     else cur.stem.push(clean(l));
   }
   flush();
@@ -69,9 +73,16 @@ function parseQuestions(src,file){
   for(const raw of kpart.split('\n')){
     const l=raw.trim();
     const km=l.replace(EM,'-').match(/^\*\*Q(\d+)\*\*\s*(?:\(([^)]*)\))?\s*-\s*\*\*([A-F ,]+)\*\*/);
-    if(km){k={code:km[2],a:km[3].split(',').map(s=>s.trim()).filter(Boolean),r:[],w:'',ob:''};keys[+km[1]]=k;continue;}
+    if(km){k={code:km[2],a:km[3].split(',').map(s=>s.trim()).filter(Boolean),r:[],w:'',ob:'',sn:[]};keys[+km[1]]=k;continue;}
+    // Yes/No and Match keys: **1 Yes, 2 No, ...** or **1 B, 2 A, ...** (statement number, answer).
+    const ks=l.replace(EM,'-').match(/^\*\*Q(\d+)\*\*\s*(?:\(([^)]*)\))?\s*-\s*\*\*((?:\d\s+(?:Yes|No|[A-F])\s*,?\s*)+)\*\*/);
+    if(ks){k={code:ks[2],sa:ks[3].split(',').map(s=>s.trim()).filter(Boolean).map(p=>{const [n,v]=p.split(/\s+/);return{n:+n,v};}),a:[],r:[],w:'',ob:'',sn:[]};keys[+ks[1]]=k;continue;}
     if(!k||!l||l==='---')continue;
     let m;
+    // One explanation per statement: - **1.** text
+    if((m=l.match(/^- \*\*(\d)\.\*\*\s+(.*)$/))){k.sn.push({n:+m[1],t:clean(m[2])});continue;}
+    // Inline option notes (used instead of option-notes.json where present): - **A.** Correct. ...
+    if((m=l.match(/^- \*\*([A-F])\.\*\*\s+(.*)$/))){(k.on=k.on||[]).push({l:m[1],t:clean(m[2])});continue;}
     if((m=l.match(/^\*Why not:\*\s*(.*)$/)))k.w=clean(m[1]);
     else if((m=l.match(/^\*Objective:\*\s*(.*?)(?:\s+·\s+\*Source:\*.*)?$/)))k.ob=clean(m[1]);
     else k.r.push(clean(l));
