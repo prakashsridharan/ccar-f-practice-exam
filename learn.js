@@ -47,9 +47,12 @@
   // Came here from the practice tests ("Read lesson")? The exam app saved where the reader
   // was in '<prefix>-back'; the Practice tests tab then goes back to it (#/back restores it).
   var hp=document.querySelector('.xt a.hp');
-  try{var back=JSON.parse(localStorage.getItem((body.getAttribute('data-prefix')||'')+'-back')||'null');
+  // Several exams can share one guide (data-back: "<prefix> <path>,..."), so take the newest
+  // return point among them and send the tab back to that exam.
+  try{var back=null,bpath=null;(body.getAttribute('data-back')||((body.getAttribute('data-prefix')||'')+' ')).split(',').forEach(function(e){
+      var p=e.split(' '),r=JSON.parse(localStorage.getItem(p[0]+'-back')||'null');if(r&&(!back||r.at>back.at)){back=r;bpath=p[1]||null;}});
     if(hp&&back&&Date.now()-back.at<24*3600*1000){
-      hp.href=hp.getAttribute('href').split('#')[0]+'#/back';
+      hp.href=(bpath||hp.getAttribute('href').split('#')[0])+'#/back';
       hp.textContent='Back to '+(back.label||'the practice tests');hp.classList.add('is-back');
     }}catch(e){}
 

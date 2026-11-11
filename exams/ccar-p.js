@@ -5,7 +5,7 @@
 // change the source there and rebuild.
 const EXAM={
   id:'ccar-p',idPrefix:'P',code:'CCAR-P',richText:true,
-  name:'Claude Certified Architect - Professional',
+  name:'Claude Certified Architect - Professional (Version 1)',
   path:'/claude/ccar-p/',storagePrefix:'ccar-p',
   visitPage:'ccar-p',
   blueprint:{questionCount:63,durationSec:7200,passScaled:720,scaledMax:1000,fee:'$175 USD',
@@ -16,6 +16,7 @@ const EXAM={
    title:'CCAR-F Practice Exam',
    blurb:'Claude Certified Architect - Foundations. 120 scenario-based questions across five domains, in two timed 60-question practice tests.'},
   copy:{
+   versionNote:{text:'This is Version 1, with single and multiple-choice items only. Version 2 follows the current exam format, with more multiple-response items, Yes/No statement grids and matching items.',href:'/claude/ccar-p-v2/',label:'Open Version 2'},
    faq:[{"q":"What is the exam format?","a":"The CCAR-P exam has 63 items in 120 minutes. Items are multiple choice or multiple response, and each one states how many answers to select. It is proctored, online or at a test centre, and booked through Pearson VUE."},{"q":"What score do I need to pass?","a":"A scaled score of 720 out of 1000. Questions do not all carry the same weight and Anthropic does not publish the conversion, so a percentage on this site is a guide, not a prediction. Aim for 80% or more overall and 75% or more in every domain."},{"q":"How much does the exam cost?","a":"Anthropic lists this exam at $175 USD on its certifications page (the Foundations exam is $125 USD), and you pay there when you register. Check that page for the current price."},{"q":"Who can take the exam?","a":"Claude certification exams are open to people who work at organizations in the Claude Partner Network. You register with a company email on your organization's partner domain, and on exam day you need to be 18 or older with a government-issued ID."},{"q":"How long is the certification valid?","a":"Anthropic states that the credential is valid for 12 months."},{"q":"Should I take Foundations first?","a":"Anthropic recommends starting at Foundations, then advancing to Professional. If the Foundations topics are new to you, the CCAR-F guide on this site covers them."},{"q":"How close are these practice tests to the real exam?","a":"They follow the official blueprint: the same number of items, the same time limit and the same domain proportions, with multiple-response items marked Select N. Every question is original and written from the public exam guide, so none of them comes from the real exam."},{"q":"Do I need an account?","a":"No. Everything here is free and works without signing in, and your progress is saved in your browser. Sign in only if you want to continue on another device."}],
    tipsIntro:'How to read your results and where to spend study time.',
    studyCard:' questions with answers, rationales, and Anthropic doc links. Filter by domain.',

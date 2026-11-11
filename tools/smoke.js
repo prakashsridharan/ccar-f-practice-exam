@@ -70,7 +70,39 @@ ok('renderReport',()=>run('submitPractice();renderReport()'));
 ok('renderReview',()=>run('renderReview()'));
 ok('multi-select card renders and reveals',()=>{const id=run("(allQ().find(q=>q.type==='multi')||{}).id");if(!id)return;run("st.rev['"+id+"']=true;var __c=renderQCard(allQ().find(q=>q.id==='"+id+"'),{showAdmin:true})");const t=text(run('__c'));if(!/Select \d/.test(t))throw new Error('no Select N badge');});
 ok('weights sum to questionCount and fit the pool',()=>{const w=run('WEIGHTS'),N=run('EX.blueprint.questionCount');const s=Object.values(w).reduce((a,b)=>a+b,0);if(s!==N)throw new Error('sum '+s);const pool=run('(()=>{const p={};allQ().forEach(q=>p[q.domain]=(p[q.domain]||0)+1);return p})()');for(const d in w)if(w[d]>(pool[d]||0))throw new Error('D'+d+' needs '+w[d]+' has '+pool[d]);});
-ok('every question well-formed with a reference',()=>{const bad=run(`allQ().filter(q=>!q.ref||!/^https:\\/\\//.test(q.ref)||q.ref.split('|').length!==2||!q.answer.length||q.answer.some(a=>!q.options.some(o=>o.l===a))||(q.type==='multi'&&q.answer.length!==q.select)||!EX.domains[q.domain]).map(q=>q.id)`);if(bad.length)throw new Error('bad: '+bad.join(','));});
+// Yes/No and Match items (CCAR-P Version 2): one answer per statement, scored all or nothing,
+// with Submit only once every row is answered. Skipped for exams without them.
+ok('Yes/No and Match items: render, select, submit, score, review',()=>{
+ for(const ty of ['yn','match']){const id=run("(allQ().find(q=>q.type==='"+ty+"')||{}).id");if(!id)continue;
+  const Q="allQ().find(q=>q.id==='"+id+"')";
+  run("st.sel={};st.sub={};st.rev={};var __g="+Q);
+  let t=text(run("renderQCard(__g,{})"));
+  if(!t.includes(ty==='yn'?'Yes / No':'Match'))throw new Error(id+': no type badge');
+  if(/Submit/.test(t))throw new Error(id+': Submit shown before any answer');
+  // answer all but the last statement: still no Submit, and not correct
+  run("st.sel[__g.id]=__g.answer.map((a,i)=>i<__g.answer.length-1?a:null)");
+  if(/Submit/.test(text(run("renderQCard(__g,{})"))))throw new Error(id+': Submit shown with a row unanswered');
+  if(run("isCorrect(__g)"))throw new Error(id+': partial grid scored as correct');
+  if(!run("hasAnswer(__g)"))throw new Error(id+': partial grid not counted as answered');
+  // all right: Submit appears, scores correct
+  run("st.sel[__g.id]=__g.answer.slice()");
+  if(!/Submit/.test(text(run("renderQCard(__g,{})"))))throw new Error(id+': no Submit with every row answered');
+  if(!run("isCorrect(__g)"))throw new Error(id+': all-correct grid scored as wrong');
+  // one row wrong: all or nothing
+  run("var __w=__g.answer.slice();__w[0]="+(ty==='yn'?"__w[0]==='Yes'?'No':'Yes'":"__g.options.find(o=>o.l!==__w[0]).l")+";st.sel[__g.id]=__w");
+  if(run("isCorrect(__g)"))throw new Error(id+': one wrong row still scored correct');
+  run("st.sub[__g.id]=true");if(run("calcScore([__g]).c")!==0)throw new Error(id+': calcScore counted a wrong grid');
+  run("st.sel[__g.id]=__g.answer.slice()");if(run("calcScore([__g]).c")!==1)throw new Error(id+': calcScore missed a right grid');
+  // review and reveal show the answer and one explanation per statement
+  t=text(run("renderQCard(__g,{showAnswer:true,allowSelect:false})"));
+  if(!t.includes('Explanation of each statement'))throw new Error(id+': no per-statement explanations');
+  if(!t.includes(run("__g.answer.map((a,i)=>(i+1)+' '+a).join(', ')")))throw new Error(id+': answer line missing');
+  // a peek (Show Answer) never grades
+  run("st.sub={};st.sel={};st.rev[__g.id]=true");t=text(run("renderQCard(__g,{})"));
+  if(!/Hide/.test(t)||/Submit/.test(t))throw new Error(id+': revealed grid should offer Hide only');
+  run("st.sel={};st.sub={};st.rev={}");}
+});
+ok('every question well-formed with a reference',()=>{const bad=run(`allQ().filter(q=>!q.ref||!/^https:\\/\\//.test(q.ref)||q.ref.split('|').length!==2||!q.answer.length||(isGrid(q)?(!q.statements||q.answer.length!==q.statements.length||(q.type==='yn'?q.answer.some(a=>a!=='Yes'&&a!=='No'):q.answer.some(a=>!q.options.some(o=>o.l===a)))||!q.notes||q.notes.length!==q.statements.length):q.answer.some(a=>!q.options.some(o=>o.l===a)))||(q.type==='multi'&&q.answer.length!==q.select)||!EX.domains[q.domain]).map(q=>q.id)`);if(bad.length)throw new Error('bad: '+bad.join(','));});
 ok('never reads questions from Supabase',()=>{if(fetched.some(u=>/\/rest\/v1\/(questions|scenarios)/.test(u)))throw new Error(fetched.join(' '))});
 ok('fixed tests: each draws exactly its ids, no overlap',()=>{const T=run('FIXED');const seen=new Set();
  T.forEach(t=>{run('PROG.cur=null;startPractice('+t.n+')');const ids=run('st.pq.map(q=>q.id)');
@@ -229,7 +261,7 @@ ok('learning guide: every lesson task has questions, answer panels link the obje
  if(!find(card,n=>n.textContent==='Read lesson '+l.id))throw new Error('no "Read lesson '+l.id+'" link on '+q.id);});
 ok('learning guide return point: Read lesson saves the view, #/back restores it once',()=>{
  if(!run('LESSONS.length'))return;
- run("startPractice(1);st.pq.slice(0,7).forEach(q=>{st.sel[q.id]=[q.options[0].l]});submitPractice();go('review');st.rf='wrong'");
+ run("startPractice(1);st.pq.slice(0,7).forEach(q=>{st.sel[q.id]=isGrid(q)?q.statements.map(()=>q.type==='yn'?'Yes':q.options[0].l):[q.options[0].l]});submitPractice();go('review');st.rf='wrong'");
  const q=run("st.pq.find(q=>lessonForOb(q.objective)).id");
  run("saveBack(allQ().find(q=>q.id==='"+q+"'))");
  const rec=run('readBack()');if(!rec||rec.v!=='review'||rec.label!=='your review'||rec.ids.length!==run('st.pq.length'))throw new Error('bad record '+JSON.stringify(rec&&{v:rec.v,label:rec.label}));

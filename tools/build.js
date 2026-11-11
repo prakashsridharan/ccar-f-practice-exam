@@ -94,12 +94,18 @@ function buildExam(dir){
   const cfgSrc=fs.readFileSync(path.join(dir,'config.js'),'utf8').trim();
   const EXAM=new Function(cfgSrc+';return EXAM;')();
   if(!EXAM.id||!EXAM.idPrefix)throw new Error(dir+': config.js needs id and idPrefix');
+  // EXAM.shares names a sibling exam folder (e.g. a newer version of the same exam): its refs,
+  // option notes, scenarios, tests, publish rule and learning guide are used for any of those
+  // files this folder does not have itself.
+  const shared=EXAM.shares?path.join(dir,'..',EXAM.shares):null;
+  if(shared&&!fs.existsSync(path.join(shared,'config.js')))throw new Error(dir+': shares "'+EXAM.shares+'" is not an exam folder');
+  const src=f=>{const p=path.join(dir,f);return fs.existsSync(p)||!shared?p:path.join(shared,f);};
   const qfile=path.join(dir,'questions.md');
   const {qs,keys}=parseQuestions(fs.readFileSync(qfile,'utf8'),qfile);
-  const refs=JSON.parse(fs.readFileSync(path.join(dir,'refs.json'),'utf8'));
-  const notesPath=path.join(dir,'option-notes.json');
+  const refs=JSON.parse(fs.readFileSync(src('refs.json'),'utf8'));
+  const notesPath=src('option-notes.json');
   const notes=fs.existsSync(notesPath)?JSON.parse(fs.readFileSync(notesPath,'utf8')):null;
-  const scPath=path.join(dir,'scenarios.json');
+  const scPath=src('scenarios.json');
   const BS=fs.existsSync(scPath)?JSON.parse(fs.readFileSync(scPath,'utf8')):{1:{t:EXAM.code+' Question Bank',d:'Scenario-based questions across the '+EXAM.code+' domains.'}};
   const errs=[],seen=new Set(),BQ=[],REFS={};
   for(const q of qs){
@@ -108,19 +114,33 @@ function buildExam(dir){
     if(!key){errs.push(at+': no answer key');continue;}
     if(key.code&&q.code&&key.code!==q.code)errs.push(at+': key code '+key.code+' != '+q.code);
     if(!q.d||!EXAM.domains[q.d])errs.push(at+': unknown domain '+q.d);
+    // Yes/No and Match items: numbered statements with one answer each (format in tools/check-v2.js).
+    const grid=q.ty==='yn'||q.ty==='match';
+    if(grid){const S=q.st,ans=key.sa||[];
+      if(q.se)errs.push(at+': '+q.ty+' item must not say "Select N"');
+      if(S.map(x=>x.n).join()!==S.map((_,i)=>i+1).join())errs.push(at+': statements must be numbered 1..'+S.length);
+      if(ans.map(x=>x.n).join()!==S.map(x=>x.n).join())errs.push(at+': key must answer statements 1..'+S.length+' in order');
+      if(q.ty==='yn'){if(S.length<5||S.length>6||q.o.length)errs.push(at+': Yes/No needs 5-6 statements and no options');if(ans.some(x=>x.v!=='Yes'&&x.v!=='No'))errs.push(at+': Yes/No answers must be Yes or No');}
+      else{if(S.length!==6||q.o.length<3||q.o.length>4)errs.push(at+': Match needs 6 statements and 3-4 options');if(ans.some(x=>!q.o.some(o=>o.l===x.v)))errs.push(at+': Match answer is not an option');}
+      if(key.sn.length!==S.length)errs.push(at+': needs one explanation per statement');
+    }else{
     if(!q.se)errs.push(at+': no "Select N"');
     if(q.o.length<2)errs.push(at+': fewer than 2 options');
     if(key.a.length!==q.se)errs.push(at+': Select '+q.se+' but '+key.a.length+' answers');
-    key.a.forEach(a=>{if(!q.o.some(o=>o.l===a))errs.push(at+': answer '+a+' is not an option');});
+    key.a.forEach(a=>{if(!q.o.some(o=>o.l===a))errs.push(at+': answer '+a+' is not an option');});}
     if(!q.stem.length)errs.push(at+': empty stem');
     if(!key.r.length)errs.push(at+': empty rationale');
     if(!refs[id])errs.push(at+': no entry in refs.json');
     else if(!/^https:\/\/\S+\|.+/.test(refs[id]))errs.push(at+': refs.json entry must be "https://...|Label"');
-    const o={id,s:q.s||1,d:q.d,ty:q.se>1?'multi':'single'};
+    const o={id,s:q.s||1,d:q.d,ty:grid?q.ty:q.se>1?'multi':'single'};
     if(q.se>1)o.se=q.se;
-    Object.assign(o,{q:q.stem.join('\n\n'),o:q.o,a:key.a,r:key.r.join(' ')});
+    if(grid)Object.assign(o,{q:q.stem.join('\n\n'),o:q.o,st:q.st.map(x=>x.t),a:(key.sa||[]).map(x=>x.v),r:key.r.join(' '),x:key.sn.map(x=>x.t)});
+    else Object.assign(o,{q:q.stem.join('\n\n'),o:q.o,a:key.a,r:key.r.join(' ')});
     if(key.w)o.w=key.w;
-    if(notes&&notes[id]){const nx=notes[id];
+    // Inline option notes in the key (- **A.** Correct. ...) win over option-notes.json.
+    if(!grid&&key.on){if(key.on.map(x=>x.l).join()!==q.o.map(x=>x.l).join())errs.push(at+': inline notes must cover options '+q.o.map(x=>x.l).join(''));
+      else{key.on.forEach(x=>{const want=key.a.includes(x.l)?'Correct.':'Incorrect.';if(!x.t.startsWith(want))errs.push(at+': note for option '+x.l+' must start with "'+want+'"');});o.x=key.on.map(x=>x.t);}}
+    else if(!grid&&notes&&notes[id]){const nx=notes[id];
       if(!Array.isArray(nx)||nx.length!==q.o.length)errs.push(at+': option-notes.json needs '+q.o.length+' notes');
       else{q.o.forEach((op,i)=>{const want=key.a.includes(op.l)?'Correct.':'Incorrect.';if(!String(nx[i]).startsWith(want))errs.push(at+': note for option '+op.l+' must start with "'+want+'"');});o.x=nx;}}
     if(q.df)o.df=q.df;
@@ -132,7 +152,7 @@ function buildExam(dir){
   if(notes)Object.keys(notes).forEach(id=>{if(!seen.has(id))errs.push('option-notes.json '+id+' has no question');});
   Object.keys(refs).forEach(id=>{if(!seen.has(id))errs.push('refs.json '+id+' has no question');});
   // Fixed practice tests (tools/make-tests.js). Optional; Random mix always exists.
-  const tPath=path.join(dir,'tests.json');
+  const tPath=src('tests.json');
   const TESTS=fs.existsSync(tPath)?JSON.parse(fs.readFileSync(tPath,'utf8')):[];
   const inTest=new Set();
   TESTS.forEach((t,i)=>{const at='tests.json test '+(t.n||'?');
@@ -147,7 +167,7 @@ function buildExam(dir){
   // publish.json {"tests":[1,2]} limits the PUBLIC file to those tests' questions;
   // the rest stay only in the private content repo (e.g. reserved for a paid course).
   // The whole bank is still validated above. Published tests are renumbered 1..N.
-  const pubPath=path.join(dir,'publish.json');
+  const pubPath=src('publish.json');
   let outBQ=BQ,outREFS=REFS,outTESTS=TESTS,held=0;
   if(fs.existsSync(pubPath)){
     const pub=JSON.parse(fs.readFileSync(pubPath,'utf8'));
@@ -167,7 +187,7 @@ function buildExam(dir){
     'const BS='+JSON.stringify(BS)+';',
     'const REFS='+JSON.stringify(outREFS,null,0)+';',
     'const TESTS='+JSON.stringify(outTESTS)+';',
-    ...learnIndex(dir,EXAM,outBQ),
+    ...learnIndex(shared&&!fs.existsSync(path.join(dir,'learn'))?shared:dir,EXAM,outBQ),
     ''].join('\n');
   if(out.includes(EM)||out.includes(EN))throw new Error(dir+': em/en dash in output (check config.js)');
   const target=path.join(ROOT,'exams',EXAM.id+'.js');
@@ -196,7 +216,9 @@ process.exit(failed?1:0);
 function learnIndex(dir,EXAM,outBQ){
   const oPath=path.join(dir,'learn','outline.json');
   if(!fs.existsSync(oPath))return [];
-  const O=JSON.parse(fs.readFileSync(oPath,'utf8')),base=EXAM.path+'learn/',lessons=[];
+  // Lesson URLs live under the exam that owns the guide (a version sharing it links there).
+  const owner=new Function(fs.readFileSync(path.join(dir,'config.js'),'utf8')+';return EXAM;')();
+  const O=JSON.parse(fs.readFileSync(oPath,'utf8')),base=owner.path+'learn/',lessons=[];
   for(const d of O.domains)for(const l of d.lessons){
     if(!fs.existsSync(path.join(dir,'learn',l.slug+'.md')))continue;
     if(!outBQ.some(q=>q.ob===l.task))throw new Error(dir+': lesson '+l.id+' task matches no published question');

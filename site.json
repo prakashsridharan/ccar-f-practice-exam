@@ -1,76 +1,87 @@
 {
-  "name": "CertPrep",
-  "tagline": "Free learning guides and practice exams for AI and cloud certifications",
-  "vendors": [
+ "name": "CertPrep",
+ "tagline": "Free learning guides and practice exams for AI and cloud certifications",
+ "vendors": [
+  {
+   "id": "claude",
+   "name": "Claude (Anthropic)",
+   "url": "/claude/",
+   "exams": [
     {
-      "id": "claude",
-      "name": "Claude (Anthropic)",
-      "url": "/claude/",
-      "exams": [
-        {
-          "id": "ccar-f",
-          "code": "CCAR-F",
-          "name": "Claude Certified Architect - Foundations",
-          "level": "Foundations",
-          "status": "live",
-          "blurb": "Agents, tools and MCP, Claude Code, prompts and structured output, context and reliability."
-        },
-        {
-          "id": "ccar-p",
-          "code": "CCAR-P",
-          "name": "Claude Certified Architect - Professional",
-          "level": "Professional",
-          "status": "live",
-          "blurb": "Solution design, models and prompting, integration, evaluation, governance and the delivery lifecycle."
-        }
-      ]
+     "id": "ccar-f",
+     "code": "CCAR-F",
+     "name": "Claude Certified Architect - Foundations",
+     "level": "Foundations",
+     "status": "live",
+     "blurb": "Agents, tools and MCP, Claude Code, prompts and structured output, context and reliability."
     },
     {
-      "id": "aws",
-      "name": "AWS",
-      "status": "soon",
-      "note": "Practice exams in preparation.",
-      "exams": []
+     "id": "ccar-p-v2",
+     "code": "CCAR-P",
+     "name": "Claude Certified Architect - Professional",
+     "level": "Professional",
+     "version": "Version 2",
+     "status": "live",
+     "blurb": "Solution design, models and prompting, integration, evaluation, governance and the delivery lifecycle."
+    },
+    {
+     "id": "ccar-p",
+     "code": "CCAR-P",
+     "name": "Claude Certified Architect - Professional",
+     "level": "Professional",
+     "status": "live",
+     "blurb": "Solution design, models and prompting, integration, evaluation, governance and the delivery lifecycle.",
+     "version": "Version 1",
+     "supersededBy": "ccar-p-v2"
     }
-  ],
-  "general": [
-    {
-      "url": "https://platform.claude.com/docs/en/home",
-      "label": "Claude Developer Platform documentation"
-    },
-    {
-      "url": "https://code.claude.com/docs/en/overview",
-      "label": "Claude Code documentation"
-    },
-    {
-      "url": "https://modelcontextprotocol.io/",
-      "label": "Model Context Protocol specification and guides"
-    },
-    {
-      "url": "https://github.com/anthropics/claude-cookbooks",
-      "label": "Anthropic Claude Cookbook (runnable notebooks)"
-    }
-  ],
-  "official": [
-    {
-      "url": "https://anthropic-partners.skilljar.com/page/partner-certifications",
-      "label": "Anthropic: Claude certifications (exams, exam guides, prep courses and registration)"
-    },
-    {
-      "url": "https://anthropic-partners.skilljar.com/page/certification-eligibility",
-      "label": "Anthropic: who can take a Claude certification exam"
-    },
-    {
-      "url": "https://anthropic-partners.skilljar.com/page/faq-certifications",
-      "label": "Anthropic: certification FAQ"
-    },
-    {
-      "url": "https://www.pearsonvue.com/us/en/anthropic.html",
-      "label": "Pearson VUE: schedule, reschedule or cancel a Claude exam"
-    },
-    {
-      "url": "https://claude.com/partners",
-      "label": "Claude Partner Network (registration requires a partner organization)"
-    }
-  ]
+   ]
+  },
+  {
+   "id": "aws",
+   "name": "AWS",
+   "status": "soon",
+   "note": "Practice exams in preparation.",
+   "exams": []
+  }
+ ],
+ "general": [
+  {
+   "url": "https://platform.claude.com/docs/en/home",
+   "label": "Claude Developer Platform documentation"
+  },
+  {
+   "url": "https://code.claude.com/docs/en/overview",
+   "label": "Claude Code documentation"
+  },
+  {
+   "url": "https://modelcontextprotocol.io/",
+   "label": "Model Context Protocol specification and guides"
+  },
+  {
+   "url": "https://github.com/anthropics/claude-cookbooks",
+   "label": "Anthropic Claude Cookbook (runnable notebooks)"
+  }
+ ],
+ "official": [
+  {
+   "url": "https://anthropic-partners.skilljar.com/page/partner-certifications",
+   "label": "Anthropic: Claude certifications (exams, exam guides, prep courses and registration)"
+  },
+  {
+   "url": "https://anthropic-partners.skilljar.com/page/certification-eligibility",
+   "label": "Anthropic: who can take a Claude certification exam"
+  },
+  {
+   "url": "https://anthropic-partners.skilljar.com/page/faq-certifications",
+   "label": "Anthropic: certification FAQ"
+  },
+  {
+   "url": "https://www.pearsonvue.com/us/en/anthropic.html",
+   "label": "Pearson VUE: schedule, reschedule or cancel a Claude exam"
+  },
+  {
+   "url": "https://claude.com/partners",
+   "label": "Claude Partner Network (registration requires a partner organization)"
+  }
+ ]
 }

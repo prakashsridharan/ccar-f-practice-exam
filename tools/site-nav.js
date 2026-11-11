@@ -17,7 +17,9 @@ for(const v of SITE.vendors)for(const x of v.exams){
   if(x.status!=='live'||!fs.existsSync(f))continue;
   const c={};vm.createContext(c);
   vm.runInContext(fs.readFileSync(f,'utf8')+';this.EXAM=EXAM;this.BQ=BQ;this.TESTS=typeof TESTS!=="undefined"?TESTS:[];this.LEARN=typeof LEARN!=="undefined"?LEARN:null;',c);
-  x.path=c.EXAM.path;x.learn=c.LEARN?c.LEARN.u:null;x.resources=x.path+'resources/';
+  x.path=c.EXAM.path;x.learn=c.LEARN?c.LEARN.u:null;
+  // A version that shares another exam's guide also shares its Resources page.
+  x.resources=x.learn&&!x.learn.startsWith(x.path)?x.learn.replace(/learn\/$/,'resources/'):x.path+'resources/';
   x.cheat=x.learn&&fs.existsSync(path.join(ROOT,x.learn,'cheat-sheet','index.html'))?x.learn+'cheat-sheet/':null;
   x.counts={lessons:c.LEARN?c.LEARN.lessons.length:0,questions:c.BQ.length,tests:c.TESTS.length,domains:Object.keys(c.EXAM.domains).length,
     items:c.EXAM.blueprint.questionCount,minutes:Math.round(c.EXAM.blueprint.durationSec/60)};
@@ -25,6 +27,10 @@ for(const v of SITE.vendors)for(const x of v.exams){
 const exams=()=>SITE.vendors.flatMap(v=>v.exams);
 const exam=id=>exams().find(x=>x.id===id);
 const live=x=>x.status==='live'&&x.counts;
+// An exam replaced by a newer version (site.json supersededBy) stays live at its own URL but is
+// not listed in menus, rows or the footer; the newer version's row links to it instead.
+const listed=x=>live(x)&&!x.supersededBy;
+const olderOf=x=>exams().find(y=>y.supersededBy===x.id&&live(y));
 
 // Logo: a progress ring closing into a check (concept A, chosen 2026-11-04). This is the
 // light-on-dark version for the navy header and footer; /favicon.svg is the same mark on a tile.
@@ -49,12 +55,12 @@ function headIcons(){
 // closes it on Escape or an outside click), Resources.
 function siteHeader(){
   const groups=SITE.vendors.map(v=>'<div class="sh-g"><div class="sh-gt">'+esc(v.name)+'</div>'+
-    (v.exams.length?v.exams.map(x=>live(x)?
+    (v.exams.length?v.exams.filter(x=>!x.supersededBy).map(x=>live(x)?
       '<div class="sh-x"><a class="sh-xn" href="'+(x.learn||x.path)+'"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+'</span></a>'+
       '<span class="sh-xl">'+(x.learn?'<a href="'+x.learn+'">Guide</a>':'')+'<a href="'+x.path+'">Tests</a></span></div>':
       '<div class="sh-x sh-soon"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+'</span><i>Coming soon</i></div>').join(''):
       '<div class="sh-x sh-soon"><span>'+esc(v.note||'Coming soon')+'</span><i>Coming soon</i></div>')+
-    (v.url&&v.exams.filter(live).length>1?'<a class="sh-all" href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>').join('');
+    (v.url&&v.exams.filter(listed).length>1?'<a class="sh-all" href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>').join('');
   return '<header class="sh"><div class="sh-in">'+
     brand()+
     '<nav class="sh-nav" aria-label="Site"><details class="sh-m"><summary>Certifications</summary><div class="sh-p">'+groups+'</div></details>'+
@@ -66,10 +72,12 @@ function siteHeader(){
 // Tab bar for every page of one exam. active: 'learn' | 'tests' | 'resources'.
 // The Practice tests tab keeps class "hp": learn.js turns it into "Back to ..." after a "Read lesson" jump.
 function examTabs(id,active){
-  const x=exam(id);
+  const x=exam(id),newer=x.supersededBy&&active!=='tests'?exam(x.supersededBy):null;
+  // On an exam's own page the bar names its version; on shared guide pages it names the exam only.
+  const label=active==='tests'&&x.version&&(x.supersededBy||olderOf(x))?x.name+' ('+x.version+')':x.name;
   const tab=(k,href,label,cls)=>'<a class="xt-t'+(cls?' '+cls:'')+(k===active?' on':'')+'" href="'+href+'"'+(k===active?' aria-current="page"':'')+'>'+label+'</a>';
-  return '<nav class="xt" aria-label="'+esc(x.code)+'"><div class="xt-in"><div class="xt-h"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+'</span></div><div class="xt-ts">'+
-    (x.learn?tab('learn',x.learn,'Learning guide'):'')+tab('tests',x.path,'Practice tests','hp')+tab('resources',x.resources,'Resources')+'</div></div></nav>';
+  return '<nav class="xt" aria-label="'+esc(x.code)+'"><div class="xt-in"><div class="xt-h"><b>'+esc(x.code)+'</b><span>'+esc(label)+'</span></div><div class="xt-ts">'+
+    (x.learn?tab('learn',x.learn,'Learning guide'):'')+tab('tests',(newer||x).path,'Practice tests','hp')+tab('resources',x.resources,'Resources')+'</div></div></nav>';
 }
 
 // One row per exam, grouped by vendor. vendorId limits it to one vendor (the vendor pages).
@@ -78,12 +86,12 @@ function certList(vendorId){
   const all=vs.flatMap(v=>v.exams);
   const filters=all.length>6?'<div class="cl-f js-only"><input type="search" class="cl-q" placeholder="Search certifications" aria-label="Search certifications"></div>':'';
   return filters+vs.map(v=>'<section class="cl-v" data-vendor="'+v.id+'">'+(vendorId?'':'<div class="cl-vh"><h2>'+esc(v.name)+'</h2>'+
-      (v.url&&v.exams.filter(live).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
-    (v.exams.length?v.exams.map(x=>live(x)?
+      (v.url&&v.exams.filter(listed).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
+    (v.exams.length?v.exams.filter(x=>!x.supersededBy).map(x=>live(x)?
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
-       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span></div>'+
+       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(x.version&&olderOf(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+'</div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
-       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div></div>'+
+       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div>'+(olderOf(x)?'<p class="cr-o">Older format: <a href="'+olderOf(x).path+'">'+esc(olderOf(x).version||'previous version')+'</a></p>':'')+'</div>'+
        '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'">Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'">Cheat sheet</a>':'')+'</div></div>':
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-s">Coming soon</span></div><h3>'+esc(x.name)+'</h3></div></div>').join(''):
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+
@@ -91,7 +99,7 @@ function certList(vendorId){
 }
 
 function siteFooter(){
-  const certs=exams().filter(live);
+  const certs=exams().filter(listed);
   return '<footer class="sf"><div class="sf-in">'+
     '<div class="sf-b">'+brand()+
     '<p>'+esc(SITE.tagline)+'. An independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p></div>'+
@@ -100,4 +108,4 @@ function siteFooter(){
     '</div></footer>';
 }
 
-module.exports={SITE,ROOT,esc,exams,exam,live,siteHeader,examTabs,certList,siteFooter,headIcons};
+module.exports={SITE,ROOT,esc,exams,exam,live,listed,siteHeader,examTabs,certList,siteFooter,headIcons};

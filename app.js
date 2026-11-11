@@ -39,7 +39,7 @@ const WEIGHTS=weightsFor(EX);
 
 // Numeric id order, so Q2 sorts before Q10.
 function byDomainThenId(a,b){return a.domain-b.domain||a.id.localeCompare(b.id,undefined,{numeric:true});}
-const BUILTIN=BQ.map(q=>({id:q.id,scenario:q.s,domain:q.d,type:q.ty,select:q.se,question:q.q,options:q.o,answer:q.a,rationale:q.r,whynot:q.w,notes:q.x||null,difficulty:q.df||'',objective:q.ob||'',ref:REFS[q.id]||''})).sort(byDomainThenId);
+const BUILTIN=BQ.map(q=>({id:q.id,scenario:q.s,domain:q.d,type:q.ty,select:q.se,question:q.q,options:q.o,answer:q.a,rationale:q.r,whynot:q.w,statements:q.st||null,notes:q.x||null,difficulty:q.df||'',objective:q.ob||'',ref:REFS[q.id]||''})).sort(byDomainThenId);
 let CQ=[],CS={};let view='home';const homeOpen=new Set();
 let st={as:0,rev:{},sel:{},sub:{},modal:null,pq:[],pi:0,psec:EX.blueprint.durationSec,pflag:{},pdone:false,ptest:0,rf:'all',stest:0,rq:[],ri:0,rd:0};
 
@@ -105,7 +105,12 @@ function testLabel(t){return t&&FIXED[t-1]?FIXED[t-1].title:'Random Mix';}
 function attemptsFor(t){return PROG.attempts.filter(a=>a.t===t);}
 function pctOf(a){return a.n?Math.round(a.c/a.n*100):0;}
 function fmtTime(sec){const m=Math.floor(sec/60),s=sec%60;return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');}
-function isCorrect(q,S){S=S||st;return(S.sel[q.id]||[]).slice().sort().join(',')===q.answer.slice().sort().join(',');}
+// Yes/No and Match items (q.statements) keep one answer per statement, in order: sel[i] is
+// 'Yes'/'No' or an option letter. Select items keep a set of letters. All or nothing for both.
+const isGrid=q=>q.type==='yn'||q.type==='match';
+function answerMatches(q,sel){sel=sel||[];if(isGrid(q))return q.answer.length===sel.length&&q.answer.every((a,i)=>sel[i]===a);return sel.slice().sort().join(',')===q.answer.slice().sort().join(',');}
+function hasAnswer(q,S){return((S||st).sel[q.id]||[]).some(Boolean);}
+function isCorrect(q,S){S=S||st;return answerMatches(q,S.sel[q.id]);}
 function saveCur(){if(!st.pq.length||st.pdone)return;const sel={};st.pq.forEach(q=>{if(st.sel[q.id])sel[q.id]=st.sel[q.id];});
  PROG.cur={t:st.ptest,ids:st.pq.map(q=>q.id),pi:st.pi,psec:st.psec,sel,flag:Object.keys(st.pflag).filter(k=>st.pflag[k])};PROG.curU=new Date().toISOString();saveProgress();}
 // Every change to the unfinished run (saved, discarded, submitted) stamps PROG.curU, so
@@ -130,7 +135,7 @@ function saveStudy(){if(view!=='study')return;const ids=new Set(studySet(st.stes
 function saveStudyScroll(){if(view!=='study'||!PROG.study||!PROG.study[st.stest])return;PROG.study[st.stest].y=Math.round(window.scrollY||0);saveProgress();}
 function loadStudy(n){const s=(PROG.study||{})[n]||{};st.sel={...(s.sel||{})};st.sub={};st.rev={};(s.sub||[]).forEach(id=>st.sub[id]=true);(s.rev||[]).forEach(id=>st.rev[id]=true);st.as=s.as||0;return s.y||0;}
 function studyStats(n){const s=(PROG.study||{})[n];if(!s||!s.sub||!s.sub.length)return null;const by=new Map(allQ().map(q=>[q.id,q]));let c=0;
- s.sub.forEach(id=>{const q=by.get(id);if(q&&((s.sel||{})[id]||[]).slice().sort().join()===q.answer.slice().sort().join())c++;});return{done:s.sub.length,c};}
+ s.sub.forEach(id=>{const q=by.get(id);if(q&&answerMatches(q,(s.sel||{})[id]))c++;});return{done:s.sub.length,c};}
 // Latest graded answer per question: PROG.ql[id] = [1 right | 0 wrong, ISO date].
 // Written by every grading event (exam submit, Study Submit, Retry Submit),
 // never by a peek. Retry mistakes and Readiness both read it.
@@ -140,7 +145,7 @@ function attemptIds(a){return Array.isArray(a.ids)?a.ids:a.t>0&&FIXED[a.t-1]?FIX
 // first and any exam attempt overrides them. Old Random Mix attempts did not
 // store their ids, so only their wrong answers are known.
 function qlFromProgress(p){const ql={},by=new Map([...BUILTIN,...CQ].map(q=>[q.id,q]));
- Object.values(p.study||{}).forEach(s=>{(s&&s.sub||[]).forEach(id=>{const q=by.get(id);if(q)ql[id]=[((s.sel||{})[id]||[]).slice().sort().join()===q.answer.slice().sort().join()?1:0,''];});});
+ Object.values(p.study||{}).forEach(s=>{(s&&s.sub||[]).forEach(id=>{const q=by.get(id);if(q)ql[id]=[answerMatches(q,(s.sel||{})[id])?1:0,''];});});
  (p.attempts||[]).slice().sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0).forEach(a=>{const w=new Set(a.wrong||[]);(attemptIds(a)||[]).forEach(id=>{ql[id]=[w.has(id)?0:1,a.d];});w.forEach(id=>{ql[id]=[0,a.d];});});
  return ql;}
 function recordResult(q,ok,d){PROG.ql=PROG.ql||{};PROG.ql[q.id]=[ok?1:0,d||new Date().toISOString()];}
@@ -222,7 +227,7 @@ function submitPractice(){if(st.pdone)return;clearInterval(timerInt);st.pdone=tr
  PROG.attempts.push({t:st.ptest,d:now,c:sc.c,n:sc.tot,ds,...(st.ptest?{}:{ids:st.pq.map(q=>q.id)}),wrong:st.pq.filter(q=>!isCorrect(q)).map(q=>q.id),flag:Object.keys(st.pflag).filter(k=>st.pflag[k]),secs:testSecs(st.ptest)-st.psec});
  if(PROG.attempts.length>300)PROG.attempts=PROG.attempts.slice(-300);
  clearCur();saveProgress();go('report');}
-function calcScore(questions){let c=0,at=0;const ds={};Object.keys(DM).forEach(d=>ds[d]={c:0,t:0,a:0});questions.forEach(q=>{if(ds[q.domain])ds[q.domain].t++;if(st.sub[q.id]){at++;if(ds[q.domain])ds[q.domain].a++;const s=(st.sel[q.id]||[]).slice().sort().join(',');if(s===q.answer.slice().sort().join(',')){c++;if(ds[q.domain])ds[q.domain].c++;}}});return{c,at,tot:questions.length,ds};}
+function calcScore(questions){let c=0,at=0;const ds={};Object.keys(DM).forEach(d=>ds[d]={c:0,t:0,a:0});questions.forEach(q=>{if(ds[q.domain])ds[q.domain].t++;if(st.sub[q.id]){at++;if(ds[q.domain])ds[q.domain].a++;if(answerMatches(q,st.sel[q.id])){c++;if(ds[q.domain])ds[q.domain].c++;}}});return{c,at,tot:questions.length,ds};}
 function E(tag,a,...ch){const e=document.createElement(tag);if(a)Object.entries(a).forEach(([k,v])=>{if(k==='className')e.className=v;else if(k==='innerHTML')e.innerHTML=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2).toLowerCase(),v);else if(k==='style'&&typeof v==='object')Object.assign(e.style,v);else e.setAttribute(k,v);});ch.flat().forEach(c=>{if(typeof c==='string')e.appendChild(document.createTextNode(c));else if(c)e.appendChild(c);});return e;}
 // Rich text for exams that opt in (EXAM.richText): **bold** and `code` only. Returns text strings and
 // <b>/<code> elements, never innerHTML, so question text cannot inject markup. Triple-backtick code fences are left as they are.
@@ -234,10 +239,54 @@ function generateTemplate(){const h=['scenario_number','scenario_title','scenari
 function downloadTemplate(){const b=new Blob([generateTemplate()],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=EX.exportNames.template;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}
 function parseUploadRows(rows){if(rows.length<2)return{questions:[],errors:['No data rows.']};const hdr=rows[0].map(h=>h.toLowerCase().replace(/\s+/g,'_'));const col=n=>hdr.indexOf(n);const iSN=col('scenario_number'),iST=col('scenario_title'),iSD=col('scenario_description'),iDM=col('domain'),iTY=col('type'),iSE=col('select_count'),iQ=col('question'),iA=col('option_a'),iB=col('option_b'),iC=col('option_c'),iD=col('option_d'),iE=col('option_e'),iCA=col('correct_answers'),iR=col('rationale'),iWN=col('why_not');if(iQ<0||iCA<0||iSN<0||iDM<0)return{questions:[],errors:['Missing required columns.']};const questions=[];const errors=[];for(let i=1;i<rows.length;i++){const r=rows[i];if(!r[iQ])continue;const rn=i+1;const sn=parseInt(r[iSN]);if(!sn){errors.push('Row '+rn+': bad scenario_number');continue;}const dm=parseInt(r[iDM]);if(!dm||!EX.domains[dm]){errors.push('Row '+rn+': domain must be 1-'+Object.keys(EX.domains).length);continue;}const ty=(r[iTY]||'single').toLowerCase();const se=parseInt(r[iSE])||2;const labs='ABCDE';const optCols=[iA,iB,iC,iD,iE];const opts=[];optCols.forEach((ci,j)=>{if(ci>=0&&r[ci])opts.push({l:labs[j],t:r[ci]});});if(opts.length<2){errors.push('Row '+rn+': need 2+ options');continue;}const ans=(r[iCA]||'').split(',').map(a=>a.trim().toUpperCase()).filter(a=>a);if(!ans.length){errors.push('Row '+rn+': no answers');continue;}questions.push({sn,st:r[iST]||'',sd:r[iSD]||'',dm,ty,se,q:r[iQ],opts,ans,rat:r[iR]||'',wn:r[iWN]||''});}return{questions,errors};}
 
+// Yes/No and Match items: one row per statement, one button per choice (Yes/No, or option
+// letters A-D for Match). Same three states as renderQCard (graded / revealed / untouched),
+// read at build time; every action updates state and calls render(), which rebuilds this
+// card from state, so nothing is toggled on a node that render() is about to replace.
+function renderGrid(q,opts,S,card,graded,revealed,showAns,allowSel){
+  var yn=q.type==='yn',choices=yn?[{l:'Yes'},{l:'No'}]:q.options,n=q.statements.length;
+  var sel=S.sel[q.id]||[],locked=graded||revealed;
+  var body=E('div',{className:'qb'},E('p',null,rich(q.question)));
+  if(!yn){var mo=E('ul',{className:'gq-opts'});q.options.forEach(function(o){mo.appendChild(E('li',null,E('span',{className:'ol'},o.l+'.'),' ',rich(o.t)));});body.appendChild(mo);}
+  var hr=E('tr',null,E('th',{className:'gq-s'},yn?'Statement':'Item'));
+  choices.forEach(function(c){hr.appendChild(E('th',null,c.l));});
+  var tb=E('tbody');
+  q.statements.forEach(function(stx,i){
+    var tr=E('tr',{className:'gq-r'+(graded?(sel[i]===q.answer[i]?' ok':' wrong'):'')});
+    tr.appendChild(E('td',{className:'gq-s'},E('span',{className:'ol'},(i+1)+'.'),' ',rich(stx)));
+    choices.forEach(function(c){var isSel=sel[i]===c.l,isCor=q.answer[i]===c.l,cls='gq-c';
+      if(locked&&isCor)cls+=' ok';if(isSel)cls+=' sel';if(graded&&isSel&&!isCor)cls+=' wrong';if(!allowSel||locked)cls+=' disabled';
+      tr.appendChild(E('td',null,E('button',{type:'button',className:cls,'aria-pressed':String(isSel),'aria-label':'Statement '+(i+1)+': '+c.l,
+        onClick:function(){if(!allowSel||S.sub[q.id]||S.rev[q.id]===true)return;var a=(S.sel[q.id]||[]).slice();while(a.length<n)a.push(null);a[i]=a[i]===c.l?null:c.l;S.sel[q.id]=a;render();}},c.l)));});
+    tb.appendChild(tr);});
+  body.appendChild(E('div',{className:'gq-w'},E('table',{className:'gq'+(yn?' gq-yn':' gq-m')},E('thead',null,hr),tb)));
+  card.appendChild(body);
+
+  var ab=E('div',{className:'ans-b',style:{display:revealed?'block':'none'}});
+  ab.appendChild(E('div',{className:'al'},'Correct Answer'));
+  ab.appendChild(E('div',{className:'av'},q.answer.map(function(a,i){return(i+1)+' '+a;}).join(', ')));
+  ab.appendChild(E('div',{className:'rat'},rich(q.rationale)));
+  if(q.objective){var ls=lessonForOb(q.objective),ow=E('div',{className:'wn'},'Exam objective: '+q.objective);if(ls)ow.appendChild(E('span',null,' · ',E('a',{href:ls.u,onClick:()=>saveBack(q)},'Read lesson '+ls.id)));ab.appendChild(ow);}
+  if(q.notes&&q.notes.length===n){var nl=E('div',{className:'on'},E('div',{className:'al'},'Explanation of each statement'));
+    q.notes.forEach(function(t,i){nl.appendChild(E('div',{className:'on-i'+(graded&&sel[i]!==q.answer[i]?'':' ok')},E('span',{className:'on-l'},(i+1)+'.'),' ',rich(t)));});ab.appendChild(nl);}
+  if(q.ref){var parts=q.ref.split('|');ab.appendChild(E('div',{style:{marginTop:'.6rem',paddingTop:'.6rem',borderTop:'1px solid rgba(6,95,70,.12)'}},E('a',{href:parts[0],target:'_blank',style:{fontSize:'.78rem',color:'#2E86C1',textDecoration:'none',fontWeight:'600'}},'📖 '+parts[1]+' →')));}
+  card.appendChild(ab);
+
+  if(!showAns&&!opts.hideActions){var act=E('div',{className:'qa'});
+    var peek=function(){if(q.id)S.rev[q.id]=true;saveStudy();render();};
+    if(revealed)act.appendChild(E('button',{className:'btn btn-g',onClick:function(){if(q.id)delete S.rev[q.id];saveStudy();render();}},'Hide'));
+    else if(graded)act.appendChild(E('button',{className:'btn btn-p',onClick:peek},'Show Answer'));
+    else{
+      // Submit appears once every statement has an answer, so a partial grid is never graded by accident.
+      if(q.answer.every(function(_,i){return!!sel[i];}))act.appendChild(E('button',{className:'btn btn-p',onClick:function(){S.sub[q.id]=true;recordResult(q,isCorrect(q,S));saveStudy();saveProgress();render();}},'Submit'));
+      act.appendChild(E('button',{className:'btn btn-g',onClick:peek},'Show Answer'));}
+    card.appendChild(act);}
+  return card;}
+
 // Shared question card renderer
 function renderQCard(q,opts){
   var S=opts.state||st;var showAns=opts.showAnswer===true;var allowSel=opts.allowSelect!==false;var showAdmin=opts.showAdmin;
-  var card=E('div',{className:'qc'+(q.custom?' cust':''),'data-q':q.id});var d=DM[q.domain];var tl=q.type==='multi'?'Select '+(q.select||2):'Select one';
+  var card=E('div',{className:'qc'+(q.custom?' cust':''),'data-q':q.id});var d=DM[q.domain];var tl=q.type==='yn'?'Yes / No':q.type==='match'?'Match':q.type==='multi'?'Select '+(q.select||2):'Select one';
   var qh=E('div',{className:'qh'},E('span',{className:'qn'},q.id),E('span',{className:'badge',style:{background:domainTint(q.domain),color:domainColor(q.domain)}},'D'+q.domain),E('span',{className:'badge b-type'},tl));
   if(q.difficulty)qh.appendChild(E('span',{className:'badge b-type'},q.difficulty.charAt(0).toUpperCase()+q.difficulty.slice(1)));
   if(q.custom&&showAdmin){qh.appendChild(E('span',{className:'badge b-custom'},'Custom'));var rt=E('div',{className:'qhr'});rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.edit,onClick:()=>{st.modal={t:'eq',q};render();}}));rt.appendChild(E('button',{className:'btn btn-g btn-sm',innerHTML:IC.trash,style:{color:'var(--danger)'},onClick:()=>{if(confirm('Delete?')){CQ=CQ.filter(c=>c.id!==q.id);saveData();render();}}}));qh.appendChild(rt);}
@@ -255,6 +304,7 @@ function renderQCard(q,opts){
   var graded=S.sub[q.id]===true;
   var revealed=showAns||(!!q.id&&S.rev[q.id]===true);
   var locked=graded||revealed;
+  if(isGrid(q))return renderGrid(q,opts,S,card,graded,revealed,showAns,allowSel);
 
   var body=E('div',{className:'qb'},E('p',null,rich(q.question)));
   var ol=E('ul',{className:'opts'});
@@ -435,6 +485,8 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  // The site header and exam tabs above #app (static in the shell) handle navigation.
  app.appendChild(E('div',{className:'hdr'},E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
+ // A version note (EX.copy.versionNote) links exams that come in more than one version.
+ const vn=EX.copy.versionNote;if(vn)ct.appendChild(E('div',{className:'vnote'},E('span',null,vn.text),' ',E('a',{href:vn.href},vn.label+' →')));
  ct.appendChild(renderStats());
  if(LESSONS.length&&learnProgress().n)ct.appendChild(learnStrip());
 
@@ -631,12 +683,12 @@ function renderRetry(){const app=document.getElementById('app');app.innerHTML=''
 
 // Every answer, flag and navigation click comes through here (they all call
 // render()), so this is where an unfinished run is saved for resume.
-function renderPractice(){const app=document.getElementById('app');app.innerHTML='';const q=st.pq[st.pi];if(!q)return;saveCur();const answered=st.pq.filter(q=>(st.sel[q.id]||[]).length>0).length;
+function renderPractice(){const app=document.getElementById('app');app.innerHTML='';const q=st.pq[st.pi];if(!q)return;saveCur();const answered=st.pq.filter(q=>hasAnswer(q)).length;
  app.appendChild(E('div',{className:'hdr',style:{padding:'1rem 1.5rem'}},E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},E('button',{className:'btn-h',onClick:()=>{if(confirm(EXIT_MSG)){pausePractice();go('home');}}},E('span',{innerHTML:IC.home}),'Exit'),E('h1',{style:{fontSize:'1.1rem'}},testLabel(st.ptest)),E('button',{className:'btn-h',onClick:()=>{const left=st.pq.length-answered;if(confirm(left?'Submit now? '+left+' question'+(left===1?' is':'s are')+' unanswered and will be marked wrong.':'Submit your exam now?'))submitPractice();}},E('span',{innerHTML:IC.flag}),'Submit'))));
  app.appendChild(E('div',{className:'timer-bar'},E('span',{className:'qi'},'Q '+(st.pi+1)+'/'+st.pq.length),E('span',{id:'timer',className:st.psec<=600?'timer warn':'timer'},fmtTime(st.psec)),E('span',{className:'qi'},answered+' answered')));
  const ct=E('div',{className:'container'});ct.appendChild(renderQCard(q,{flaggable:true,hideActions:true}));
  ct.appendChild(E('div',{style:{display:'flex',justifyContent:'space-between',padding:'.5rem 0',gap:'.5rem'}},E('button',{className:'btn btn-g',style:st.pi===0?{opacity:'.4',pointerEvents:'none'}:{},onClick:()=>{if(st.pi>0){st.pi--;render();}}},'< Previous'),E('button',{className:'btn btn-p',style:st.pi===st.pq.length-1?{opacity:'.4',pointerEvents:'none'}:{},onClick:()=>{if(st.pi<st.pq.length-1){st.pi++;render();}}},'Next >')));
- const grid=E('div',{style:{display:'flex',flexWrap:'wrap',gap:'3px',justifyContent:'center',padding:'.75rem 0'}});st.pq.forEach((pq,i)=>{const hasSel=(st.sel[pq.id]||[]).length>0;const isCur=i===st.pi;const isFl=st.pflag[pq.id];let cls='qnum-dot';if(isCur)cls+=' cur';else if(hasSel)cls+=' ans';if(isFl)cls+=' flagged';grid.appendChild(E('button',{className:cls,onClick:()=>{st.pi=i;render();}},String(i+1)));});
+ const grid=E('div',{style:{display:'flex',flexWrap:'wrap',gap:'3px',justifyContent:'center',padding:'.75rem 0'}});st.pq.forEach((pq,i)=>{const hasSel=hasAnswer(pq);const isCur=i===st.pi;const isFl=st.pflag[pq.id];let cls='qnum-dot';if(isCur)cls+=' cur';else if(hasSel)cls+=' ans';if(isFl)cls+=' flagged';grid.appendChild(E('button',{className:cls,onClick:()=>{st.pi=i;render();}},String(i+1)));});
  ct.appendChild(grid);app.appendChild(ct);}
 
 function renderReport(){const app=document.getElementById('app');app.innerHTML='';const sc=calcScore(st.pq);const pct=sc.at?Math.round(sc.c/sc.at*100):0;
@@ -654,7 +706,7 @@ function renderReport(){const app=document.getElementById('app');app.innerHTML='
  ct.appendChild(E('div',{style:{display:'flex',justifyContent:'center',gap:'.75rem',margin:'1.5rem 0',flexWrap:'wrap'}},E('button',{className:'btn btn-p',onClick:()=>{go('review');}},E('span',{innerHTML:IC.book}),'Review Answers'),E('button',{className:'btn btn-p',onClick:()=>startPractice(st.ptest)},E('span',{innerHTML:IC.play}),st.ptest?'Retake '+testLabel(st.ptest):'New Random Mix'),(w=>w.length?E('button',{className:'btn btn-g',onClick:()=>startRetry(0,w)},E('span',{innerHTML:IC.reset}),'Retry the '+w.length+' you missed'):null)(st.pq.filter(q=>!isCorrect(q)).map(q=>q.id)),E('button',{className:'btn btn-g',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home')));app.appendChild(ct);}
 
 function renderReview(){const app=document.getElementById('app');app.innerHTML='';app.appendChild(E('div',{className:'hdr',style:{padding:'1rem 1.5rem'}},E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},E('button',{className:'btn-h',onClick:()=>{go('report');}},E('span',{innerHTML:IC.home}),'Back'),E('h1',{style:{fontSize:'1.1rem'}},'Review Answers'),E('span',null,''))));
- const F={all:['All',()=>true],wrong:['Incorrect',q=>!isCorrect(q)],flag:['Flagged',q=>!!st.pflag[q.id]],skip:['Unanswered',q=>!(st.sel[q.id]||[]).length]};
+ const F={all:['All',()=>true],wrong:['Incorrect',q=>!isCorrect(q)],flag:['Flagged',q=>!!st.pflag[q.id]],skip:['Unanswered',q=>!hasAnswer(q)]};
  const nav=E('div',{className:'nav'});Object.entries(F).forEach(([k,[label,fn]])=>{const n=st.pq.filter(fn).length;if(k!=='all'&&k!=='wrong'&&!n)return;nav.appendChild(E('button',{className:'nav-t'+(st.rf===k?' on':''),onClick:()=>{st.rf=k;render();}},label,E('span',{className:'tc'},String(n))));});app.appendChild(nav);
  const list=st.pq.filter((F[st.rf]||F.all)[1]);
  const ct=E('div',{className:'container'});list.forEach(q=>ct.appendChild(renderQCard(q,{showAnswer:true,allowSelect:false})));

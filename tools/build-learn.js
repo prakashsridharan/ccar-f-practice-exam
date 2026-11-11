@@ -69,6 +69,11 @@ const SRC=path.join(contentDir,vendor,examId),LSRC=path.join(SRC,'learn');
 const ctx={};vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(path.join(SRC,'config.js'),'utf8')+';this.EXAM=EXAM;',ctx);
 const EXAM=ctx.EXAM;
+// Exams that use this guide: this one, plus any sibling whose config says shares:'<this exam>'
+// (e.g. a newer version). learn.js checks each one's return point for "Back to ...".
+const USERS=[{p:EXAM.storagePrefix,u:EXAM.path}];
+for(const d of fs.readdirSync(path.join(contentDir,vendor))){const f=path.join(contentDir,vendor,d,'config.js');if(d===examId||!fs.existsSync(f))continue;
+  const c={};vm.createContext(c);vm.runInContext(fs.readFileSync(f,'utf8')+';this.EXAM=EXAM;',c);if(c.EXAM.shares===examId)USERS.push({p:c.EXAM.storagePrefix,u:c.EXAM.path});}
 const pub={};vm.createContext(pub);
 vm.runInContext(fs.readFileSync(path.join(ROOT,'exams',examId+'.js'),'utf8')+';this.BQ=BQ;this.TESTS=typeof TESTS!=="undefined"?TESTS:[];',pub);
 const refPages=new Set(Object.values(JSON.parse(fs.readFileSync(path.join(SRC,'refs.json'),'utf8'))).map(r=>r.split('|')[0].split('#')[0]));
@@ -77,6 +82,9 @@ const OUT=JSON.parse(fs.readFileSync(path.join(LSRC,'outline.json'),'utf8'));
 for(const t of OUT.bannedTerms||[])BANNED.push([new RegExp(t,'i'),'a banned term']);
 const examPath=EXAM.path; // e.g. /claude/ccar-p/
 const learnPath=examPath+'learn/';
+// Practice-test links and breadcrumbs go to the newest exam that uses this guide (Version 2 of
+// CCAR-P shares the CCAR-P guide), while the guide's own pages stay under examPath.
+const testsPath=USERS[USERS.length-1].u;
 const outDir=path.join(ROOT,learnPath);
 const casesPath=learnPath+'cases/';
 
@@ -328,7 +336,7 @@ ${NAV.headIcons()}
 <link rel="stylesheet" href="/learn.css?v=${V}">
 <link rel="stylesheet" href="/site.css?v=${V}">
 </head>
-<body data-prefix="${esc(EXAM.storagePrefix)}" data-learn="${learnPath}" data-v="${V}"${lesson?' data-lesson="'+lesson+'"':''}${domainColor?' style="--dc:'+domainColor.color+';--dt:'+domainColor.tint+'"':''}>
+<body data-prefix="${esc(EXAM.storagePrefix)}" data-back="${esc(USERS.map(x=>x.p+' '+x.u).join(','))}" data-learn="${learnPath}" data-v="${V}"${lesson?' data-lesson="'+lesson+'"':''}${domainColor?' style="--dc:'+domainColor.color+';--dt:'+domainColor.tint+'"':''}>
 ${NAV.siteHeader()}
 ${NAV.examTabs(examId,tab)}
 <div class="wrap${side?'':' wrap-1'}${wrapCls?' '+wrapCls:''}">
@@ -365,7 +373,7 @@ const pages=[];
 // Curriculum
 pages.push({url:learnPath,html:page({
   title:EXAM.code+' Learning Guide - '+EXAM.name,
-  desc:OUT.intro,url:learnPath,crumbs:[[EXAM.code,examPath],['Learning guide']],
+  desc:OUT.intro,url:learnPath,crumbs:[[EXAM.code,testsPath],['Learning guide']],
   jsonld:orgJson('Course',EXAM.code+' Learning Guide',learnPath,OUT.intro,{provider:{'@type':'Organization',name:'certprep'},
     hasPart:lessons.filter(l=>l.html).map(l=>({'@type':'LearningResource',name:l.title,url:SITE+l.url}))}),
   main:`<div class="tag">${esc(EXAM.code)} Learning Guide</div>
@@ -378,13 +386,13 @@ ${cheat?`<a class="cs-card" href="${csPath}"><span class="cs-ck">Before the exam
  <h2>${esc(d.name)}</h2><p>${esc(d.blurb)}</p>
  <div class="dc-foot"><span>${d.lessons.length} lessons</span><span class="js-only" data-prog="d${d.n}" data-total="${d.lessons.length}"></span></div></a>`).join('\n')}</div>
 ${casesIndex?'<p class="after">Every lesson ends with a short exercise set in one of '+WORDS[Object.keys(CASES).length]+' fictional companies. Their facts are on the <a href="'+casesPath+'">case studies</a> page.</p>':''}${OUT.outOfScope?'\n<section class="oos"><h2>Not on the exam</h2><p>'+inline(OUT.outOfScope.intro)+'</p><ul>'+OUT.outOfScope.items.map(t=>'<li>'+inline(t)+'</li>').join('')+'</ul></section>':''}
-<p class="after">Ready to test yourself? The <a href="${examPath}">${esc(EXAM.code)} practice tests</a> cover the same ${WORDS[OUT.domains.length]} domains, with a rationale and documentation link for every question.</p>`})});
+<p class="after">Ready to test yourself? The <a href="${testsPath}">${esc(EXAM.code)} practice tests</a> cover the same ${WORDS[OUT.domains.length]} domains, with a rationale and documentation link for every question.</p>`})});
 // Domain pages
 OUT.domains.forEach((d,di)=>{
   const prev=OUT.domains[di-1],next=OUT.domains[di+1];
   pages.push({url:d.url,html:page({
     title:'Domain '+d.n+': '+d.name+' - '+EXAM.code+' Learning Guide',desc:d.blurb,url:d.url,domainColor:d,
-    crumbs:[[EXAM.code,examPath],['Learning guide',learnPath],['Domain '+d.n]],
+    crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],['Domain '+d.n]],
     jsonld:orgJson('CollectionPage','Domain '+d.n+': '+d.name,d.url,d.blurb),
     main:`<div class="tag">Domain ${d.n} &middot; ${d.weight}% of the exam</div>
 <h1>${esc(d.name)}</h1>
@@ -398,7 +406,7 @@ written.forEach(l=>{
   const mins=Math.max(3,Math.round(l.words/200));
   pages.push({url:l.url,html:page({
     title:l.id+' '+l.title+' - '+EXAM.code+' Learning Guide',desc:l.summary,url:l.url,lesson:l.id,domainColor:d,
-    crumbs:[[EXAM.code,examPath],['Learning guide',learnPath],['Domain '+d.n,d.url],['Lesson '+l.id]],
+    crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],['Domain '+d.n,d.url],['Lesson '+l.id]],
     jsonld:orgJson('LearningResource',l.title,l.url,l.summary,{learningResourceType:'Lesson',timeRequired:'PT'+mins+'M',
       teaches:l.task,isPartOf:{'@type':'Course',name:EXAM.code+' Learning Guide',url:SITE+learnPath}}),
     main:`<div class="tag">Domain ${d.n} &middot; Lesson ${l.id} &middot; ${mins} min read</div>
@@ -418,7 +426,7 @@ if(cheat){
   const bp=EXAM.blueprint;
   pages.push({url:csPath,html:page({
     title:EXAM.code+' Cheat Sheet - '+EXAM.name,desc:cheat.summary,url:csPath,side:false,wrapCls:'wrap-cs',
-    crumbs:[[EXAM.code,examPath],['Learning guide',learnPath],['Cheat sheet']],
+    crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],['Cheat sheet']],
     jsonld:orgJson('LearningResource',EXAM.code+' Cheat Sheet',csPath,cheat.summary,{learningResourceType:'Cheat sheet',
       isPartOf:{'@type':'Course',name:EXAM.code+' Learning Guide',url:SITE+learnPath}}),
     main:`<div class="tag">${esc(EXAM.code)} Learning Guide &middot; Cheat sheet</div>
@@ -429,7 +437,7 @@ ${searchBox().replace('class="ls js-only"','class="ls ls-wide js-only"')}
 <div class="cs-glance"><div><b>${bp.questionCount}</b>items</div><div><b>${Math.round(bp.durationSec/60)}</b>minutes</div><div><b>${bp.passScaled}</b>to pass, of ${bp.scaledMax}</div>
 <ul>${OUT.domains.map(d=>`<li style="--dc:${d.color}"><b>D${d.n}</b> ${esc(d.name)} <i>${d.weight}%</i></li>`).join('')}</ul></div>
 ${cheat.sections.map(s=>`<section class="cs-s${s.d?'':' cs-x'}"${s.d?` style="--dc:${s.d.color};--dt:${s.d.tint}"`:''}><h2 id="${slugify(s.h)}">${s.d?`<span>Domain ${s.d.n} &middot; ${s.d.weight}%</span>`+esc(s.d.name):esc(s.h)}</h2>${s.html}</section>`).join('\n')}
-<p class="after">Unsure about a point? Open its lesson from the number beside it. Ready to check yourself? Take the <a href="${examPath}">${esc(EXAM.code)} practice tests</a>.</p>`})});
+<p class="after">Unsure about a point? Open its lesson from the number beside it. Ready to check yourself? Take the <a href="${testsPath}">${esc(EXAM.code)} practice tests</a>.</p>`})});
 }
 
 // Case pages
@@ -437,14 +445,14 @@ if(casesIndex){
   const list=Object.values(CASES);
   pages.push({url:casesPath,html:page({
     title:'Case Studies - '+EXAM.code+' Learning Guide',desc:casesIndex.summary,url:casesPath,
-    crumbs:[[EXAM.code,examPath],['Learning guide',learnPath],['Case studies']],
+    crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],['Case studies']],
     jsonld:orgJson('CollectionPage',EXAM.code+' Case Studies',casesPath,casesIndex.summary),
     main:'<h1>'+esc(casesIndex.title)+'</h1><p class="lead">'+esc(casesIndex.summary)+'</p><article class="body">'+casesIndex.html+'</article>'})});
   for(const c of list){
     const used=c.used.slice().sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
     pages.push({url:c.url,html:page({
       title:c.title+' (case study) - '+EXAM.code+' Learning Guide',desc:c.summary,url:c.url,
-      crumbs:[[EXAM.code,examPath],['Learning guide',learnPath],['Case studies',casesPath],[c.title]],
+      crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],['Case studies',casesPath],[c.title]],
       jsonld:orgJson('Article',c.title+' case study',c.url,c.summary),
       main:'<div class="tag tag-case">Case study &middot; fictional company</div><h1>'+esc(c.title)+'</h1><p class="lead">'+esc(c.summary)+'</p>'+
         '<article class="body">'+c.html+'</article>'+
@@ -466,7 +474,7 @@ const resPath=examPath+'resources/';
   pages.push({url:resPath,html:page({
     title:EXAM.code+' Study Resources - '+EXAM.name,tab:'resources',side:false,
     desc:'Official documentation and hands-on notebooks for the '+EXAM.name+' exam, grouped by exam domain and linked to the lessons that use them.',url:resPath,
-    crumbs:[[EXAM.code,examPath],['Resources']],
+    crumbs:[[EXAM.code,testsPath],['Resources']],
     jsonld:orgJson('CollectionPage',EXAM.code+' Study Resources',resPath,'Official documentation and hands-on notebooks for the '+EXAM.code+' exam, grouped by domain.'),
     main:`<div class="tag">${esc(EXAM.code)} Study Resources</div>
 <h1>Study resources</h1>
@@ -474,7 +482,7 @@ const resPath=examPath+'resources/';
 ${official.length?'<section class="res-s"><h2 id="official">Official exam information</h2><ul class="res">'+official.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')+'</ul></section>':''}
 ${doms.map(({d,g})=>`<section class="res-s" style="--dc:${d.color}"><h2 id="domain-${d.n}"><span>Domain ${d.n}</span>${esc(d.name)}</h2>${list(g)}</section>`).join('\n')}
 ${ho.length?'<section class="res-s"><h2 id="hands-on"><span>Go hands-on</span>Claude Cookbook notebooks</h2><p class="ho-p">Optional and needs a Claude API key. Each notebook builds a pattern from the lessons listed beside it.</p>'+list(ho)+'</section>':''}
-<p class="after">Learning the topics? Start with the <a href="${learnPath}">${esc(EXAM.code)} learning guide</a>.${cheat?` Revising before the exam? Read the <a href="${csPath}">cheat sheet</a>.`:''} Ready to test yourself? Take the <a href="${examPath}">practice tests</a>.</p>`})});
+<p class="after">Learning the topics? Start with the <a href="${learnPath}">${esc(EXAM.code)} learning guide</a>.${cheat?` Revising before the exam? Read the <a href="${csPath}">cheat sheet</a>.`:''} Ready to test yourself? Take the <a href="${testsPath}">practice tests</a>.</p>`})});
 }
 
 // ---- search index (<learn>/search.json, read by learn.js) ----

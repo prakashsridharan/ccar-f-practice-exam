@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 // Check a Version 2 question bank (exam-format item types) without publishing anything.
 //
-//   node tools/check-v2.js <exam-content-dir> [file]   e.g. node tools/check-v2.js ../certprep-content/claude/ccar-p
-//   file defaults to questions-v2.md. Ids, refs, tests.json and option-notes.json come from the same folder.
+//   node tools/check-v2.js <v2-exam-dir>   e.g. node tools/check-v2.js ../certprep-content/claude/ccar-p-v2
+//   Reads <dir>/questions.md; Version 1 (ids, refs, tests.json, option-notes.json) is the folder named by
+//   the config's `shares`. tools/build.js applies the same rules when it builds the exam.
 //
 // Item types (header token after the code): Select ONE / Select N (as in Version 1), and
 //   Yes/No   stem, then 5-6 statements "- **1.** ...";  key "**Q12** (CODE) - **1 Yes, 2 No, ...**"
@@ -17,14 +18,16 @@
 'use strict';
 const fs=require('fs'),path=require('path');
 const {parseQuestions}=require('./build.js');
-const dir=process.argv[2],file=path.join(dir||'',process.argv[3]||'questions-v2.md');
-if(!dir){console.error('usage: node tools/check-v2.js <exam-content-dir> [file]');process.exit(2);}
+const dir=process.argv[2];
+if(!dir){console.error('usage: node tools/check-v2.js <v2-exam-dir>');process.exit(2);}
+const file=path.join(dir,'questions.md');
 const EXAM=new Function(fs.readFileSync(path.join(dir,'config.js'),'utf8')+';return EXAM;')();
+const v1dir=path.join(dir,'..',EXAM.shares||'');
 const {qs,keys}=parseQuestions(fs.readFileSync(file,'utf8'),file);
-const v1=parseQuestions(fs.readFileSync(path.join(dir,'questions.md'),'utf8'),'questions.md');
-const refs=JSON.parse(fs.readFileSync(path.join(dir,'refs.json'),'utf8'));
-const notes=JSON.parse(fs.readFileSync(path.join(dir,'option-notes.json'),'utf8'));
-const tests=JSON.parse(fs.readFileSync(path.join(dir,'tests.json'),'utf8'));
+const v1=parseQuestions(fs.readFileSync(path.join(v1dir,'questions.md'),'utf8'),'questions.md');
+const refs=JSON.parse(fs.readFileSync(path.join(v1dir,'refs.json'),'utf8'));
+const notes=JSON.parse(fs.readFileSync(path.join(v1dir,'option-notes.json'),'utf8'));
+const tests=JSON.parse(fs.readFileSync(path.join(v1dir,'tests.json'),'utf8'));
 const TARGET={multi:33,yn:5,match:5};// per 63-item test; single choice takes the rest
 const EM=String.fromCharCode(0x2014),EN=String.fromCharCode(0x2013);
 const errs=[],type={},changed=new Set();

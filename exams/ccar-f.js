@@ -11,7 +11,7 @@ const EXAM={
    format:'Multiple choice / response',delivery:'Proctored (online or centre)',scoring:'Scaled (criterion-referenced)',
    tiers:{pass:80,border:70},domainThreshold:75},
   exportNames:{backup:'ccar-f-backup.json',template:'ccar-f-question-template.csv'},
-  crossLink:{href:'/claude/ccar-p/',label:'Also preparing for the Professional exam?',
+  crossLink:{href:'/claude/ccar-p-v2/',label:'Also preparing for the Professional exam?',
    title:'CCAR-P Practice Exam',
    blurb:'Claude Certified Architect - Professional. 126 practice questions across seven domains, in two timed 63-question practice tests.'},
   copy:{
