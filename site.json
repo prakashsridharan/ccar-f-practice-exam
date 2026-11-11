@@ -30,9 +30,10 @@
      "name": "Claude Certified Architect - Professional",
      "level": "Professional",
      "status": "live",
-     "blurb": "Solution design, models and prompting, integration, evaluation, governance and the delivery lifecycle.",
+     "blurb": "The earlier question set, with single and multiple-choice items only. Available until 7 December 2026, when Anthropic changes the exam.",
      "version": "Version 1",
-     "supersededBy": "ccar-p-v2"
+     "supersededBy": "ccar-p-v2",
+     "list": true
     }
    ]
   },

@@ -28,8 +28,11 @@ const exams=()=>SITE.vendors.flatMap(v=>v.exams);
 const exam=id=>exams().find(x=>x.id===id);
 const live=x=>x.status==='live'&&x.counts;
 // An exam replaced by a newer version (site.json supersededBy) stays live at its own URL but is
-// not listed in menus, rows or the footer; the newer version's row links to it instead.
-const listed=x=>live(x)&&!x.supersededBy;
+// not listed in menus, rows or the footer (the newer version's row links to it instead), unless
+// site.json sets "list": true, as for CCAR-P Version 1 until it is retired.
+const listed=x=>live(x)&&(!x.supersededBy||x.list===true);
+// The version label is shown wherever an exam has a sibling version on the site.
+const versioned=x=>!!(x.version&&(x.supersededBy||olderOf(x)));
 const olderOf=x=>exams().find(y=>y.supersededBy===x.id&&live(y));
 
 // Logo: a progress ring closing into a check (concept A, chosen 2026-11-04). This is the
@@ -55,8 +58,8 @@ function headIcons(){
 // closes it on Escape or an outside click), Resources.
 function siteHeader(){
   const groups=SITE.vendors.map(v=>'<div class="sh-g"><div class="sh-gt">'+esc(v.name)+'</div>'+
-    (v.exams.length?v.exams.filter(x=>!x.supersededBy).map(x=>live(x)?
-      '<div class="sh-x"><a class="sh-xn" href="'+(x.learn||x.path)+'"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+'</span></a>'+
+    (v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
+      '<div class="sh-x"><a class="sh-xn" href="'+(x.learn||x.path)+'"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+(versioned(x)?' ('+esc(x.version)+')':'')+'</span></a>'+
       '<span class="sh-xl">'+(x.learn?'<a href="'+x.learn+'">Guide</a>':'')+'<a href="'+x.path+'">Tests</a></span></div>':
       '<div class="sh-x sh-soon"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+'</span><i>Coming soon</i></div>').join(''):
       '<div class="sh-x sh-soon"><span>'+esc(v.note||'Coming soon')+'</span><i>Coming soon</i></div>')+
@@ -74,7 +77,7 @@ function siteHeader(){
 function examTabs(id,active){
   const x=exam(id),newer=x.supersededBy&&active!=='tests'?exam(x.supersededBy):null;
   // On an exam's own page the bar names its version; on shared guide pages it names the exam only.
-  const label=active==='tests'&&x.version&&(x.supersededBy||olderOf(x))?x.name+' ('+x.version+')':x.name;
+  const label=active==='tests'&&versioned(x)?x.name+' ('+x.version+')':x.name;
   const tab=(k,href,label,cls)=>'<a class="xt-t'+(cls?' '+cls:'')+(k===active?' on':'')+'" href="'+href+'"'+(k===active?' aria-current="page"':'')+'>'+label+'</a>';
   return '<nav class="xt" aria-label="'+esc(x.code)+'"><div class="xt-in"><div class="xt-h"><b>'+esc(x.code)+'</b><span>'+esc(label)+'</span></div><div class="xt-ts">'+
     (x.learn?tab('learn',x.learn,'Learning guide'):'')+tab('tests',(newer||x).path,'Practice tests','hp')+tab('resources',x.resources,'Resources')+'</div></div></nav>';
@@ -87,11 +90,11 @@ function certList(vendorId){
   const filters=all.length>6?'<div class="cl-f js-only"><input type="search" class="cl-q" placeholder="Search certifications" aria-label="Search certifications"></div>':'';
   return filters+vs.map(v=>'<section class="cl-v" data-vendor="'+v.id+'">'+(vendorId?'':'<div class="cl-vh"><h2>'+esc(v.name)+'</h2>'+
       (v.url&&v.exams.filter(listed).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
-    (v.exams.length?v.exams.filter(x=>!x.supersededBy).map(x=>live(x)?
+    (v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
-       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(x.version&&olderOf(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+'</div>'+
+       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(versioned(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+'</div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
-       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div>'+(olderOf(x)?'<p class="cr-o">Older format: <a href="'+olderOf(x).path+'">'+esc(olderOf(x).version||'previous version')+'</a></p>':'')+'</div>'+
+       '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div>'+(olderOf(x)&&!listed(olderOf(x))?'<p class="cr-o">Older format: <a href="'+olderOf(x).path+'">'+esc(olderOf(x).version||'previous version')+'</a></p>':'')+'</div>'+
        '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'">Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'">Cheat sheet</a>':'')+'</div></div>':
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-s">Coming soon</span></div><h3>'+esc(x.name)+'</h3></div></div>').join(''):
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+
@@ -103,7 +106,7 @@ function siteFooter(){
   return '<footer class="sf"><div class="sf-in">'+
     '<div class="sf-b">'+brand()+
     '<p>'+esc(SITE.tagline)+'. An independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p></div>'+
-    '<div class="sf-c"><div class="sf-h">Certifications</div>'+certs.map(x=>'<a href="'+(x.learn||x.path)+'">'+esc(x.code)+' '+esc(x.level)+'</a>').join('')+'</div>'+
+    '<div class="sf-c"><div class="sf-h">Certifications</div>'+certs.map(x=>'<a href="'+(versioned(x)?x.path:(x.learn||x.path))+'">'+esc(x.code)+' '+esc(x.level)+(versioned(x)?' '+esc(x.version.replace('Version ','v')):'')+'</a>').join('')+'</div>'+
     '<div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a><a href="/privacy/">Privacy</a></div>'+
     '</div></footer>';
 }
