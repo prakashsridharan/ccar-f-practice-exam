@@ -130,3 +130,15 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 @media(max-width:500px){.feat li{font-size:.72rem;padding:.28rem .6rem}}
 /* A cert row's link to the previous version of the same exam */
 .cr-o{margin:.35rem 0 0;font-size:.78rem;color:var(--text-m)}.cr-o a{color:var(--ac);font-weight:600}
+/* Admin: feedback list */
+.adm-fbn{font-weight:500;color:var(--text-m,#8b90a0);font-size:.85em}
+.adm-fbt{display:flex;gap:.4rem;margin:.2rem 0 .6rem}
+.adm-fbf{font:600 .78rem Inter,system-ui,sans-serif;padding:.35rem .7rem;border-radius:7px;border:1px solid #dce1e8;background:#fff;color:#4a5568;cursor:pointer}
+.adm-fbf.on{border-color:#1B4F8A;background:#D6EAF8;color:#1A2E45}
+#adm-fbcsv{margin-left:auto}
+.adm-fi{border:1px solid #dce1e8;border-radius:9px;padding:.6rem .75rem;margin-bottom:.5rem;background:#fff}
+.adm-fi.done{opacity:.6}
+.adm-fm{font-size:.74rem;color:#8b90a0}.adm-fm a{color:#1B4F8A;font-weight:600}
+.adm-fx{margin:.35rem 0;font-size:.86rem;white-space:pre-wrap;word-break:break-word}
+.adm-ff{display:flex;flex-wrap:wrap;align-items:center;gap:.3rem .8rem;font-size:.74rem;color:#8b90a0}.adm-ff a{color:#1B4F8A}
+.adm-fd{margin-left:auto;font:600 .74rem Inter,system-ui,sans-serif;padding:.3rem .6rem;border-radius:6px;border:1px solid #dce1e8;background:#fff;cursor:pointer}

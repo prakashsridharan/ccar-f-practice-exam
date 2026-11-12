@@ -107,7 +107,7 @@ function siteFooter(){
     '<div class="sf-b">'+brand()+
     '<p>'+esc(SITE.tagline)+'. An independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p></div>'+
     '<div class="sf-c"><div class="sf-h">Certifications</div>'+certs.map(x=>'<a href="'+(versioned(x)?x.path:(x.learn||x.path))+'">'+esc(x.code)+' '+esc(x.level)+(versioned(x)?' '+esc(x.version.replace('Version ','v')):'')+'</a>').join('')+'</div>'+
-    '<div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a><a href="/privacy/">Privacy</a></div>'+
+    '<div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a><a href="/privacy/">Privacy</a><button type="button" class="sf-fb" data-fb>Send feedback</button></div>'+
     '</div></footer>';
 }
 

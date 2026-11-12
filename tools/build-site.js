@@ -121,6 +121,7 @@ const privHtml=`<!DOCTYPE html>
   <ul>
     <li><b>Your progress stays in your browser.</b> Practice test scores, study answers and completed lessons are saved in your browser's local storage. They never leave your device unless you sign in. Clearing your browser data removes them.</li>
     <li><b>Visit counts.</b> When a page opens we record the page, your browser type (user agent), the site that linked to us and any campaign tags in the link (such as utm_source). We do not record your name or email, and we do not use this to identify you. It tells us which pages and which shared posts are useful.</li>
+    <li><b>Feedback.</b> If you send feedback with the Feedback button, we store your message, the rating and topic you choose, the address and title of the page you sent it from and your browser type. Your email is stored only if you add it, and is used only to reply to you. Only the site owner can read feedback.</li>
     <li><b>No advertising or tracking cookies.</b> We do not set cookies.</li>
   </ul>
 
@@ -136,7 +137,7 @@ const privHtml=`<!DOCTYPE html>
 
   <h2>Services we use</h2>
   <ul>
-    <li><b>Supabase</b> stores accounts, saved progress and visit counts, and runs sign-in.</li>
+    <li><b>Supabase</b> stores accounts, saved progress, visit counts and feedback, and runs sign-in.</li>
     <li><b>Resend</b> sends the sign-in emails.</li>
     <li><b>Google</b> handles "Continue with Google" if you choose it, and serves the fonts on these pages.</li>
     <li><b>GitHub Pages</b> hosts the site. Like any web host, it keeps standard server logs.</li>
@@ -144,7 +145,7 @@ const privHtml=`<!DOCTYPE html>
   <p>These providers may process data in countries other than yours. Each acts under its own privacy terms.</p>
 
   <h2>How long we keep it</h2>
-  <p>Account data and saved progress are kept until you delete your account. Visit counts are kept as aggregate statistics.</p>
+  <p>Account data and saved progress are kept until you delete your account. Visit counts are kept as aggregate statistics. Feedback is kept while it is useful for improving the site, and you can ask for yours to be deleted.</p>
 
   <h2>Your choices</h2>
   <ul>

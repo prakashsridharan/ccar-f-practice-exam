@@ -80,6 +80,24 @@
       load().then(function(){window.CPAccount.init();}).catch(function(){});
   })();
 
+  // Feedback (every page): a small fixed button, plus any [data-fb] element such as the footer's
+  // "Send feedback". /feedback.js (the form) loads on the first click only.
+  (function(){
+    var me=document.querySelector('script[src*="/site.js"]'),v=(String(me&&me.getAttribute('src')||'').split('?v=')[1]||''),loading=null;
+    function open(){
+      if(window.CPFeedback){window.CPFeedback.open();return;}
+      if(loading)return;
+      loading=true;var s=document.createElement('script');s.src='/feedback.js?v='+v;
+      s.onload=function(){loading=null;if(window.CPFeedback)window.CPFeedback.open();};
+      s.onerror=function(){loading=null;location.href='mailto:contact@pratechlabs.com?subject='+encodeURIComponent('CertPrep feedback: '+location.pathname);};
+      document.head.appendChild(s);
+    }
+    var b=document.createElement('button');b.type='button';b.className='fb-tab';b.setAttribute('aria-label','Send feedback');
+    b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg><span>Feedback</span>';
+    b.addEventListener('click',open);document.body.appendChild(b);
+    document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('[data-fb]');if(t){e.preventDefault();open();}});
+  })();
+
   var q=document.querySelector('.cl-q');
   if(q)q.addEventListener('input',function(){
     var t=q.value.trim().toLowerCase();

@@ -296,3 +296,50 @@ RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, auth
   ) END;
 $$;
 GRANT EXECUTE ON FUNCTION account_stats() TO anon, authenticated;
+
+-- ============================================
+-- 6. FEEDBACK (2026-11): the "Feedback" button on every page
+-- Anyone can send feedback (signed in or not); nobody can read it through the API.
+-- The admin panel (/#admin) lists it and marks items done through the two functions
+-- below, which return nothing unless is_admin(). Every column is length-limited and
+-- the message must be 3-2000 characters, so the table cannot be used to store junk.
+-- ============================================
+CREATE TABLE IF NOT EXISTS feedback (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  path        TEXT NOT NULL DEFAULT '' CHECK (char_length(path) <= 300),
+  page_title  TEXT NOT NULL DEFAULT '' CHECK (char_length(page_title) <= 200),
+  area        TEXT NOT NULL DEFAULT '' CHECK (char_length(area) <= 60),
+  rating      SMALLINT CHECK (rating BETWEEN 1 AND 3),
+  category    TEXT NOT NULL DEFAULT 'other' CHECK (category IN ('content','guide','cheat','tests','site','idea','other')),
+  message     TEXT NOT NULL CHECK (char_length(btrim(message)) BETWEEN 3 AND 2000),
+  email       TEXT NOT NULL DEFAULT '' CHECK (char_length(email) <= 200),
+  ua          TEXT NOT NULL DEFAULT '' CHECK (char_length(ua) <= 200),
+  status      TEXT NOT NULL DEFAULT 'new' CHECK (status IN ('new','done'))
+);
+ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can send feedback" ON feedback;
+CREATE POLICY "Anyone can send feedback" ON feedback FOR INSERT TO anon, authenticated WITH CHECK (status = 'new');
+REVOKE ALL ON feedback FROM anon, authenticated;
+GRANT INSERT ON feedback TO anon, authenticated;
+
+-- Admin panel: the newest 500 items of the last p_days days.
+CREATE OR REPLACE FUNCTION feedback_list(p_days INT DEFAULT 365)
+RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT CASE WHEN is_admin() THEN COALESCE((
+    SELECT json_agg(f ORDER BY f.created_at DESC) FROM (
+      SELECT id, created_at, path, page_title, area, rating, category, message, email, status
+      FROM feedback WHERE created_at > now() - make_interval(days => p_days)
+      ORDER BY created_at DESC LIMIT 500) f), '[]'::json) END;
+$$;
+-- Admin panel: mark an item done (or new again). False for anyone else.
+CREATE OR REPLACE FUNCTION feedback_set_status(p_id BIGINT, p_status TEXT)
+RETURNS BOOLEAN LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NOT is_admin() OR p_status NOT IN ('new','done') THEN RETURN FALSE; END IF;
+  UPDATE feedback SET status = p_status WHERE id = p_id;
+  RETURN FOUND;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION feedback_list(INT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION feedback_set_status(BIGINT, TEXT) TO anon, authenticated;
