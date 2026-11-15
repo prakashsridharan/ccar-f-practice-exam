@@ -367,7 +367,7 @@ function sidebar(cur){
     '</details></nav>';
 }
 const orgJson=(type,name,url,desc,extra)=>Object.assign({'@context':'https://schema.org','@type':type,name,url:SITE+url,description:desc,inLanguage:'en',isAccessibleForFree:true,
-  about:{'@type':'Thing',name:EXAM.name+' ('+EXAM.code+') certification'}},extra||{});
+  about:{'@type':'Thing',name:EXAM.name+' ('+EXAM.code+') certification'},author:NAV.authorLd()},extra||{});
 
 const pages=[];
 // Curriculum
@@ -379,6 +379,7 @@ pages.push({url:learnPath,html:page({
   main:`<div class="tag">${esc(EXAM.code)} Learning Guide</div>
 <h1>${esc(OUT.title)}</h1>
 <p class="lead">${esc(OUT.intro)}</p>
+${NAV.byline()}
 <div class="progress js-only"><div class="bar"><i data-bar="all"></i></div><span data-prog="all" data-total="${lessons.length}"></span> lessons complete</div>
 ${cheat?`<a class="cs-card" href="${csPath}"><span class="cs-ck">Before the exam</span><b>Cheat sheet</b><span>${esc(cheat.summary)}</span></a>`:''}
 <div class="dgrid">${OUT.domains.map(d=>`<a class="dcard" href="${d.url}" style="--dc:${d.color};--dt:${d.tint}">
@@ -413,6 +414,7 @@ written.forEach(l=>{
 <h1>${esc(l.title)}</h1>
 <div class="task"><span>Exam task</span>${esc(l.task)}</div>
 <p class="lead">${esc(l.summary)}</p>
+${NAV.byline()}
 <nav class="jump" aria-label="On this page"><span>On this page</span>${l.toc.map(t=>'<a href="#'+t.id+'">'+t.txt.replace(/<[^>]+>/g,'').split(':')[0]+'</a>').join('')}<a href="#sources">Sources</a></nav>
 <article class="body">
 ${l.html}</article>
@@ -432,6 +434,7 @@ if(cheat){
     main:`<div class="tag">${esc(EXAM.code)} Learning Guide &middot; Cheat sheet</div>
 <h1>${esc(cheat.title)}</h1>
 <p class="lead">${esc(cheat.summary)}</p>
+${NAV.byline()}
 ${searchBox().replace('class="ls js-only"','class="ls ls-wide js-only"')}
 <div class="cs-act js-only"><button type="button" class="btn" data-print>Print or save as PDF</button><span>Numbers like <a class="cs-l" href="${written[0].url}">${written[0].id}</a> open the lesson behind each point.</span></div>
 <div class="cs-glance"><div><b>${bp.questionCount}</b>items</div><div><b>${Math.round(bp.durationSec/60)}</b>minutes</div><div><b>${bp.passScaled}</b>to pass, of ${bp.scaledMax}</div>

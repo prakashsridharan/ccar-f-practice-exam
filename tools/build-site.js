@@ -172,8 +172,72 @@ const privHtml=`<!DOCTYPE html>
 fs.mkdirSync(path.join(ROOT,'privacy'),{recursive:true});
 fs.writeFileSync(path.join(ROOT,'privacy','index.html'),privHtml);
 
+// ---- About (/about/): who writes the guides and tests (site.json author; empty fields are left out) ----
+const A=SITE.author;
+if(A){
+  const SUM=[].concat(A&&A.summary||[]);const EDU=A.education||[];
+  const ld={'@context':'https://schema.org','@type':'AboutPage',url:URL_+'/about/',name:'About '+SITE.name,
+    mainEntity:Object.assign(N.authorLd(),SUM.length?{description:SUM.join(' ')}:{},EDU.length?{alumniOf:EDU.map(e=>({'@type':'EducationalOrganization',name:e.split(', ').pop()}))}:{},A.photo?{image:URL_+A.photo}:{},
+      A.credentials.length?{hasCredential:A.credentials.map(c=>({'@type':'EducationalOccupationalCredential',name:c.name||c}))}:{})};
+  const li=(c)=>typeof c==='string'?esc(c):(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener">'+esc(c.name)+'</a>':esc(c.name))+(c.note?' <span class="ab-n">'+esc(c.note)+'</span>':'');
+  const aboutHtml=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About - ${esc(SITE.name)}</title>
+<meta name="description" content="${esc(SITE.name)} is written and maintained by ${esc(A.name)}${A.title?', '+esc(A.title):''}. Free learning guides, cheat sheets and practice tests for certification exams.">
+<meta name="robots" content="index, follow">
+<meta name="author" content="PraTech Labs">
+<link rel="canonical" href="${URL_}/about/">
+<!--site-icons--><!--/site-icons-->
+<script type="application/ld+json">${JSON.stringify(ld).split('<').join('\u003c')}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/hub.css?v=${V}">
+<link rel="stylesheet" href="/site.css?v=${V}">
+</head>
+<body>
+<!--site-header--><!--/site-header-->
+<div class="hdr">
+  <h1>About ${esc(SITE.name)}</h1>
+  <div class="sub">Who writes the guides and tests, and why</div>
+</div>
+<div class="container legal about">
+  <section class="ab-card">
+    ${A.photo?'<img class="ab-ph" src="'+esc(A.photo)+'" alt="'+esc(A.name)+'" width="140" height="140">':''}
+    <div>
+      <h2>Built by ${esc(A.name)}</h2>
+      ${A.title?'<p class="ab-t">'+esc(A.title)+(A.role?' &middot; '+esc(A.role):'')+(A.years?' &middot; '+A.years+' years in software':'')+'</p>':''}
+      ${SUM.map(p=>'<p>'+esc(p)+'</p>').join('')}
+      ${A.linkedin?'<p><a class="ab-li" href="'+esc(A.linkedin)+'" target="_blank" rel="noopener me">Connect on LinkedIn</a></p>':''}
+    </div>
+  </section>
+  ${A.credentials.length?'<h2>Credentials</h2>\n  <ul>'+A.credentials.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
+  ${EDU.length?'<h2>Education</h2>\n  <ul>'+EDU.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
+  ${A.patents.length?'<h2>Patents</h2>\n  <p>Two U.S. patents granted and one application pending.</p>\n  <ul>'+A.patents.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
+  <h2>Why ${esc(SITE.name)}</h2>
+  <p>Good preparation for a new certification is hard to find, and much of it is paid. ${esc(SITE.name)} offers free learning guides, printable cheat sheets and timed practice tests, so you can learn each exam topic, test yourself under exam conditions and see which domains you are ready for.</p>
+  <p>Every lesson, cheat sheet and practice question is written and maintained by ${esc(A.name)}. The questions are original, written from the public exam guides and the providers' public documentation. They contain no real exam content.</p>
+  <h2>Found a mistake?</h2>
+  <p>Use the Feedback button on any page, or email <a href="mailto:${CONTACT}">${CONTACT}</a>. Corrections are made as soon as they are checked.</p>
+  <div class="notice">
+    <strong>Important Note</strong>
+    <p>${esc(SITE.name)} is an independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p>
+  </div>
+</div>
+<!--site-footer--><!--/site-footer-->
+<script src="/site.js?v=${V}"></script>
+</body>
+</html>
+`;
+  fs.mkdirSync(path.join(ROOT,'about'),{recursive:true});
+  fs.writeFileSync(path.join(ROOT,'about','index.html'),aboutHtml);
+}
+
 // ---- fill the marked regions ----
-const pages=['index.html','resources/index.html','privacy/index.html',
+const pages=['index.html','resources/index.html','privacy/index.html',...(SITE.author?['about/index.html']:[]),
   ...SITE.vendors.filter(v=>v.url).map(v=>v.url.replace(/^\//,'')+'index.html'),
   ...liveExams.map(x=>x.path.replace(/^\//,'')+'index.html')];
 // The exam FAQ comes from the generated exams/<id>.js, so the crawler copy can never drift
@@ -198,8 +262,9 @@ for(const p of pages){
     else{if(!N.exam(a[0])){errors.push(p+': exam-tabs for unknown exam '+a[0]);return _;}body=N.examTabs(a[0],a[1]);}
     return '<!--'+kind+args+'-->'+body+'<!--/'+kind+'-->';});
   if(!out.includes('<!--site-header-->'))errors.push(p+': no <!--site-header--> marker');
-  // The author meta, the site's own domain and the privacy contact address are the allowed mentions.
-  const scan=out.replace(/<meta name="author"[^>]*>/,'').split('certprep.pratechlabs.com').join('').split(CONTACT).join('');
+  // The author meta, the site's own domain, the privacy contact address and the named author
+  // (site.json author: About page, footer, bylines) are the allowed mentions.
+  const scan=out.replace(/<meta name="author"[^>]*>/,'').split(A?A.name:SITE.name).join('').split(A&&A.linkedin||SITE.name).join('').split('certprep.pratechlabs.com').join('').split(CONTACT).join('');
   if(scan.includes(EM)||scan.includes(EN))errors.push(p+': contains an em or en dash');
   for(const t of banned)if(new RegExp(t,'i').test(scan))errors.push(p+': contains a banned term');
   if(out!==src)fs.writeFileSync(f,out);
@@ -208,7 +273,7 @@ for(const p of pages){
 // ---- sitemap: /resources/ ----
 const smf=path.join(ROOT,'sitemap.xml');
 let sm=fs.readFileSync(smf,'utf8').replace(/\r\n/g,'\n');
-for(const [p,pr] of [['/resources/','0.6'],['/privacy/','0.2']])
+for(const [p,pr] of [['/resources/','0.6'],['/privacy/','0.2'],...(A?[['/about/','0.3']]:[])])
   if(!sm.includes('<loc>'+URL_+p+'</loc>'))
     sm=sm.replace('</urlset>','  <url>\n    <loc>'+URL_+p+'</loc>\n    <lastmod>'+new Date().toISOString().slice(0,10)+'</lastmod>\n    <changefreq>'+(pr==='0.2'?'yearly':'monthly')+'</changefreq>\n    <priority>'+pr+'</priority>\n  </url>\n</urlset>');
 fs.writeFileSync(smf,sm);

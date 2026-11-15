@@ -179,3 +179,7 @@ html:not(.js) .js-only{display:none!important}
 .fb-okt{font-weight:700;color:#065f46;margin:.4rem 0}
 .sf-c .sf-fb{display:block;background:none;border:0;padding:.25rem 0;font:inherit;font-size:.82rem;color:#fff;cursor:pointer;text-align:left}
 .sf-c .sf-fb:hover{text-decoration:underline}
+/* Author byline on guide pages (tools/site-nav.js byline) */
+.byline{display:flex;align-items:center;gap:.5rem;margin:.1rem 0 1rem;font-size:.82rem;color:#5A6B7E}
+.byline img{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none}
+.byline a{color:#1B4F8A;font-weight:600;text-decoration:none}.byline a:hover{text-decoration:underline}

@@ -1,6 +1,45 @@
 {
  "name": "CertPrep",
  "tagline": "Free learning guides and practice exams for AI and cloud certifications",
+ "author": {
+  "name": "Prakash Sridharan",
+  "title": "Claude Certified Architect",
+  "role": "Senior Technical Manager",
+  "photo": "",
+  "linkedin": "https://www.linkedin.com/in/prakash-sridharan-software-dev/",
+  "years": 24,
+  "summary": [
+   "Prakash Sridharan is a technology leader with more than two decades of experience in enterprise transformation and software modernization. Much of his career has been in telecommunications and digital Business Support Systems (BSS).",
+   "His expertise spans enterprise architecture, microservices, Elasticsearch, APIs, cloud and AI-driven solutions. He builds high-performing teams and now focuses on applying AI to real business problems."
+  ],
+  "credentials": [
+   "Claude Certified Architect",
+   "AWS Certified Solutions Architect - Associate",
+   "AWS Certified AI Practitioner",
+   "Google Cloud Generative AI Leader"
+  ],
+  "education": [
+   "Master's in Software Systems, BITS Pilani",
+   "Diploma in AI/ML, University of Hyderabad"
+  ],
+  "patents": [
+   {
+    "name": "Dynamically Generated Menus",
+    "note": "U.S. Patent 8,645,833",
+    "url": "https://patents.justia.com/patent/8645833"
+   },
+   {
+    "name": "Session Independent Backend Data Cache System",
+    "note": "U.S. Patent 7,809,882",
+    "url": "https://patents.google.com/patent/US7809882B1/en"
+   },
+   {
+    "name": "Real-Time Search Engine Indexing and Synchronization System for Relational Databases",
+    "note": "U.S. Patent Application 2026/0044529, pending",
+    "url": "https://patents.justia.com/patent/20260044529"
+   }
+  ]
+ },
  "vendors": [
   {
    "id": "claude",
