@@ -209,13 +209,13 @@ if(A){
     ${A.photo?'<img class="ab-ph" src="'+esc(A.photo)+'" alt="'+esc(A.name)+'" width="140" height="140">':''}
     <div>
       <h2>Built by ${esc(A.name)}</h2>
-      ${A.title?'<p class="ab-t">'+esc(A.title)+(A.role?' &middot; '+esc(A.role):'')+(A.experience?' &middot; '+esc(A.experience):'')+'</p>':''}
+      ${(A.headline||A.title)?'<p class="ab-t">'+esc(A.headline||A.title)+(A.role?' &middot; '+esc(A.role):'')+(A.experience?' &middot; '+esc(A.experience):'')+'</p>':''}
       ${SUM.map(p=>'<p>'+esc(p)+'</p>').join('')}
       ${A.linkedin?'<p><a class="ab-li" href="'+esc(A.linkedin)+'" target="_blank" rel="noopener me">Connect on LinkedIn</a></p>':''}
     </div>
   </section>
-  ${A.credentials.length?'<h2>Credentials</h2>\n  <ul>'+A.credentials.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
   ${EDU.length?'<h2>Education</h2>\n  <ul>'+EDU.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
+  ${A.credentials.length?'<h2>Credentials</h2>\n  <ul>'+A.credentials.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
   ${A.patents.length?'<h2>Patents</h2>\n  <p>Two U.S. patents granted and one application pending.</p>\n  <ul>'+A.patents.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
   <h2>Why ${esc(SITE.name)}</h2>
   <p>Good preparation for a new certification is hard to find, and much of it is paid. ${esc(SITE.name)} offers free learning guides, printable cheat sheets and timed practice tests, so you can learn each exam topic, test yourself under exam conditions and see which domains you are ready for.</p>
