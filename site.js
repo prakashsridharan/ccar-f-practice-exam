@@ -98,6 +98,14 @@
     document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('[data-fb]');if(t){e.preventDefault();closeAll();open();}});
   })();
 
+  // A guide shared by two versions (CCAR-P v1 and v2): remember which version the reader is
+  // using, so the guide's practice-test links go back to it (learn.js reads 'cp-for:<guide>').
+  // Saved when a version's exam page opens (its tab bar carries data-for) and when a link with
+  // data-for is followed from a menu or a certification card.
+  function setFor(a){var v=(a&&a.getAttribute('data-for')||'').split(' ');if(v[1])try{localStorage.setItem('cp-for:'+v[0],v[1]);}catch(e){}}
+  setFor(document.querySelector('.xt a[data-for]'));
+  ['click','auxclick'].forEach(function(t){document.addEventListener(t,function(e){setFor(e.target&&e.target.closest&&e.target.closest('a[data-for]'));});});
+
   var q=document.querySelector('.cl-q');
   if(q)q.addEventListener('input',function(){
     var t=q.value.trim().toLowerCase();

@@ -420,7 +420,7 @@ ${NAV.byline()}
 ${l.html}</article>
 <section class="sources"><h2 id="sources">Sources</h2><ul>${l.sources.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')}</ul>${l.handson.length?'<h3 class="ho">Go hands-on <span>optional, needs a Claude API key</span></h3><p class="ho-p">Runnable notebooks from Anthropic\'s Claude Cookbook that build the patterns in this lesson.</p><ul>'+l.handson.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')+'</ul>':''}</section>
 <div class="done-row js-only"><button type="button" class="btn done-btn" data-done="${l.id}">Mark complete</button></div>
-<nav class="pn">${prev?'<a class="prev" href="'+prev.url+'"><small>Previous lesson</small>'+prev.id+' '+esc(prev.title)+'</a>':'<span></span>'}${next?'<a class="next" href="'+next.url+'"><small>Next lesson</small>'+next.id+' '+esc(next.title)+'</a>':'<a class="next" href="'+examPath+'"><small>Finished</small>Take a practice test</a>'}</nav>`})});
+<nav class="pn">${prev?'<a class="prev" href="'+prev.url+'"><small>Previous lesson</small>'+prev.id+' '+esc(prev.title)+'</a>':'<span></span>'}${next?'<a class="next" href="'+next.url+'"><small>Next lesson</small>'+next.id+' '+esc(next.title)+'</a>':'<a class="next" href="'+testsPath+'"><small>Finished</small>Take a practice test</a>'}</nav>`})});
 });
 
 // Cheat sheet: full width, prints on two or three pages (print rules in learn.css).

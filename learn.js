@@ -47,6 +47,15 @@
   // Came here from the practice tests ("Read lesson")? The exam app saved where the reader
   // was in '<prefix>-back'; the Practice tests tab then goes back to it (#/back restores it).
   var hp=document.querySelector('.xt a.hp');
+  // A guide shared by several versions links to the newest one's practice tests. If the reader
+  // came from another version (site.js saves 'cp-for:<guide path>' when a link with data-for is
+  // followed), every practice-test link on the page goes to that version instead.
+  try{var users=(body.getAttribute('data-back')||'').split(',').map(function(e){return e.split(' ')[1];}).filter(Boolean),
+      pick=localStorage.getItem('cp-for:'+body.getAttribute('data-learn'));
+    if(users.length>1&&users.indexOf(pick)>=0)document.querySelectorAll('a[href]').forEach(function(a){
+      if(a.closest('.sh,.sf'))return;// the menu and footer list each version on purpose
+      var h=a.getAttribute('href').split('#');if(h[0]!==pick&&users.indexOf(h[0])>=0)a.setAttribute('href',pick+(h[1]?'#'+h[1]:''));});
+  }catch(e){}
   // Several exams can share one guide (data-back: "<prefix> <path>,..."), so take the newest
   // return point among them and send the tab back to that exam.
   try{var back=null,bpath=null;(body.getAttribute('data-back')||((body.getAttribute('data-prefix')||'')+' ')).split(',').forEach(function(e){
