@@ -66,8 +66,11 @@ function siteHeader(){
     (v.url&&v.exams.filter(listed).length>1?'<a class="sh-all" href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>').join('');
   return '<header class="sh"><div class="sh-in">'+
     brand()+
-    '<nav class="sh-nav" aria-label="Site"><details class="sh-m"><summary>Certifications</summary><div class="sh-p">'+groups+'</div></details>'+
-    '<a class="sh-a" href="/resources/">Resources</a></nav>'+
+    '<nav class="sh-nav" aria-label="Site"><details class="sh-m"><summary>Certifications</summary><div class="sh-p"><a class="sh-all sh-top" href="/">All certifications &rarr;</a>'+groups+'</div></details>'+
+    '<a class="sh-a sh-rs" href="/resources/">Resources</a>'+
+    // About, Privacy and Feedback: links on wide screens, a More menu on narrow ones.
+    (SITE.author?'<a class="sh-a sh-w" href="/about/">About</a>':'')+'<a class="sh-a sh-w" href="/privacy/">Privacy</a><button type="button" class="sh-a sh-w" data-fb>Feedback</button>'+
+    '<details class="sh-m sh-more"><summary>More</summary><div class="sh-p sh-pm"><a class="sh-mr" href="/resources/">Resources</a>'+(SITE.author?'<a href="/about/">About</a>':'')+'<a href="/privacy/">Privacy</a><button type="button" data-fb>Send feedback</button></div></details></nav>'+
     // Filled by site.js / account.js ("Sign in", or the account menu); hidden without JavaScript.
     '<div class="sh-acct"><button type="button" class="sh-in-btn" aria-label="Sign in" hidden><svg class="sh-in-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="sh-in-t">Sign in</span></button></div></div></header>';
 }

@@ -95,7 +95,7 @@
     var b=document.createElement('button');b.type='button';b.className='fb-tab';b.setAttribute('aria-label','Send feedback');
     b.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg><span>Feedback</span>';
     b.addEventListener('click',open);document.body.appendChild(b);
-    document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('[data-fb]');if(t){e.preventDefault();open();}});
+    document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('[data-fb]');if(t){e.preventDefault();closeAll();open();}});
   })();
 
   var q=document.querySelector('.cl-q');

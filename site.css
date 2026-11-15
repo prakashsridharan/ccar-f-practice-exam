@@ -183,3 +183,15 @@ html:not(.js) .js-only{display:none!important}
 .byline{display:flex;align-items:center;gap:.5rem;margin:.1rem 0 1rem;font-size:.82rem;color:#5A6B7E}
 .byline img{width:28px;height:28px;border-radius:50%;object-fit:cover;flex:none}
 .byline a{color:#1B4F8A;font-weight:600;text-decoration:none}.byline a:hover{text-decoration:underline}
+/* Header: About, Privacy, Feedback (links when wide, a More menu when narrow), All certifications in the menu */
+button.sh-a{background:none;border:0;font-family:inherit}
+.sh-top{margin:.15rem 0 .1rem .4rem}
+.sh-more{display:none}
+.sh-pm{width:13rem;padding:.4rem;gap:.1rem}
+.sh-pm a,.sh-pm button{display:block;width:100%;text-align:left;padding:.55rem .7rem;border-radius:8px;border:0;background:none;font:600 .88rem Inter,sans-serif;color:#1A2E45;text-decoration:none;cursor:pointer}
+.sh-pm a:hover,.sh-pm button:hover{background:#f4f8fc}
+@media(max-width:900px){.sh-w{display:none!important}.sh-more{display:block}}
+@media(max-width:560px){.sh-pm{width:auto}}
+.sh-pm .sh-mr{display:none}
+@media(max-width:560px){.sh-rs{display:none!important}.sh-pm .sh-mr{display:block}}
+@media(max-width:380px){.sh-in{gap:.3rem}.sh-m>summary,.sh-a{padding:0 .4rem;font-size:.8rem}.sh-m>summary{gap:.25rem}.sh-brand{font-size:.92rem}}
