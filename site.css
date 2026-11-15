@@ -195,3 +195,17 @@ button.sh-a{background:none;border:0;font-family:inherit}
 .sh-pm .sh-mr{display:none}
 @media(max-width:560px){.sh-rs{display:none!important}.sh-pm .sh-mr{display:block}}
 @media(max-width:380px){.sh-in{gap:.3rem}.sh-m>summary,.sh-a{padding:0 .4rem;font-size:.8rem}.sh-m>summary{gap:.25rem}.sh-brand{font-size:.92rem}}
+/* One More menu at every width */
+.sh-more{display:block}
+/* Certification cards: a grid of boxes on the home and vendor pages */
+.cl-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:.9rem}
+.cl-g .cert-row{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:.9rem;margin:0;height:100%;transition:border-color .15s,box-shadow .15s,transform .15s}
+.cl-g .cert-row:not(.cr-soon):hover{border-color:#1B4F8A;transform:translateY(-2px);box-shadow:0 2px 4px rgba(26,46,69,.06),0 14px 30px -16px rgba(26,46,69,.35)}
+.cl-g .cr-m{flex:1}
+.cl-g .cr-t{flex-wrap:wrap}
+.cl-g .cr-a{flex-direction:row;flex-wrap:wrap;gap:.4rem}
+.cl-g .cr-b{flex:1 1 auto;padding:.5rem .7rem}
+@media (prefers-reduced-motion:reduce){.cl-g .cert-row{transition:none}.cl-g .cert-row:hover{transform:none}}
+.sh-pm .sh-mh{display:none}
+@media(max-width:900px){.sh-pm .sh-mh{display:block}}
+.cl-v>.cl-g:first-child{margin-top:1rem}

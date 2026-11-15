@@ -68,9 +68,8 @@ function siteHeader(){
     brand()+
     '<nav class="sh-nav" aria-label="Site"><a class="sh-a sh-w" href="/">Home</a><details class="sh-m"><summary>Certifications</summary><div class="sh-p"><a class="sh-all sh-top" href="/">All certifications &rarr;</a>'+groups+'</div></details>'+
     '<a class="sh-a sh-rs" href="/resources/">Resources</a>'+
-    // About, Privacy and Feedback: links on wide screens, a More menu on narrow ones.
-    (SITE.author?'<a class="sh-a sh-w" href="/about/">About</a>':'')+'<a class="sh-a sh-w" href="/privacy/">Privacy</a><button type="button" class="sh-a sh-w" data-fb>Feedback</button>'+
-    '<details class="sh-m sh-more"><summary>More</summary><div class="sh-p sh-pm"><a href="/">Home</a><a class="sh-mr" href="/resources/">Resources</a>'+(SITE.author?'<a href="/about/">About</a>':'')+'<a href="/privacy/">Privacy</a><button type="button" data-fb>Send feedback</button></div></details></nav>'+
+    // About, Privacy and Feedback live in one More menu at every width; Home joins it under 900px, Resources on phones.
+    '<details class="sh-m sh-more"><summary>More</summary><div class="sh-p sh-pm"><a class="sh-mh" href="/">Home</a><a class="sh-mr" href="/resources/">Resources</a>'+(SITE.author?'<a href="/about/">About</a>':'')+'<a href="/privacy/">Privacy</a><button type="button" data-fb>Send feedback</button></div></details></nav>'+
     // Filled by site.js / account.js ("Sign in", or the account menu); hidden without JavaScript.
     '<div class="sh-acct"><button type="button" class="sh-in-btn" aria-label="Sign in" hidden><svg class="sh-in-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="sh-in-t">Sign in</span></button></div></div></header>';
 }
@@ -93,14 +92,14 @@ function certList(vendorId){
   const filters=all.length>6?'<div class="cl-f js-only"><input type="search" class="cl-q" placeholder="Search certifications" aria-label="Search certifications"></div>':'';
   return filters+vs.map(v=>'<section class="cl-v" data-vendor="'+v.id+'">'+(vendorId?'':'<div class="cl-vh"><h2>'+esc(v.name)+'</h2>'+
       (v.url&&v.exams.filter(listed).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
-    (v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
+    '<div class="cl-g">'+(v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
        '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(versioned(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+'</div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
        '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div>'+(olderOf(x)&&!listed(olderOf(x))?'<p class="cr-o">Older format: <a href="'+olderOf(x).path+'">'+esc(olderOf(x).version||'previous version')+'</a></p>':'')+'</div>'+
        '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'">Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'">Cheat sheet</a>':'')+'</div></div>':
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-s">Coming soon</span></div><h3>'+esc(x.name)+'</h3></div></div>').join(''):
-      '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+
+      '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+'</div>'+
     '</section>').join('');
 }
 
