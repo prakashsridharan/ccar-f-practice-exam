@@ -209,7 +209,7 @@ if(A){
     ${A.photo?'<img class="ab-ph" src="'+esc(A.photo)+'" alt="'+esc(A.name)+'" width="140" height="140">':''}
     <div>
       <h2>Built by ${esc(A.name)}</h2>
-      ${A.title?'<p class="ab-t">'+esc(A.title)+(A.role?' &middot; '+esc(A.role):'')+(A.years?' &middot; '+A.years+' years in software':'')+'</p>':''}
+      ${A.title?'<p class="ab-t">'+esc(A.title)+(A.role?' &middot; '+esc(A.role):'')+(A.experience?' &middot; '+esc(A.experience):'')+'</p>':''}
       ${SUM.map(p=>'<p>'+esc(p)+'</p>').join('')}
       ${A.linkedin?'<p><a class="ab-li" href="'+esc(A.linkedin)+'" target="_blank" rel="noopener me">Connect on LinkedIn</a></p>':''}
     </div>
