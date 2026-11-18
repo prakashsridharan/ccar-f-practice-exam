@@ -7,7 +7,7 @@
 //
 //   node tools/udemy-csv.js <v2-exam-dir>      e.g. node tools/udemy-csv.js ../certprep-content/claude/ccar-p-v2
 //
-// Writes <dir>/udemy/<CODE>-v2_Test<N>_<count>Q.csv (private content repo) and checks every row.
+// Writes <dir>/udemy/<CODE>-v<guide>_Test<N>_<count>Q.csv (private content repo) and checks every row.
 'use strict';
 const fs=require('fs'),path=require('path');
 const {parseQuestions}=require('./build.js');
@@ -25,7 +25,7 @@ const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'
 const html=s=>esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>');
 const cell=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
 const HEAD=['Question','Question Type'];for(let i=1;i<=6;i++)HEAD.push('Answer Option '+i,'Explanation '+i);HEAD.push('Correct Answers','Overall Explanation','Domain');
-const prefix=EXAM.code+'-v2';
+const prefix=EXAM.code+'-v'+((EXAM.blueprint&&EXAM.blueprint.guide)||'2');
 const outDir=path.join(dir,'udemy');fs.mkdirSync(outDir,{recursive:true});
 const errs=[];let total=0;const summary=[];
 for(const t of tests){

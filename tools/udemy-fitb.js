@@ -20,7 +20,7 @@ const tests=JSON.parse(fs.readFileSync(path.join(fs.existsSync(path.join(dir,'te
 const plain=s=>String(s).replace(/\*\*([^*]+)\*\*/g,'$1').replace(/`([^`]+)`/g,'$1');
 // The bank says "select Yes ... or No"; in Udemy the learner types the answer.
 const typed=s=>s.replace(/select Yes if/g,'type Yes if').replace(/, select Yes/g,', type Yes');
-const out=['# '+EXAM.code+' '+(EXAM.name.match(/\(Version \d+\)/)||[''])[0]+' - Udemy "Fill in the blanks" items','',
+const out=['# '+EXAM.code+' '+(EXAM.name.match(/\(Version [\d.]+\)/)||[''])[0]+' - Udemy "Fill in the blanks" items','',
   'One block per Yes/No or Match question. In Udemy: Add question, Fill in the blanks; paste STATEMENT into Statement,',
   'EXPLANATION into Explanation, and pick the DOMAIN. Each __answer__ becomes a blank. Answers are Yes/No or a single',
   'capital letter, and every item tells the learner exactly what to type.',''];
