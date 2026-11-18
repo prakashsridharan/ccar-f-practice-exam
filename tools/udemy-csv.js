@@ -49,7 +49,7 @@ for(const t of tests){
     rows.push(line);q.se>1?multi++:single++;}
   const f=path.join(outDir,prefix+'_Test'+t.n+'_'+(rows.length-1)+'Q.csv');
   fs.writeFileSync(f,rows.join('\n')+'\n');total+=rows.length-1;
-  summary.push(path.basename(f)+': '+(rows.length-1)+' rows ('+single+' multiple-choice, '+multi+' multi-select); '+skipped+' Yes/No or Match items go in fill-in-blanks.md');}
+  summary.push(path.basename(f)+': '+(rows.length-1)+' rows ('+single+' multiple-choice, '+multi+' multi-select); '+skipped+' Yes/No or Match items go in fill-in-blanks.txt');}
 summary.forEach(s=>console.log(s));
 if(errs.length){console.log(errs.length+' problem(s):\n  '+errs.join('\n  '));process.exit(1);}
 console.log('OK, '+total+' rows');
