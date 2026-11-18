@@ -5,7 +5,7 @@
 // change the source there and rebuild.
 const EXAM={
   id:'ccar-f',idPrefix:'Q',code:'CCAR-F',richText:true,
-  name:'Claude Certified Architect - Foundations',
+  name:'Claude Certified Architect - Foundations (Version 1.0)',
   path:'/claude/ccar-f/',storagePrefix:'ccar-f',
   blueprint:{questionCount:60,durationSec:7200,passScaled:720,scaledMax:1000,fee:'$125 USD',
    format:'Multiple choice / response',delivery:'Proctored (online or centre)',scoring:'Scaled (criterion-referenced)',

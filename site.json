@@ -54,8 +54,9 @@
      "code": "CCAR-F",
      "name": "Claude Certified Architect - Foundations",
      "level": "Foundations",
+     "version": "Version 1.0",
      "status": "live",
-     "blurb": "Agents, tools and MCP, Claude Code, prompts and structured output, context and reliability."
+     "blurb": "Follows Anthropic's exam guide 1.0. Agents, tools and MCP, Claude Code, prompts and structured output, context and reliability."
     },
     {
      "id": "ccar-p-v2",

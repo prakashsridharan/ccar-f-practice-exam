@@ -33,6 +33,8 @@ const live=x=>x.status==='live'&&x.counts;
 const listed=x=>live(x)&&(!x.supersededBy||x.list===true);
 // The version label is shown wherever an exam has a sibling version on the site.
 const versioned=x=>!!(x.version&&(x.supersededBy||olderOf(x)));
+// Every exam that names its exam guide version shows it (CCAR-F Version 1.0, CCAR-P Version 1.1 / 1.0).
+const showVer=x=>!!x.version;
 // Versions sharing one guide: links into the guide carry data-for="<guide> <exam path>" so site.js
 // remembers which version the reader came from, and learn.js points the guide's practice-test links there.
 const forA=x=>x.learn&&exams().some(y=>y!==x&&y.learn===x.learn)?' data-for="'+x.learn+' '+x.path+'"':'';
@@ -62,7 +64,7 @@ function headIcons(){
 function siteHeader(){
   const groups=SITE.vendors.map(v=>'<div class="sh-g"><div class="sh-gt">'+esc(v.name)+'</div>'+
     (v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
-      '<div class="sh-x"><a class="sh-xn" href="'+(x.learn||x.path)+'"'+forA(x)+'><b>'+esc(x.code)+'</b><span>'+esc(x.name)+(versioned(x)?' ('+esc(x.version)+')':'')+'</span></a>'+
+      '<div class="sh-x"><a class="sh-xn" href="'+(x.learn||x.path)+'"'+forA(x)+'><b>'+esc(x.code)+'</b><span>'+esc(x.name)+(showVer(x)?' ('+esc(x.version)+')':'')+'</span></a>'+
       '<span class="sh-xl">'+(x.learn?'<a href="'+x.learn+'"'+forA(x)+'>Guide</a>':'')+'<a href="'+x.path+'">Tests</a></span></div>':
       '<div class="sh-x sh-soon"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+'</span><i>Coming soon</i></div>').join(''):
       '<div class="sh-x sh-soon"><span>'+esc(v.note||'Coming soon')+'</span><i>Coming soon</i></div>')+
@@ -82,7 +84,7 @@ function siteHeader(){
 function examTabs(id,active){
   const x=exam(id),newer=x.supersededBy&&active!=='tests'?exam(x.supersededBy):null;
   // The bar names the version wherever two versions of the exam are live (each has its own guide).
-  const label=versioned(x)?x.name+' ('+x.version+')':x.name;
+  const label=showVer(x)?x.name+' ('+x.version+')':x.name;
   // On an exam's own page, the guide and Resources tabs remember this version (forA).
   const fa=active==='tests'?forA(x):'';
   const tab=(k,href,label,cls,attr)=>'<a class="xt-t'+(cls?' '+cls:'')+(k===active?' on':'')+'" href="'+href+'"'+(attr||'')+(k===active?' aria-current="page"':'')+'>'+label+'</a>';
@@ -99,7 +101,7 @@ function certList(vendorId){
       (v.url&&v.exams.filter(listed).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
     '<div class="cl-g">'+(v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
-       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(versioned(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
+       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(showVer(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
        '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div>'+(olderOf(x)&&!listed(olderOf(x))?'<p class="cr-o">Older format: <a href="'+olderOf(x).path+'">'+esc(olderOf(x).version||'previous version')+'</a></p>':'')+'</div>'+
        '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'"'+forA(x)+'>Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'"'+forA(x)+'>Cheat sheet</a>':'')+'</div></div>':
@@ -113,7 +115,7 @@ function siteFooter(){
   return '<footer class="sf"><div class="sf-in">'+
     '<div class="sf-b">'+brand()+
     '<p>'+esc(SITE.tagline)+'. An independent study aid, not affiliated with or endorsed by Anthropic or any other certification provider.</p></div>'+
-    '<div class="sf-c"><div class="sf-h">Certifications</div>'+certs.map(x=>'<a href="'+(versioned(x)?x.path:(x.learn||x.path))+'">'+esc(x.code)+' '+esc(x.level)+(versioned(x)?' '+esc(x.version.replace('Version ','v')):'')+'</a>').join('')+'</div>'+
+    '<div class="sf-c"><div class="sf-h">Certifications</div>'+certs.map(x=>'<a href="'+(versioned(x)?x.path:(x.learn||x.path))+'">'+esc(x.code)+' '+esc(x.level)+(showVer(x)?' '+esc(x.version.replace('Version ','v')):'')+'</a>').join('')+'</div>'+
     '<div class="sf-c"><div class="sf-h">Site</div><a href="/">All certifications</a><a href="/resources/">Resources</a>'+(SITE.author?'<a href="/about/">About</a>':'')+'<a href="/privacy/">Privacy</a><button type="button" class="sf-fb" data-fb>Send feedback</button></div>'+
     '</div></footer>';
 }
