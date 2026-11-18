@@ -209,3 +209,4 @@ button.sh-a{background:none;border:0;font-family:inherit}
 .sh-pm .sh-mh{display:none}
 @media(max-width:900px){.sh-pm .sh-mh{display:block}}
 .cl-v>.cl-g:first-child{margin-top:1rem}
+.cr-new{font-size:.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:#C0522A;padding:.15rem .5rem;border-radius:20px}

@@ -465,7 +465,7 @@ function renderDomainCards(){const p=E('section',{className:'panel',style:{margi
 function renderIncluded(){const p=E('section',{className:'panel',style:{margin:'0 0 1rem'}});
  p.appendChild(E('h2',{className:'ov-h'},'What\'s included, free'));
  const ul=E('ul',{className:'incl'}),li=(...k)=>ul.appendChild(E('li',null,...k));
- if(LESSONS.length){li(E('a',{href:LEARN.u},'Learning guide'),': '+LESSONS.length+' lessons, one per exam task, with check questions and exercises');
+ if(LESSONS.length){li(E('a',{href:LEARN.u},'Learning guide'),': '+LESSONS.length+' lessons, one per exam objective, with check questions and exercises');
   li(E('a',{href:LEARN.u+'cheat-sheet/'},'Cheat sheet'),': every domain on three printable pages or fewer');}
  const nt=FIXED.length;
  li(BQ.length+' original practice questions'+(nt?' in '+nt+' fixed '+(nt===1?'test':'tests')+' of '+FIXED[0].ids.length+', plus Random Mix':''));

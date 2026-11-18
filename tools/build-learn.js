@@ -6,7 +6,8 @@
 // Sources, in <content-dir>/<vendor>/<exam>/:
 //   config.js            const EXAM={...}  domain names, weights, colours, blurbs, path, storagePrefix
 //   refs.json            the title-checked doc links; every lesson source must use one of these pages
-//   learn/outline.json   {title, intro, notice, outOfScope?:{intro, items}, domains:[{n, slug, lessons:[{id, slug, title, task}]}]}
+//   learn/outline.json   {title, intro, notice, taskLabel?, outOfScope?:{intro, items}, domains:[{n, slug, lessons:[{id, slug, title, task, desc?}]}]}
+//                        (taskLabel names the box that shows each lesson's task, "Exam task" by default; desc is shown under it)
 //   learn/<slug>.md      one per lesson; a lesson with no file is listed as "coming soon"
 //   learn/cases/*.md     fictional case studies used by the exercises (index.md = the cases page)
 //   learn/cheat-sheet.md optional: title/summary front matter, then ## sections (one "## Domain <n>: ..."
@@ -412,7 +413,7 @@ written.forEach(l=>{
       teaches:l.task,isPartOf:{'@type':'Course',name:EXAM.code+' Learning Guide',url:SITE+learnPath}}),
     main:`<div class="tag">Domain ${d.n} &middot; Lesson ${l.id} &middot; ${mins} min read</div>
 <h1>${esc(l.title)}</h1>
-<div class="task"><span>Exam task</span>${esc(l.task)}</div>
+<div class="task"><span>${esc(OUT.taskLabel||'Exam task')}</span>${esc(l.task)}${l.desc?'<p class="task-d">'+esc(l.desc)+'</p>':''}</div>
 <p class="lead">${esc(l.summary)}</p>
 ${NAV.byline()}
 <nav class="jump" aria-label="On this page"><span>On this page</span>${l.toc.map(t=>'<a href="#'+t.id+'">'+t.txt.replace(/<[^>]+>/g,'').split(':')[0]+'</a>').join('')}<a href="#sources">Sources</a></nav>

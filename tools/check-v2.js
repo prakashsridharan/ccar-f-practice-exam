@@ -22,13 +22,23 @@ const dir=process.argv[2];
 if(!dir){console.error('usage: node tools/check-v2.js <v2-exam-dir>');process.exit(2);}
 const file=path.join(dir,'questions.md');
 const EXAM=new Function(fs.readFileSync(path.join(dir,'config.js'),'utf8')+';return EXAM;')();
-const v1dir=path.join(dir,'..',EXAM.shares||'');
+// basedOn: the earlier version this bank was converted from (ids, option notes); shares: the same, when the versions also share files.
+const v1dir=path.join(dir,'..',EXAM.basedOn||EXAM.shares||'');
 const {qs,keys}=parseQuestions(fs.readFileSync(file,'utf8'),file);
 const v1=parseQuestions(fs.readFileSync(path.join(v1dir,'questions.md'),'utf8'),'questions.md');
-const refs=JSON.parse(fs.readFileSync(path.join(v1dir,'refs.json'),'utf8'));
-const notes=JSON.parse(fs.readFileSync(path.join(v1dir,'option-notes.json'),'utf8'));
-const tests=JSON.parse(fs.readFileSync(path.join(v1dir,'tests.json'),'utf8'));
-const TARGET={multi:33,yn:5,match:5};// per 63-item test; single choice takes the rest
+// Version 2's own refs, option notes and tests when it has them, else the shared (Version 1) files.
+const own=f=>fs.existsSync(path.join(dir,f))?path.join(dir,f):path.join(v1dir,f);
+const refs=JSON.parse(fs.readFileSync(own('refs.json'),'utf8'));
+const notes=JSON.parse(fs.readFileSync(own('option-notes.json'),'utf8'));
+const tests=JSON.parse(fs.readFileSync(own('tests.json'),'utf8'));
+const QN=EXAM.blueprint.questionCount,MIX=EXAM.blueprint.mix||{multi:33,yn:5,match:5};
+const TARGET=Object.assign({},MIX,{single:QN-MIX.multi-MIX.yn-MIX.match});
+// Domain targets per test: the blueprint weights over questionCount, largest remainder (as app.js weightsFor).
+const DK=Object.keys(EXAM.domains),DT={};{let used=0;const raw=DK.map(k=>{const x=QN*EXAM.domains[k].weightPct/100;DT[k]=Math.floor(x);used+=DT[k];return[k,x-DT[k]];});
+  raw.sort((a,b)=>b[1]-a[1]);for(let i=0;used<QN;i++,used++)DT[raw[i][0]]++;}
+// Skills (v1.1 guide): each question's *Objective:* line names one skill of its own domain.
+const SK={};DK.forEach(k=>(EXAM.domains[k].skills||[]).forEach(x=>SK[x]=+k));const useSkills=Object.keys(SK).length>0;
+const skillOf={},untagged=[];
 const EM=String.fromCharCode(0x2014),EN=String.fromCharCode(0x2013);
 const errs=[],type={},changed=new Set();
 const v1q=new Map(v1.qs.map(q=>[q.n,q]));
@@ -70,16 +80,32 @@ for(const q of qs){
     else if(!same)errs.push(at+': options or answers changed, so it needs inline option notes');
     else if(!notes[id]||notes[id].length!==q.o.length)errs.push(at+': option-notes.json does not fit');
   }
+  if(useSkills){if(SK[k.ob]===undefined)untagged.push(id);else if(SK[k.ob]!==q.d)errs.push(at+': skill "'+k.ob+'" belongs to domain '+SK[k.ob]+', question is domain '+q.d);else skillOf[id]=k.ob;}
   if(k.code&&q.code&&k.code!==q.code)errs.push(at+': key code '+k.code+' != '+q.code);
 }
 const ids=new Set(qs.map(q=>EXAM.idPrefix+q.n)),v1ids=new Set(v1.qs.map(q=>EXAM.idPrefix+q.n));
-v1ids.forEach(id=>{if(!ids.has(id))errs.push(id+': missing from Version 2');});
-ids.forEach(id=>{if(!v1ids.has(id))errs.push(id+': not in Version 1 (ids must stay P1..P'+v1ids.size+')');});
+const dropped=[...v1ids].filter(id=>!ids.has(id)),added=[...ids].filter(id=>!v1ids.has(id));
+console.log('Bank: '+ids.size+' questions ('+added.length+' new, '+dropped.length+' Version 1 questions dropped)');
+const dom={};qs.forEach(q=>dom[EXAM.idPrefix+q.n]=q.d);
+for(const t of tests)t.ids.forEach(id=>{if(!ids.has(id))errs.push('test '+t.n+': '+id+' is not in the bank');});
 const raw=fs.readFileSync(file,'utf8');if(raw.includes(EM)||raw.includes(EN))console.log('note: '+(raw.split(EM).length-1)+' em and '+(raw.split(EN).length-1)+' en dashes (the build turns them into hyphens)');
 // Mix per test
-console.log('Test   multi  yes/no  match  single   (target '+TARGET.multi+' / '+TARGET.yn+' / '+TARGET.match+' / '+(63-TARGET.multi-TARGET.yn-TARGET.match)+')');
+console.log('Test  items  multi  yes/no  match  single   (target '+QN+': '+TARGET.multi+' / '+TARGET.yn+' / '+TARGET.match+' / '+TARGET.single+')');
 for(const t of tests){const c={multi:0,yn:0,match:0,single:0};t.ids.forEach(id=>c[type[id]]++);
-  console.log(String(t.n).padEnd(6)+String(c.multi).padStart(5)+String(c.yn).padStart(8)+String(c.match).padStart(7)+String(c.single).padStart(8));}
+  console.log(String(t.n).padEnd(6)+String(t.ids.length).padStart(5)+String(c.multi).padStart(7)+String(c.yn).padStart(8)+String(c.match).padStart(7)+String(c.single).padStart(8));
+  if(t.ids.length===QN)for(const x in TARGET)if(c[x]!==TARGET[x])errs.push('test '+t.n+': '+c[x]+' '+x+' items, target '+TARGET[x]);}
+// Domains per test against the blueprint weights
+console.log('\nTest  '+DK.map(k=>('D'+k).padStart(5)).join('')+'   (target '+DK.map(k=>DT[k]).join('/')+' of '+QN+')');
+for(const t of tests){const c={};DK.forEach(k=>c[k]=0);t.ids.forEach(id=>c[dom[id]]++);
+  console.log(String(t.n).padEnd(6)+DK.map(k=>String(c[k]).padStart(5)).join(''));
+  if(t.ids.length===QN)DK.forEach(k=>{if(Math.abs(c[k]-DT[k])>1)errs.push('test '+t.n+': domain '+k+' has '+c[k]+', target '+DT[k]);});}
+const bank={};DK.forEach(k=>bank[k]=0);qs.forEach(q=>bank[q.d]++);
+console.log('Bank  '+DK.map(k=>String(bank[k]).padStart(5)).join('')+'   (for '+tests.length+' tests: '+DK.map(k=>DT[k]*tests.length).join('/')+')');
+// Skills: questions per skill in the bank, and in how many tests each appears
+if(useSkills){console.log('\nSkill coverage (bank / tests that include it):');
+  for(const k of DK)console.log('  D'+k+'  '+EXAM.domains[k].skills.map(x=>{const ids=Object.keys(skillOf).filter(i=>skillOf[i]===x);
+    return x+' '+ids.length+'/'+tests.filter(t=>t.ids.some(i=>skillOf[i]===x)).length;}).join(', '));
+  if(untagged.length)console.log('Untagged (objective is not a v1.1 skill): '+untagged.length+(untagged.length<=20?' '+untagged.join(' '):''));}
 // Balance over the Select items
 const sel=qs.filter(q=>q.se),pos={};let longest=0,shortest=0;
 sel.forEach(q=>{const k=keys[q.n];if(!k)return;k.a.forEach(a=>pos[a]=(pos[a]||0)+1);

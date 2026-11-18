@@ -297,3 +297,4 @@ td:first-child{font-weight:600;color:var(--ac-h)}
 .hl-bar .hl-res::after{content:" \25BE"}.hl-bar .hl-res.on{background:var(--ac);border-color:var(--ac);color:#fff}
 .hl-bar .ls-pop .ls-r{position:absolute;right:.5rem;top:calc(100% + .35rem);width:min(480px,calc(100vw - 2rem));max-height:60vh;z-index:30;margin:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:.3rem;box-shadow:var(--sh-m);text-align:left}
 @media(max-width:560px){.hl-bar{flex-wrap:wrap;gap:.35rem}.hl-bar .ls-pop .ls-r{right:auto;left:0;width:calc(100vw - 2rem)}}
+.task-d{margin:.35rem 0 0;font-weight:400;font-size:.88rem;line-height:1.55;color:var(--text-2,#4a5568)}

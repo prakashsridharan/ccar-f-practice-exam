@@ -81,8 +81,8 @@ function siteHeader(){
 // The Practice tests tab keeps class "hp": learn.js turns it into "Back to ..." after a "Read lesson" jump.
 function examTabs(id,active){
   const x=exam(id),newer=x.supersededBy&&active!=='tests'?exam(x.supersededBy):null;
-  // On an exam's own page the bar names its version; on shared guide pages it names the exam only.
-  const label=active==='tests'&&versioned(x)?x.name+' ('+x.version+')':x.name;
+  // The bar names the version wherever two versions of the exam are live (each has its own guide).
+  const label=versioned(x)?x.name+' ('+x.version+')':x.name;
   // On an exam's own page, the guide and Resources tabs remember this version (forA).
   const fa=active==='tests'?forA(x):'';
   const tab=(k,href,label,cls,attr)=>'<a class="xt-t'+(cls?' '+cls:'')+(k===active?' on':'')+'" href="'+href+'"'+(attr||'')+(k===active?' aria-current="page"':'')+'>'+label+'</a>';
@@ -99,7 +99,7 @@ function certList(vendorId){
       (v.url&&v.exams.filter(listed).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
     '<div class="cl-g">'+(v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
-       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(versioned(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+'</div>'+
+       '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(versioned(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
        '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div>'+(olderOf(x)&&!listed(olderOf(x))?'<p class="cr-o">Older format: <a href="'+olderOf(x).path+'">'+esc(olderOf(x).version||'previous version')+'</a></p>':'')+'</div>'+
        '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'"'+forA(x)+'>Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'"'+forA(x)+'>Cheat sheet</a>':'')+'</div></div>':
