@@ -7,7 +7,7 @@
 //
 // Writes <dir>/udemy/fill-in-blanks.md (private content repo): one block per item, grouped by
 // test, each with the Statement text (scenario, Match options, numbered statements with blanks),
-// the Explanation (rationale plus one line per statement) and the Domain to pick.
+// the Explanation (rationale, one line per statement, then the documentation link) and the Domain to pick.
 'use strict';
 const fs=require('fs'),path=require('path');
 const {parseQuestions}=require('./build.js');
@@ -15,6 +15,7 @@ const dir=process.argv[2];if(!dir){console.error('usage: node tools/udemy-fitb.j
 const EXAM=new Function(fs.readFileSync(path.join(dir,'config.js'),'utf8')+';return EXAM;')();
 const shared=EXAM.shares?path.join(dir,'..',EXAM.shares):dir;
 const {qs,keys}=parseQuestions(fs.readFileSync(path.join(dir,'questions.md'),'utf8'),'questions.md');
+const refs=JSON.parse(fs.readFileSync(path.join(fs.existsSync(path.join(dir,'refs.json'))?dir:shared,'refs.json'),'utf8'));
 const tests=JSON.parse(fs.readFileSync(path.join(fs.existsSync(path.join(dir,'tests.json'))?dir:shared,'tests.json'),'utf8'));
 // Udemy shows plain text: drop Markdown emphasis and code ticks.
 const plain=s=>String(s).replace(/\*\*([^*]+)\*\*/g,'$1').replace(/`([^`]+)`/g,'$1');
@@ -35,6 +36,8 @@ for(const t of tests){
     if(q.ty==='match'){q.o.forEach(o=>lines.push(o.l+'. '+plain(o.t)));lines.push('');}
     q.st.forEach((s,i)=>lines.push((i+1)+'. '+plain(s.t)+' __'+k.sa[i].v+'__'));
     const exp=[plain(k.r.join(' ')),'',...k.sn.map(x=>x.n+'. '+plain(x.t))];
+    const ref=(refs[id]||'').split('|');if(!ref[0])throw new Error(id+': no documentation link in refs.json');
+    exp.push('','Resources: '+(ref[1]||ref[0])+' '+ref[0]);
     out.push('### '+id+' · '+(q.ty==='yn'?'Yes/No':'Match')+' · '+(q.df||''),'',
       'DOMAIN: '+q.d+'. '+EXAM.domains[q.d].n,'','STATEMENT:','','```',...lines,'```','','EXPLANATION:','','```',...exp,'```','');}
 }
