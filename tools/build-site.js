@@ -71,7 +71,7 @@ const resHtml=`<!DOCTYPE html>
 ${(SITE.official||[]).map(g=>`    <li><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.label)}</a></li>`).join('\n')}
   </ul>
   <div class="cl-vh"><h2>By certification</h2></div>
-${liveExams.map(x=>`  <div class="cert-row"><div class="cr-m"><div class="cr-t"><span class="cr-c">${esc(x.code)}</span><span class="cr-l">${esc(x.level)}</span></div><h3>${esc(x.name)}</h3><p>Every documentation page the ${esc(x.code)} lessons cite, grouped by the exam's ${x.counts.domains} domains, plus runnable notebooks.</p></div><div class="cr-a"><a class="cr-b cr-p" href="${x.resources}">${esc(x.code)} resources</a></div></div>`).join('\n')}
+${liveExams.filter(x=>!x.preview).map(x=>`  <div class="cert-row"><div class="cr-m"><div class="cr-t"><span class="cr-c">${esc(x.code)}</span><span class="cr-l">${esc(x.level)}</span></div><h3>${esc(x.name)}</h3><p>Every documentation page the ${esc(x.code)} lessons cite, grouped by the exam's ${x.counts.domains} domains, plus runnable notebooks.</p></div><div class="cr-a"><a class="cr-b cr-p" href="${x.resources}">${esc(x.code)} resources</a></div></div>`).join('\n')}
   <div class="cl-vh"><h2>Official documentation</h2></div>
   <ul class="res-g">
 ${SITE.general.map(g=>`    <li><a href="${esc(g.url)}" target="_blank" rel="noopener">${esc(g.label)}</a></li>`).join('\n')}

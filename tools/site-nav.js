@@ -30,7 +30,10 @@ const live=x=>x.status==='live'&&x.counts;
 // An exam replaced by a newer version (site.json supersededBy) stays live at its own URL but is
 // not listed in menus, rows or the footer (the newer version's row links to it instead), unless
 // site.json sets "list": true, as for CCAR-P Version 1 until it is retired.
-const listed=x=>live(x)&&(!x.supersededBy||x.list===true);
+const listed=x=>live(x)&&!x.preview&&(!x.supersededBy||x.list===true);
+// site.json "preview": true keeps an exam out of every menu, row, footer and sitemap, marks its pages
+// noindex, and site.js shows them only to a signed-in admin (a client-side gate, not access control).
+const previewHead=x=>x&&x.preview?['<meta name="robots" content="noindex, nofollow">','<meta name="cp-preview" content="1">','<style id="cp-pv">body{visibility:hidden}</style>'].join('\n'):'';
 // The version label is shown wherever an exam has a sibling version on the site.
 const versioned=x=>!!(x.version&&(x.supersededBy||olderOf(x)));
 // Every exam that names its exam guide version shows it (CCAR-F Version 1.0, CCAR-P Version 1.1 / 1.0).
@@ -63,7 +66,7 @@ function headIcons(){
 // closes it on Escape or an outside click), Resources.
 function siteHeader(){
   const groups=SITE.vendors.map(v=>'<div class="sh-g"><div class="sh-gt">'+esc(v.name)+'</div>'+
-    (v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
+    (v.exams.length?v.exams.filter(x=>!x.preview&&(!x.supersededBy||x.list===true)).map(x=>live(x)?
       '<div class="sh-x"><a class="sh-xn" href="'+(x.learn||x.path)+'"'+forA(x)+'><b>'+esc(x.code)+'</b><span>'+esc(x.name)+(showVer(x)?' ('+esc(x.version)+')':'')+'</span></a>'+
       '<span class="sh-xl">'+(x.learn?'<a href="'+x.learn+'"'+forA(x)+'>Guide</a>':'')+'<a href="'+x.path+'">Tests</a></span></div>':
       '<div class="sh-x sh-soon"><b>'+esc(x.code)+'</b><span>'+esc(x.name)+'</span><i>Coming soon</i></div>').join(''):
@@ -99,7 +102,7 @@ function certList(vendorId){
   const filters=all.length>6?'<div class="cl-f js-only"><input type="search" class="cl-q" placeholder="Search certifications" aria-label="Search certifications"></div>':'';
   return filters+vs.map(v=>'<section class="cl-v" data-vendor="'+v.id+'">'+(vendorId?'':'<div class="cl-vh"><h2>'+esc(v.name)+'</h2>'+
       (v.url&&v.exams.filter(listed).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
-    '<div class="cl-g">'+(v.exams.length?v.exams.filter(x=>!x.supersededBy||x.list===true).map(x=>live(x)?
+    '<div class="cl-g">'+(v.exams.length?v.exams.filter(x=>!x.preview&&(!x.supersededBy||x.list===true)).map(x=>live(x)?
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
        '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(showVer(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
@@ -124,4 +127,4 @@ function siteFooter(){
 function byline(){const a=SITE.author;if(!a)return '';
   return '<p class="byline">'+(a.photo?'<img src="'+esc(a.photo)+'" alt="" width="28" height="28">':'')+'<span>Written and maintained by <a href="/about/">'+esc(a.name)+'</a>'+(a.title?', '+esc(a.title):'')+'</span></p>';}
 function authorLd(){const a=SITE.author;return a?{'@type':'Person',name:a.name,url:'https://certprep.pratechlabs.com/about/',...(a.title?{jobTitle:a.title}:{}),...(a.linkedin?{sameAs:[a.linkedin]}:{})}:undefined;}
-module.exports={SITE,byline,authorLd,ROOT,esc,exams,exam,live,listed,siteHeader,examTabs,certList,siteFooter,headIcons};
+module.exports={previewHead,SITE,byline,authorLd,ROOT,esc,exams,exam,live,listed,siteHeader,examTabs,certList,siteFooter,headIcons};

@@ -87,7 +87,8 @@
      "version": "Version 1.0",
      "tag": "New",
      "status": "live",
-     "blurb": "Follows Anthropic's exam guide 1.0 (November 2026): operating Claude systems in production, from agent orchestration, reliability and observability to evaluation, cost, security and coding-agent fleets."
+     "blurb": "Follows Anthropic's exam guide 1.0 (November 2026): operating Claude systems in production, from agent orchestration, reliability and observability to evaluation, cost, security and coding-agent fleets.",
+     "preview": true
     }
    ]
   },

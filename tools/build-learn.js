@@ -320,7 +320,7 @@ function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
-<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+${NAV.previewHead(NAV.exam(examId))||'<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">'}
 <meta name="author" content="PraTech Labs">
 <link rel="canonical" href="${canon}">
 <meta property="og:type" content="article">
@@ -554,7 +554,7 @@ for(const base of [learnPath,resPath])
   sm=sm.replace(new RegExp('  <url>\\n    <loc>'+(SITE+base).replace(/[.\/]/g,'\\$&')+'[^<]*</loc>[\\s\\S]*?</url>\\n','g'),'');
 const entries=pages.filter(p=>p.url===learnPath||p.url.split('/').length>0).map(p=>
   '  <url>\n    <loc>'+SITE+p.url+'</loc>\n    <lastmod>'+today+'</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>'+(p.url===learnPath?'0.8':'0.7')+'</priority>\n  </url>\n').join('');
-sm=sm.replace('</urlset>',entries+'</urlset>');
+if(!(NAV.exam(examId)||{}).preview)sm=sm.replace('</urlset>',entries+'</urlset>');
 fs.writeFileSync(smf,sm);
 for(const w of warns)console.log('note: '+w);
 console.log('build-learn: '+examId+': '+pages.length+' pages ('+written.length+' of '+lessons.length+' lessons written) -> '+learnPath);

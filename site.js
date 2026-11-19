@@ -72,6 +72,26 @@
     // For the admin panels: is the signed-in account an admin (see CPAccount.admin), and open sign-in.
     window.cpAdmin=function(){return load().then(function(){return window.CPAccount.admin();});};
     window.cpSignIn=function(){load().then(function(){window.CPAccount.click();}).catch(function(){});};
+    // Private preview (site.json "preview", see tools/site-nav.js previewHead): the page starts hidden
+    // and is shown only to a signed-in admin; anyone else sees a cover with a Sign in button.
+    // This is a client-side gate for unlisted pages, not access control: the files are public.
+    if(document.querySelector('meta[name="cp-preview"]')){
+      var cover=function(msg,signin){
+        var d=document.getElementById('cp-pvg');
+        if(!d){d=document.createElement('div');d.id='cp-pvg';
+          d.style.cssText='position:fixed;inset:0;z-index:2147483000;background:#f4f7fb;display:flex;align-items:center;justify-content:center;padding:24px;font:16px Inter,system-ui,sans-serif;color:#1A2E45;text-align:center';
+          document.body.appendChild(d);}
+        d.innerHTML='<div style="max-width:440px"><h1 style="font-size:1.4rem;margin:0 0 .6rem">Private preview</h1><p style="margin:0 0 1.1rem;line-height:1.5">'+msg+'</p>'+
+          (signin?'<p><button type="button" id="cp-pvb" style="font:600 15px Inter,system-ui,sans-serif;background:#1B4F8A;color:#fff;border:0;border-radius:8px;padding:10px 22px;cursor:pointer">Sign in</button></p>':'')+
+          '<p style="margin-top:1rem"><a href="/" style="color:#1B4F8A">Back to CertPrep</a></p></div>';
+        var b=document.getElementById('cp-pvb');if(b)b.onclick=function(){window.cpSignIn();};
+        var st=document.getElementById('cp-pv');if(st)st.remove();};
+      var gate=function(){window.cpAdmin().then(function(a){
+          if(a.state==='admin'){var g=document.getElementById('cp-pvg');if(g)g.remove();var st=document.getElementById('cp-pv');if(st)st.remove();}
+          else cover(a.state==='signin'?'This page is not published yet. Sign in with an admin account to view it.':'This page is not published yet.',a.state==='signin');
+        }).catch(function(){cover('This page is not published yet.',false);});};
+      gate();window.addEventListener('cp-auth',gate);
+    }
     if(!btn||!(AUTH_LIVE||pv))return;
     btn.hidden=false;
     btn.addEventListener('click',function(){load().then(function(){window.CPAccount.click();}).catch(function(){});});
