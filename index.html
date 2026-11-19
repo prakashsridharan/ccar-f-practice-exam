@@ -102,7 +102,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/hub.css?v=20261119a">
+<link rel="stylesheet" href="/hub.css?v=20261119b">
 <link rel="stylesheet" href="/site.css?v=20261119a">
 </head>
 <body>
@@ -115,14 +115,17 @@
 
 <div class="container">
 
-  <!-- Udemy coupons (November 2026 links, valid to 12 Dec 2026). The script below hides this box once data-until has passed. -->
-  <div class="promo" data-until="2026-12-13">
-    <div class="promo-t"><span class="promo-pill">Free coupon</span><span class="promo-until">Valid until 12 Dec 2026 &middot; first 100 people</span></div>
-    <h2>Get all five practice tests free on Udemy</h2>
-    <p>Each course has the two tests on this site plus three more, and every question explains why the answer is right.</p>
+  <!-- Udemy coupons. Each card has its own data-until (the day after its coupon ends): the script
+       below hides each expired card, and the whole box once no card is left.
+       CCAR-F and CCAR-P: November 2026 links, valid to 12 Dec 2026. CCDV-P: valid to 20 Dec 2026. -->
+  <div class="promo" data-until="2026-12-21">
+    <div class="promo-t"><span class="promo-pill">Free coupon</span><span class="promo-until">First 100 people per course</span></div>
+    <h2>Get the full practice test courses free on Udemy</h2>
+    <p>Each course has the two tests on this site plus three or four more, and every question explains why the answer is right.</p>
     <div class="promo-l">
-      <a class="promo-b" href="https://www.udemy.com/course/claude-certified-architect-foundations-practice-tests-c/?couponCode=CCAR-F-NOV26" target="_blank" rel="noopener"><b>CCAR-F</b><span>Foundations<small>5 tests &middot; 300 questions</small></span><i>Get it free &rarr;</i></a>
-      <a class="promo-b" href="https://www.udemy.com/course/claude-certified-architect-professional-practice-tests-w/?couponCode=CCAR-P-NOV26" target="_blank" rel="noopener"><b>CCAR-P</b><span>Professional<small>6 tests &middot; 385 questions</small></span><i>Get it free &rarr;</i></a>
+      <a class="promo-b" data-until="2026-12-13" href="https://www.udemy.com/course/claude-certified-architect-foundations-practice-tests-c/?couponCode=CCAR-F-NOV26" target="_blank" rel="noopener"><b>CCAR-F</b><span>Foundations<small>5 tests &middot; 300 questions</small><small class="promo-d">Free until 12 Dec</small></span><i>Get free &rarr;</i></a>
+      <a class="promo-b" data-until="2026-12-13" href="https://www.udemy.com/course/claude-certified-architect-professional-practice-tests-w/?couponCode=CCAR-P-NOV26" target="_blank" rel="noopener"><b>CCAR-P</b><span>Professional<small>6 tests &middot; 385 questions</small><small class="promo-d">Free until 12 Dec</small></span><i>Get free &rarr;</i></a>
+      <a class="promo-b" data-until="2026-12-21" href="https://www.udemy.com/course/claude-certified-developer-professional-practice-tests/?couponCode=CCDV-P-NOV-DEC26" target="_blank" rel="noopener"><b>CCDV-P</b><span>Developer<small>5 tests &middot; 350 questions</small><small class="promo-d">Free until 20 Dec</small></span><i>Get free &rarr;</i></a>
     </div>
   </div>
 
@@ -180,6 +183,7 @@
 <script>
 // Hide time-limited offers (the Udemy coupon box) after their data-until date.
 document.querySelectorAll('[data-until]').forEach(function(el){if(new Date()>=new Date(el.getAttribute('data-until')+'T00:00:00'))el.hidden=true;});
+document.querySelectorAll('.promo').forEach(function(p){if(!p.querySelector('.promo-b:not([hidden])'))p.hidden=true;});
 </script>
 <script>
 // Site admin at /#admin. Hidden unless the hash is #admin; nothing here is linked from the

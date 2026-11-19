@@ -77,13 +77,16 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 .promo-until{font-size:.75rem;font-weight:600;opacity:.92}
 .promo h2{font-size:1.1rem;font-weight:800;letter-spacing:-.02em;line-height:1.25;margin-bottom:.2rem;text-shadow:0 1px 2px rgba(0,0,0,.18)}
 .promo p{font-size:.8rem;line-height:1.5;opacity:.95;margin-bottom:.6rem}
-.promo-l{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
-.promo-b{display:flex;align-items:center;gap:.6rem;padding:.45rem .7rem;border-radius:var(--r);background:#fff;text-decoration:none;color:var(--text);box-shadow:0 4px 14px -6px rgba(0,0,0,.3);transition:transform .15s,box-shadow .15s}
+.promo-l{display:grid;grid-template-columns:1fr;gap:.6rem}
+@media(min-width:1040px){.promo-l{grid-template-columns:repeat(3,1fr)}}
+.promo-b[hidden]{display:none}
+.promo-b{display:flex;align-items:center;gap:.5rem;padding:.45rem .6rem;min-width:0;border-radius:var(--r);background:#fff;text-decoration:none;color:var(--text);box-shadow:0 4px 14px -6px rgba(0,0,0,.3);transition:transform .15s,box-shadow .15s}
 .promo-b:hover{transform:translateY(-2px);box-shadow:0 10px 22px -8px rgba(0,0,0,.38)}
 .promo-b b{font-family:'JetBrains Mono',monospace;font-size:.74rem;font-weight:600;color:#00727e;background:#e3f6f8;padding:.2rem .55rem;border-radius:20px;flex-shrink:0}
 .promo-b span{display:flex;flex-direction:column;font-size:.85rem;font-weight:700;color:var(--ac-h);line-height:1.25}
-.promo-b small{font-size:.72rem;font-weight:500;color:var(--text-2)}
-.promo-b i{margin-left:auto;font-style:normal;font-size:.82rem;font-weight:700;color:#fff;background:#C0522A;padding:.3rem .65rem;border-radius:8px;white-space:nowrap}
+.promo-b small{font-size:.72rem;font-weight:500;color:var(--text-2);white-space:nowrap}
+.promo-b small.promo-d{color:#00727e;font-weight:600}
+.promo-b i{margin-left:auto;font-style:normal;font-size:.82rem;font-weight:700;color:#fff;background:#C0522A;padding:.3rem .55rem;border-radius:8px;white-space:nowrap;flex-shrink:0}
 .promo-b:hover i{background:#a8451f}
 @media(max-width:720px){.promo-l{grid-template-columns:1fr}.promo h2{font-size:1rem}}
 @media (prefers-reduced-motion:reduce){.promo-b:hover{transform:none}}
