@@ -78,6 +78,16 @@
      "version": "Version 1.0",
      "supersededBy": "ccar-p-v2",
      "list": true
+    },
+    {
+     "id": "ccdv-p",
+     "code": "CCDV-P",
+     "name": "Claude Certified Developer - Professional",
+     "level": "Professional",
+     "version": "Version 1.0",
+     "tag": "New",
+     "status": "live",
+     "blurb": "Follows Anthropic's exam guide 1.0 (November 2026): operating Claude systems in production, from agent orchestration, reliability and observability to evaluation, cost, security and coding-agent fleets."
     }
    ]
   },
