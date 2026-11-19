@@ -6,7 +6,9 @@ https://certprep.pratechlabs.com. Currently:
 | Exam | Learning guide | Practice tests |
 |---|---|---|
 | Claude Certified Architect - Foundations (CCAR-F) | `/claude/ccar-f/learn/`: 30 lessons, 6 case studies, cheat sheet | `/claude/ccar-f/`: 120 questions, 2 fixed tests of 60 (120 min) |
-| Claude Certified Architect - Professional (CCAR-P) | `/claude/ccar-p/learn/`: 38 lessons, 4 case studies, cheat sheet | `/claude/ccar-p/`: 126 questions, 2 fixed tests of 63 (120 min) |
+| Claude Certified Architect - Professional (CCAR-P), Version 1.1 (exam guide 1.1) | `/claude/ccar-p-v2/learn/`: 39 lessons, 4 case studies, cheat sheet | `/claude/ccar-p-v2/`: 140 questions, 2 fixed tests of 70 (120 min) |
+| Claude Certified Architect - Professional (CCAR-P), Version 1.0 (exam guide 1.0, until 7 Dec 2026) | `/claude/ccar-p/learn/`: 38 lessons, 4 case studies, cheat sheet | `/claude/ccar-p/`: 126 questions, 2 fixed tests of 63 (120 min) |
+| Claude Certified Developer - Professional (CCDV-P) | `/claude/ccdv-p/learn/`: 25 lessons, 4 case studies, cheat sheet | `/claude/ccdv-p/`: 140 questions, 2 fixed tests of 70 (120 min) |
 
 AWS certifications are in preparation.
 
@@ -91,9 +93,13 @@ Generated files are never edited by hand. Build in this order:
 node tools/build.js <content-dir>                    # exams/*.js
 node tools/build-learn.js <content-dir> ccar-f       # each exam's guide, cheat sheet, search index
 node tools/build-learn.js <content-dir> ccar-p
+node tools/build-learn.js <content-dir> ccar-p-v2
+node tools/build-learn.js <content-dir> ccdv-p
 node tools/build-site.js <content-dir>               # shared chrome, /resources/, /privacy/, sitemap
 node tools/smoke.js claude/ccar-f/index.html         # before every deploy, for every exam
 node tools/smoke.js claude/ccar-p/index.html
+node tools/smoke.js claude/ccar-p-v2/index.html
+node tools/smoke.js claude/ccdv-p/index.html
 node tools/check-links.js                            # every documentation link is a real page
 node tools/serve.js                                  # http://localhost:8765 (root-absolute paths need a server)
 ```
