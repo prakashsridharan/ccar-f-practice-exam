@@ -196,9 +196,13 @@ function visitMeta(){const q=new URLSearchParams(location.search),m={path:locati
  const tags=[...q.keys()].filter(k=>k.startsWith('utm_'));
  if(tags.length){tags.forEach(k=>q.delete(k));const s=q.toString();try{history.replaceState(history.state,'',location.pathname+(s?'?'+s:'')+location.hash);}catch(e){}}
  return m;}
+// Anonymous visitor ID for unique-visitor counts: random, kept only in this browser ('cp-vid',
+// same key in site.js and learn.js), never linked to an account. '' if storage is blocked.
+function cpVid(){try{var v=localStorage.getItem('cp-vid');if(!v||!/^[0-9a-f]{24}$/.test(v)){var a=new Uint8Array(12),i;if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(i=0;i<12;i++)a[i]=Math.random()*256|0;v='';for(i=0;i<12;i++)v+=(a[i]<16?'0':'')+a[i].toString(16);localStorage.setItem('cp-vid',v);}return v;}catch(e){return '';}}
 async function trackVisit(){if(!hasSupa())return;try{const base={page:EX.visitPage||'home',ua:navigator.userAgent.substring(0,200)};
  const post=b=>fetch(SUPABASE_URL+'/rest/v1/visits',{method:'POST',headers:{'apikey':SUPABASE_ANON,'Authorization':'Bearer '+SUPABASE_ANON,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(b)});
- let r=await post(Object.assign({},base,visitMeta()));
+ const full=Object.assign({},base,visitMeta(),{vid:cpVid()});let r=await post(full);
+ if(r.status===400){delete full.vid;r=await post(full);}// vid column not migrated yet
  if(r.status===400)r=await post(base);// source columns not migrated yet: still count the visit
  if(!r.ok)console.warn('Visit tracking:',r.status,await r.text());}catch(e){console.warn('Visit tracking error:',e);}}
 function allQ(){return[...BUILTIN,...CQ];}
@@ -767,7 +771,8 @@ function adminModal(){const ov=E('div',{className:'modal-ov',onClick:e=>{if(e.ta
  el.appendChild(E('div',{style:{fontWeight:'700',marginBottom:'.5rem',color:'var(--text)'}},'📊 Visitor Metrics'));
  const grid=E('div',{style:{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:'.5rem'}});
  const metric=(label,value)=>{const d=E('div',{style:{textAlign:'center',padding:'.5rem',background:'var(--surface)',borderRadius:'6px',border:'1px solid var(--border)'}});d.appendChild(E('div',{style:{fontSize:'1.2rem',fontWeight:'800',color:'var(--ac)'}},String(value)));d.appendChild(E('div',{style:{fontSize:'.7rem',color:'var(--text-m)',marginTop:'.15rem'}},label));return d;};
- grid.appendChild(metric('Total Visits',v.total||0));grid.appendChild(metric('Today',v.today||0));grid.appendChild(metric('Unique Visitors',v.unique||0));
+ grid.appendChild(metric('Total Visits',v.total||0));grid.appendChild(metric('Visits today (IST)',v.today||0));grid.appendChild(metric('Unique Visitors',v.v_all||0));
+ grid.appendChild(metric('Visitors today (IST)',v.v_today||0));grid.appendChild(metric('Visitors, 7 days',v.v_7d||0));grid.appendChild(metric('Visitors, 30 days',v.v_30d||0));
  el.appendChild(grid);
  });
  bd.appendChild(E('div',{style:{marginTop:'.75rem',fontSize:'.8rem',color:'var(--text-2)'}},'Built-in: '+BUILTIN.length+' | Custom: '+CQ.length+' | Total: '+allQ().length));

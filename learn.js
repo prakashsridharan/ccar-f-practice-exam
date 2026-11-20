@@ -296,12 +296,14 @@
     try{var h=document.referrer&&new URL(document.referrer).hostname;if(h&&h!==location.hostname)ref=h.slice(0,80);}catch(e){}
     var base={page:'learn-'+(body.getAttribute('data-prefix')||''),ua:navigator.userAgent.substring(0,200)};
     var full={page:base.page,ua:base.ua,path:location.pathname.slice(0,200),
-      src:(q.get('utm_source')||'').slice(0,40),campaign:(q.get('utm_campaign')||'').slice(0,60),ref:ref};
+      src:(q.get('utm_source')||'').slice(0,40),campaign:(q.get('utm_campaign')||'').slice(0,60),ref:ref,vid:cpVid()};
     var tags=[];q.forEach(function(v,k){if(k.indexOf('utm_')===0)tags.push(k);});
     if(tags.length){tags.forEach(function(k){q.delete(k);});var s=q.toString();
       try{history.replaceState(history.state,'',location.pathname+(s?'?'+s:'')+location.hash);}catch(e){}}
     function post(b){return fetch(U,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(b)});}
-    // 400 = the source columns are not migrated yet: still count the visit.
-    post(full).then(function(r){if(r.status===400)return post(base);}).catch(function(){});
+    // 400 = a column is not migrated yet (vid, then the source columns): still count the visit.
+    post(full).then(function(r){if(r.status!==400)return;delete full.vid;return post(full).then(function(r2){if(r2.status===400)return post(base);});}).catch(function(){});
+    // Anonymous visitor ID, same as app.js and site.js ('cp-vid'): random, this browser only.
+    function cpVid(){try{var v=localStorage.getItem('cp-vid');if(!v||!/^[0-9a-f]{24}$/.test(v)){var a=new Uint8Array(12),i;if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(i=0;i<12;i++)a[i]=Math.random()*256|0;v='';for(i=0;i<12;i++)v+=(a[i]<16?'0':'')+a[i].toString(16);localStorage.setItem('cp-vid',v);}return v;}catch(e){return '';}}
   }
 })();

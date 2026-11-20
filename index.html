@@ -102,8 +102,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/hub.css?v=20261119b">
-<link rel="stylesheet" href="/site.css?v=20261119a">
+<link rel="stylesheet" href="/hub.css?v=20261120a">
+<link rel="stylesheet" href="/site.css?v=20261120a">
 </head>
 <body>
 <!--site-header--><header class="sh"><div class="sh-in"><a class="sh-brand" href="/" aria-label="CertPrep home"><svg class="sh-mark" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="25" fill="none" stroke="#fff" stroke-opacity=".22" stroke-width="7"/><path d="M32 7a25 25 0 1 1-23.5 16.4" fill="none" stroke="#5fd3e0" stroke-width="7" stroke-linecap="round"/><path d="M21 33l8 8 15-17" fill="none" stroke="#fff" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Cert<b>Prep</b></span></a><nav class="sh-nav" aria-label="Site"><a class="sh-a sh-w" href="/">Home</a><details class="sh-m"><summary>Certifications</summary><div class="sh-p"><a class="sh-all sh-top" href="/">All certifications &rarr;</a><div class="sh-g"><div class="sh-gt">Claude (Anthropic)</div><div class="sh-x"><a class="sh-xn" href="/claude/ccar-f/learn/"><b>CCAR-F</b><span>Claude Certified Architect - Foundations (Version 1.0)</span></a><span class="sh-xl"><a href="/claude/ccar-f/learn/">Guide</a><a href="/claude/ccar-f/">Tests</a></span></div><div class="sh-x"><a class="sh-xn" href="/claude/ccar-p-v2/learn/"><b>CCAR-P</b><span>Claude Certified Architect - Professional (Version 1.1)</span></a><span class="sh-xl"><a href="/claude/ccar-p-v2/learn/">Guide</a><a href="/claude/ccar-p-v2/">Tests</a></span></div><div class="sh-x"><a class="sh-xn" href="/claude/ccar-p/learn/"><b>CCAR-P</b><span>Claude Certified Architect - Professional (Version 1.0)</span></a><span class="sh-xl"><a href="/claude/ccar-p/learn/">Guide</a><a href="/claude/ccar-p/">Tests</a></span></div><div class="sh-x"><a class="sh-xn" href="/claude/ccdv-p/learn/"><b>CCDV-P</b><span>Claude Certified Developer - Professional (Version 1.0)</span></a><span class="sh-xl"><a href="/claude/ccdv-p/learn/">Guide</a><a href="/claude/ccdv-p/">Tests</a></span></div><a class="sh-all" href="/claude/">All Claude certifications &rarr;</a></div><div class="sh-g"><div class="sh-gt">AWS</div><div class="sh-x sh-soon"><span>Practice exams in preparation.</span><i>Coming soon</i></div></div></div></details><a class="sh-a sh-rs" href="/resources/">Resources</a><details class="sh-m sh-more"><summary>More</summary><div class="sh-p sh-pm"><a class="sh-mh" href="/">Home</a><a class="sh-mr" href="/resources/">Resources</a><a href="/about/">About</a><a href="/privacy/">Privacy</a><button type="button" data-fb>Send feedback</button></div></details></nav><div class="sh-acct"><button type="button" class="sh-in-btn" aria-label="Sign in" hidden><svg class="sh-in-i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg><span class="sh-in-t">Sign in</span></button></div></div></header><!--/site-header-->
@@ -167,7 +167,8 @@
       <div class="adm-fbt"><button type="button" class="adm-fbf on" data-f="new">New</button><button type="button" class="adm-fbf" data-f="all">All</button><button type="button" class="adm-fbf" id="adm-fbcsv">Download CSV</button></div>
       <div id="adm-fb">Loading...</div>
       <h3>Visitor metrics (all pages)</h3>
-      <div class="adm-stats"><div class="adm-stat"><b id="adm-total">-</b><span>Total visits</span></div><div class="adm-stat"><b id="adm-today">-</b><span>Today</span></div><div class="adm-stat"><b id="adm-unique">-</b><span>Unique visitors</span></div></div>
+      <div class="adm-stats"><div class="adm-stat"><b id="adm-total">-</b><span>Total visits</span></div><div class="adm-stat"><b id="adm-today">-</b><span>Visits today (IST)</span></div><div class="adm-stat"><b id="adm-v_all">-</b><span>Unique visitors</span></div><div class="adm-stat"><b id="adm-v_today">-</b><span>Visitors today (IST)</span></div><div class="adm-stat"><b id="adm-v_7d">-</b><span>Visitors, 7 days</span></div><div class="adm-stat"><b id="adm-v_30d">-</b><span>Visitors, 30 days</span></div></div>
+      <p class="adm-note" id="adm-vnote"></p>
       <h3>Accounts</h3>
       <div class="adm-stats"><div class="adm-stat"><b id="adm-accounts">-</b><span>Accounts</span></div><div class="adm-stat"><b id="adm-new_7d">-</b><span>New, 7 days</span></div><div class="adm-stat"><b id="adm-active_7d">-</b><span>Signed in, 7 days</span></div><div class="adm-stat"><b id="adm-synced">-</b><span>With saved progress</span></div></div>
       <h3>Traffic sources (last 90 days)</h3>
@@ -213,7 +214,11 @@ document.querySelectorAll('.promo').forEach(function(p){if(!p.querySelector('.pr
   function fill(rpc){
     feedback(rpc);
     rpc('visit_stats').catch(function(){return null;})
-      .then(function(v){['total','today','unique'].forEach(function(k){document.getElementById('adm-'+k).textContent=v&&v[k]!=null?v[k]:'n/a';});});
+      .then(function(v){['total','today','v_all','v_today','v_7d','v_30d'].forEach(function(k){document.getElementById('adm-'+k).textContent=v&&v[k]!=null?v[k]:'n/a';});
+        // Unique visitors count browsers by their anonymous ID (schema.sql, visits.vid), from the day it went live.
+        var n=document.getElementById('adm-vnote');if(!v||!n)return;
+        n.textContent=(v.v_since?'Unique visitors are counted by anonymous browser ID since '+new Date(v.v_since).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'})+'. ':'Unique visitor counts start once the database update is run and new visits arrive. ')+
+          'One person on two devices counts twice; clearing site data starts a new ID. Old measure (distinct browser versions, all time): '+(v.unique!=null?v.unique:'n/a')+'.';});
     rpc('account_stats').catch(function(){return null;})
       .then(function(v){['accounts','new_7d','active_7d','synced'].forEach(function(k){document.getElementById('adm-'+k).textContent=v&&v[k]!=null?v[k]:'n/a';});});
     rpc('visit_sources',{p_days:90}).catch(function(){return null;})
@@ -269,6 +274,6 @@ document.querySelectorAll('.promo').forEach(function(p){if(!p.querySelector('.pr
   window.addEventListener('hashchange',sync);document.addEventListener('DOMContentLoaded',sync);
 })();
 </script>
-<script src="/site.js?v=20261119a"></script>
+<script src="/site.js?v=20261120a"></script>
 </body>
 </html>

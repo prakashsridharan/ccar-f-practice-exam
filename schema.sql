@@ -61,6 +61,17 @@ ALTER TABLE visits    ADD COLUMN IF NOT EXISTS src      TEXT NOT NULL DEFAULT ''
 ALTER TABLE visits    ADD COLUMN IF NOT EXISTS campaign TEXT NOT NULL DEFAULT '';
 ALTER TABLE visits    ADD COLUMN IF NOT EXISTS ref      TEXT NOT NULL DEFAULT '';
 
+-- Unique visitors (2026-11-20): vid is a random ID made in the browser and kept only there
+-- (localStorage 'cp-vid'). It is not linked to an account, name or email. Before this,
+-- unique visitors were counted by distinct user agent, which merges everyone on the same
+-- browser version. Rows from before this have vid ''.
+ALTER TABLE visits    ADD COLUMN IF NOT EXISTS vid      TEXT NOT NULL DEFAULT '';
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'visits_vid_len') THEN
+    ALTER TABLE visits ADD CONSTRAINT visits_vid_len CHECK (length(vid) <= 40);
+  END IF;
+END $$;
+
 -- Prompts for mapping/matching items. NULL for ordinary choice items.
 ALTER TABLE questions ADD COLUMN IF NOT EXISTS prompts JSONB;
 
@@ -182,8 +193,16 @@ CREATE FUNCTION visit_stats(p_exam TEXT DEFAULT NULL)
 RETURNS JSON AS $$
   SELECT CASE WHEN is_admin() THEN json_build_object(
     'total',  (SELECT COUNT(*) FROM visits WHERE p_exam IS NULL OR exam = p_exam),
-    'today',  (SELECT COUNT(*) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND visited_at >= CURRENT_DATE),
-    'unique', (SELECT COUNT(DISTINCT ua) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND ua != '')
+    -- "Today" starts at midnight India time (the owner's day), not midnight UTC.
+    'today',  (SELECT COUNT(*) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND visited_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'),
+    -- Old measure (distinct user agents), kept for comparison; undercounts people.
+    'unique', (SELECT COUNT(DISTINCT ua) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND ua != ''),
+    -- Unique visitors by browser ID (vid), counted only from rows that carry one.
+    'v_today', (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> '' AND visited_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'),
+    'v_7d',   (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> '' AND visited_at >= now() - interval '7 days'),
+    'v_30d',  (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> '' AND visited_at >= now() - interval '30 days'),
+    'v_all',  (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> ''),
+    'v_since', (SELECT MIN(visited_at) FROM visits WHERE vid <> '')
   ) END;
 $$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
@@ -196,7 +215,7 @@ RETURNS JSON AS $$
   SELECT CASE WHEN is_admin() THEN json_build_object(
     'sources', COALESCE((SELECT json_agg(t ORDER BY t.visits DESC) FROM (
       SELECT COALESCE(NULLIF(src,''), NULLIF(ref,''), 'direct') AS source, campaign,
-             COUNT(*) AS visits, COUNT(DISTINCT ua) AS people, MAX(visited_at) AS last
+             COUNT(*) AS visits, COUNT(DISTINCT COALESCE(NULLIF(vid,''), ua)) AS people, MAX(visited_at) AS last
       FROM visits
       WHERE path <> '' AND visited_at >= now() - make_interval(days => p_days)
       GROUP BY 1, 2) t), '[]'::json),

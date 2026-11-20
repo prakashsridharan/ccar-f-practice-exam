@@ -44,11 +44,15 @@
     try{var h=document.referrer&&new URL(document.referrer).hostname;if(h&&h!==location.hostname)ref=h.slice(0,80);}catch(e){}
     var page=location.pathname==='/'?'hub':location.pathname.replace(/^\/|\/$/g,'').slice(0,40);
     var full={page:page,ua:navigator.userAgent.substring(0,200),path:location.pathname.slice(0,200),
-      src:(p.get('utm_source')||'').slice(0,40),campaign:(p.get('utm_campaign')||'').slice(0,60),ref:ref};
+      src:(p.get('utm_source')||'').slice(0,40),campaign:(p.get('utm_campaign')||'').slice(0,60),ref:ref,vid:cpVid()};
     var tags=[];p.forEach(function(v,k){if(k.indexOf('utm_')===0)tags.push(k);});
     if(tags.length){tags.forEach(function(k){p.delete(k);});var s=p.toString();
       try{history.replaceState(history.state,'',location.pathname+(s?'?'+s:'')+location.hash);}catch(e){}}
-    fetch(U,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(full)}).catch(function(){});
+    function post(b){return fetch(U,{method:'POST',headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(b)});}
+    // 400 = the vid column is not migrated yet: still count the visit.
+    post(full).then(function(r){if(r.status===400){delete full.vid;return post(full);}}).catch(function(){});
+    // Anonymous visitor ID, same as app.js and learn.js ('cp-vid'): random, this browser only.
+    function cpVid(){try{var v=localStorage.getItem('cp-vid');if(!v||!/^[0-9a-f]{24}$/.test(v)){var a=new Uint8Array(12),i;if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(i=0;i<12;i++)a[i]=Math.random()*256|0;v='';for(i=0;i<12;i++)v+=(a[i]<16?'0':'')+a[i].toString(16);localStorage.setItem('cp-vid',v);}return v;}catch(e){return '';}}
   })();
 
   // Account (header "Sign in"): account.js and the sign-in library load only when they are
