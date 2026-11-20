@@ -177,7 +177,7 @@ const A=SITE.author;
 if(A){
   const SUM=[].concat(A&&A.summary||[]);const EDU=A.education||[];
   const ld={'@context':'https://schema.org','@type':'AboutPage',url:URL_+'/about/',name:'About '+SITE.name,
-    mainEntity:Object.assign(N.authorLd(),SUM.length?{description:SUM.join(' ')}:{},EDU.length?{alumniOf:EDU.map(e=>({'@type':'EducationalOrganization',name:e.split(', ').pop()}))}:{},A.photo?{image:URL_+A.photo}:{},
+    mainEntity:Object.assign(N.authorLd(),SUM.length?{description:SUM.join(' ')}:{},EDU.length?{alumniOf:EDU.map(e=>({'@type':'EducationalOrganization',name:e.slice(e.indexOf(', ')+2)}))}:{},A.photo?{image:URL_+A.photo}:{},
       A.credentials.length?{hasCredential:A.credentials.map(c=>({'@type':'EducationalOccupationalCredential',name:c.name||c}))}:{})};
   const li=(c)=>typeof c==='string'?esc(c):(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener">'+esc(c.name)+'</a>':esc(c.name))+(c.note?' <span class="ab-n">'+esc(c.note)+'</span>':'');
   const aboutHtml=`<!DOCTYPE html>
