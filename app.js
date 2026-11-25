@@ -773,6 +773,7 @@ function adminModal(){const ov=E('div',{className:'modal-ov',onClick:e=>{if(e.ta
  const metric=(label,value)=>{const d=E('div',{style:{textAlign:'center',padding:'.5rem',background:'var(--surface)',borderRadius:'6px',border:'1px solid var(--border)'}});d.appendChild(E('div',{style:{fontSize:'1.2rem',fontWeight:'800',color:'var(--ac)'}},String(value)));d.appendChild(E('div',{style:{fontSize:'.7rem',color:'var(--text-m)',marginTop:'.15rem'}},label));return d;};
  grid.appendChild(metric('Total Visits',v.total||0));grid.appendChild(metric('Visits today (IST)',v.today||0));grid.appendChild(metric('Unique Visitors',v.v_all||0));
  grid.appendChild(metric('Visitors today (IST)',v.v_today||0));grid.appendChild(metric('Visitors, 7 days',v.v_7d||0));grid.appendChild(metric('Visitors, 30 days',v.v_30d||0));
+ grid.appendChild(metric('Crawler visits',v.crawl_total||0));grid.appendChild(metric('Crawlers today',v.crawl_today||0));grid.appendChild(metric('Crawlers, 7 days',v.crawl_7d||0));
  el.appendChild(grid);
  });
  bd.appendChild(E('div',{style:{marginTop:'.75rem',fontSize:'.8rem',color:'var(--text-2)'}},'Built-in: '+BUILTIN.length+' | Custom: '+CQ.length+' | Total: '+allQ().length));

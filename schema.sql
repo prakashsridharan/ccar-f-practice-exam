@@ -185,30 +185,47 @@ GRANT EXECUTE ON FUNCTION is_admin() TO anon, authenticated;
 -- The stats functions below return NULL unless is_admin(). They still answer
 -- 200 to anyone, which the keep-alive workflow relies on.
 
+-- Crawlers (2026-11-25): search engines and link-preview bots run the page's JavaScript, so
+-- they record visits too, each with a fresh visitor ID. They are kept in the table but counted
+-- apart, by user agent. Note 'linkedinbot', not 'linkedin': the LinkedIn app's own browser
+-- (real people opening a shared post) has "LinkedInApp" in its user agent.
+CREATE OR REPLACE FUNCTION is_crawler(p_ua TEXT)
+RETURNS BOOLEAN LANGUAGE sql IMMUTABLE AS $f$
+  SELECT COALESCE(p_ua, '') ~* '(bot|crawl|spider|slurp|headless|lighthouse|facebookexternalhit|python|curl|wget|java/|go-http|phantom|selenium|puppeteer|playwright)';
+$f$;
+
 -- Dropped and recreated rather than CREATE OR REPLACE: adding a parameter
 -- would create an overload and make the PostgREST rpc call ambiguous.
+-- People's numbers exclude crawlers; crawl_* count only crawlers.
 DROP FUNCTION IF EXISTS visit_stats();
 DROP FUNCTION IF EXISTS visit_stats(TEXT);
 CREATE FUNCTION visit_stats(p_exam TEXT DEFAULT NULL)
 RETURNS JSON AS $$
+  WITH v AS (
+    SELECT vid, ua, visited_at, is_crawler(ua) AS bot,
+           -- "Today" starts at midnight India time (the owner's day), not midnight UTC.
+           visited_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata' AS today
+    FROM visits WHERE p_exam IS NULL OR exam = p_exam)
   SELECT CASE WHEN is_admin() THEN json_build_object(
-    'total',  (SELECT COUNT(*) FROM visits WHERE p_exam IS NULL OR exam = p_exam),
-    -- "Today" starts at midnight India time (the owner's day), not midnight UTC.
-    'today',  (SELECT COUNT(*) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND visited_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'),
+    'total',   (SELECT COUNT(*) FROM v WHERE NOT bot),
+    'today',   (SELECT COUNT(*) FROM v WHERE NOT bot AND today),
     -- Old measure (distinct user agents), kept for comparison; undercounts people.
-    'unique', (SELECT COUNT(DISTINCT ua) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND ua != ''),
+    'unique',  (SELECT COUNT(DISTINCT ua) FROM v WHERE NOT bot AND ua <> ''),
     -- Unique visitors by browser ID (vid), counted only from rows that carry one.
-    'v_today', (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> '' AND visited_at >= date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata'),
-    'v_7d',   (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> '' AND visited_at >= now() - interval '7 days'),
-    'v_30d',  (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> '' AND visited_at >= now() - interval '30 days'),
-    'v_all',  (SELECT COUNT(DISTINCT vid) FROM visits WHERE (p_exam IS NULL OR exam = p_exam) AND vid <> ''),
-    'v_since', (SELECT MIN(visited_at) FROM visits WHERE vid <> '')
+    'v_today', (SELECT COUNT(DISTINCT vid) FROM v WHERE NOT bot AND vid <> '' AND today),
+    'v_7d',    (SELECT COUNT(DISTINCT vid) FROM v WHERE NOT bot AND vid <> '' AND visited_at >= now() - interval '7 days'),
+    'v_30d',   (SELECT COUNT(DISTINCT vid) FROM v WHERE NOT bot AND vid <> '' AND visited_at >= now() - interval '30 days'),
+    'v_all',   (SELECT COUNT(DISTINCT vid) FROM v WHERE NOT bot AND vid <> ''),
+    'v_since', (SELECT MIN(visited_at) FROM visits WHERE vid <> ''),
+    'crawl_total', (SELECT COUNT(*) FROM v WHERE bot),
+    'crawl_today', (SELECT COUNT(*) FROM v WHERE bot AND today),
+    'crawl_7d',    (SELECT COUNT(*) FROM v WHERE bot AND visited_at >= now() - interval '7 days')
   ) END;
 $$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
 
 -- Traffic sources for the site admin panel: visits per source + campaign
 -- (source = utm_source, else the referring host, else 'direct'), and the most
--- visited learning-guide pages, over the last p_days days.
+-- visited learning-guide pages, over the last p_days days. Crawlers are left out.
 DROP FUNCTION IF EXISTS visit_sources(INTEGER);
 CREATE FUNCTION visit_sources(p_days INTEGER DEFAULT 90)
 RETURNS JSON AS $$
@@ -217,12 +234,12 @@ RETURNS JSON AS $$
       SELECT COALESCE(NULLIF(src,''), NULLIF(ref,''), 'direct') AS source, campaign,
              COUNT(*) AS visits, COUNT(DISTINCT COALESCE(NULLIF(vid,''), ua)) AS people, MAX(visited_at) AS last
       FROM visits
-      WHERE path <> '' AND visited_at >= now() - make_interval(days => p_days)
+      WHERE path <> '' AND NOT is_crawler(ua) AND visited_at >= now() - make_interval(days => p_days)
       GROUP BY 1, 2) t), '[]'::json),
     'pages', COALESCE((SELECT json_agg(t ORDER BY t.visits DESC) FROM (
       SELECT path, COUNT(*) AS visits
       FROM visits
-      WHERE path LIKE '%/learn/%' AND visited_at >= now() - make_interval(days => p_days)
+      WHERE path LIKE '%/learn/%' AND NOT is_crawler(ua) AND visited_at >= now() - make_interval(days => p_days)
       GROUP BY path ORDER BY 2 DESC LIMIT 15) t), '[]'::json)
   ) END;
 $$ LANGUAGE sql SECURITY DEFINER SET search_path = public;
