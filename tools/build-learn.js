@@ -338,7 +338,7 @@ function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 ${NAV.previewHead(NAV.exam(examId))||'<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">'}
-<meta name="author" content="PraTech Labs">
+<meta name="author" content="Prakash Sridharan">
 <link rel="canonical" href="${canon}">
 <meta property="og:type" content="article">
 <meta property="og:url" content="${canon}">

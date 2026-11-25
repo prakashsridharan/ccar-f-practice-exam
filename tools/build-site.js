@@ -44,7 +44,7 @@ const resHtml=`<!DOCTYPE html>
 <title>Study Resources for Claude Certifications - ${esc(SITE.name)}</title>
 <meta name="description" content="Curated official documentation and hands-on notebooks for each certification on ${esc(SITE.name)}, grouped by exam domain.">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
-<meta name="author" content="PraTech Labs">
+<meta name="author" content="Prakash Sridharan">
 <link rel="canonical" href="${URL_}/resources/">
 <meta property="og:type" content="website">
 <meta property="og:url" content="${URL_}/resources/">
@@ -99,7 +99,7 @@ const privHtml=`<!DOCTYPE html>
 <title>Privacy Policy - ${esc(SITE.name)}</title>
 <meta name="description" content="What ${esc(SITE.name)} collects, why, where it is stored, and how to delete your account.">
 <meta name="robots" content="index, follow">
-<meta name="author" content="PraTech Labs">
+<meta name="author" content="Prakash Sridharan">
 <link rel="canonical" href="${URL_}/privacy/">
 <!--site-icons--><!--/site-icons-->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -188,7 +188,7 @@ if(A){
 <title>About - ${esc(SITE.name)}</title>
 <meta name="description" content="${esc(SITE.name)} is written and maintained by ${esc(A.name)}${A.title?', '+esc(A.title):''}. Free learning guides, cheat sheets and practice tests for certification exams.">
 <meta name="robots" content="index, follow">
-<meta name="author" content="PraTech Labs">
+<meta name="author" content="Prakash Sridharan">
 <link rel="canonical" href="${URL_}/about/">
 <!--site-icons--><!--/site-icons-->
 <script type="application/ld+json">${JSON.stringify(ld).split('<').join('\u003c')}</script>
