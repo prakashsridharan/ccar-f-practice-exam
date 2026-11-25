@@ -56,7 +56,7 @@ const ORIGIN='https://certprep.pratechlabs.com';
 function headIcons(id,opts){
   const x=id&&exam(id),own=x&&fs.existsSync(path.join(__dirname,'..','og-'+id+'.png'));
   const pub=(opts&&opts.published)||(x&&x.published)||'';
-  const img=ORIGIN+(own?'/og-'+id+'.png':'/og-image.png');
+  const img=ORIGIN+(own?'/og-'+id+'.png':'/og-image.png')+'?v=2';
   const alt=own?SITE.name+': '+x.code+(x.version?' '+x.version:'')+' '+x.name+' practice tests and learning guide':SITE.name+': '+SITE.tagline;
   return ['<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
     '<link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png">',
