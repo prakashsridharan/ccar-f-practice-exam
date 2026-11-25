@@ -345,7 +345,7 @@ ${NAV.previewHead(NAV.exam(examId))||'<meta name="robots" content="index, follow
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta name="twitter:card" content="summary_large_image">
-${NAV.headIcons()}
+${NAV.headIcons(examId)}
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

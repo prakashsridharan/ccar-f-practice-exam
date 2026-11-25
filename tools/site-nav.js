@@ -49,17 +49,22 @@ const LOGO='<svg class="sh-mark" viewBox="0 0 64 64" aria-hidden="true"><circle 
 const brand=()=>'<a class="sh-brand" href="/" aria-label="'+esc(SITE.name)+' home">'+LOGO+'<span>'+esc(SITE.name).replace(/Prep$/,'<b>Prep</b>')+'</span></a>';
 const ORIGIN='https://certprep.pratechlabs.com';
 // <head> tags shared by every page: icons, theme colour, manifest and the link-preview image.
-function headIcons(){
+// With an exam id, pages of that exam (its practice tests and guide) use /og-<id>.png when it
+// exists, so a shared link previews that exam instead of the generic CertPrep card.
+function headIcons(id){
+  const x=id&&exam(id),own=x&&fs.existsSync(path.join(__dirname,'..','og-'+id+'.png'));
+  const img=ORIGIN+(own?'/og-'+id+'.png':'/og-image.png');
+  const alt=own?SITE.name+': '+x.code+(x.version?' '+x.version:'')+' '+x.name+' practice tests and learning guide':SITE.name+': '+SITE.tagline;
   return ['<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
     '<link rel="icon" href="/favicon-48.png" sizes="48x48" type="image/png">',
     '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
     '<link rel="manifest" href="/site.webmanifest">',
     '<meta name="theme-color" content="#1B4F8A">',
-    '<meta property="og:image" content="'+ORIGIN+'/og-image.png">',
+    '<meta property="og:image" content="'+img+'">',
     '<meta property="og:image:width" content="1200">',
     '<meta property="og:image:height" content="630">',
-    '<meta property="og:image:alt" content="'+esc(SITE.name)+': '+esc(SITE.tagline)+'">',
-    '<meta name="twitter:image" content="'+ORIGIN+'/og-image.png">'].join('\n');
+    '<meta property="og:image:alt" content="'+esc(alt)+'">',
+    '<meta name="twitter:image" content="'+img+'">'].join('\n');
 }
 
 // Header: brand, Certifications menu (a <details>, so it opens without JavaScript; /site.js

@@ -6,7 +6,7 @@
 // Run it last: node tools/build.js <content> -> node tools/build-learn.js <content> <exam> (each) -> this.
 //
 // Static pages carry marked regions, rewritten from tools/site-nav.js on every run:
-//   <!--site-icons-->...<!--/site-icons-->   (in <head>: favicons, manifest, link-preview image)
+//   <!--site-icons [exam]-->...<!--/site-icons-->   (in <head>: favicons, manifest, link-preview image; an exam id picks /og-<id>.png)
 //   <!--site-header-->...<!--/site-header-->
 //   <!--exam-tabs <exam-id> <learn|tests|resources>-->...<!--/exam-tabs-->
 //   <!--cert-list [vendor-id]-->...<!--/cert-list-->
@@ -254,7 +254,7 @@ for(const p of pages){
   const src=fs.readFileSync(f,'utf8');
   const out=src.replace(RE,(_,kind,args)=>{
     const a=args.trim().split(/\s+/).filter(Boolean);let body='';
-    if(kind==='site-icons')body='\n'+N.headIcons()+'\n';
+    if(kind==='site-icons')body='\n'+N.headIcons(a[0])+'\n';
     else if(kind==='site-header')body=N.siteHeader();
     else if(kind==='site-footer')body=N.siteFooter();
     else if(kind==='cert-list')body=N.certList(a[0]);
