@@ -67,6 +67,9 @@ ok('practice draws questionCount',()=>{const n=run('st.pq.length'),N=run('EX.blu
 ok('timer starts at durationSec',()=>{if(run('st.psec')!==run('EX.blueprint.durationSec'))throw new Error('psec '+run('st.psec'))});
 ok('calcScore',()=>run('calcScore(allQ())'));
 ok('renderReport',()=>run('submitPractice();renderReport()'));
+ok('report has a share box with a tracked link',()=>{const sh=find(byId.app,n=>n.className==='share');if(!sh)throw new Error('no .share box');
+ const ta=find(sh,n=>n.className==='share-t'),v=ta&&ta.value||'',code=run('EX.code');
+ if(!v.includes(code)||!/utm_source=share/.test(v))throw new Error('share text lacks exam code or utm_source=share: '+v.slice(0,120));});
 ok('renderReview',()=>run('renderReview()'));
 ok('multi-select card renders and reveals',()=>{const id=run("(allQ().find(q=>q.type==='multi')||{}).id");if(!id)return;run("st.rev['"+id+"']=true;var __c=renderQCard(allQ().find(q=>q.id==='"+id+"'),{showAdmin:true})");const t=text(run('__c'));if(!/Select \d/.test(t))throw new Error('no Select N badge');});
 ok('weights sum to questionCount and fit the pool',()=>{const w=run('WEIGHTS'),N=run('EX.blueprint.questionCount');const s=Object.values(w).reduce((a,b)=>a+b,0);if(s!==N)throw new Error('sum '+s);const pool=run('(()=>{const p={};allQ().forEach(q=>p[q.domain]=(p[q.domain]||0)+1);return p})()');for(const d in w)if(w[d]>(pool[d]||0))throw new Error('D'+d+' needs '+w[d]+' has '+pool[d]);});

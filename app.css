@@ -370,3 +370,11 @@ body::before{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;ba
 /* Version note on exams that come in more than one version */
 .vnote{margin:1rem 0 0;padding:.6rem .85rem;border-radius:var(--r);background:var(--ac-s);border:1px solid var(--ac-l);font-size:.8rem;color:var(--text-2);line-height:1.55}
 .vnote a{color:var(--ac);font-weight:700;text-decoration:none;white-space:nowrap}.vnote a:hover{text-decoration:underline}
+
+/* Share box on the results screen (renderShare in app.js) */
+.share{margin:1.25rem 0 .25rem;padding:1rem;border-radius:var(--r);background:var(--bg);border:1px solid var(--border);text-align:left}
+.share-h{font-weight:800;color:var(--text);margin-bottom:.25rem}
+.share-p{font-size:.8rem;color:var(--text-2);line-height:1.5;margin:0 0 .6rem}
+.share-t{width:100%;box-sizing:border-box;font:inherit;font-size:.82rem;line-height:1.5;padding:.55rem .65rem;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);resize:vertical}
+.share-a{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin-top:.6rem}
+.share-n{font-size:.78rem;font-weight:600;color:var(--ac)}

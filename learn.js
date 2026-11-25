@@ -194,7 +194,7 @@
     function row(r,v){
       var parts=r.u.split('#'),dom=meta.domains[r.d],terms=r.terms.length?r.terms:v.toLowerCase().split(/\s+/);
       var href=parts[0]+'?q='+encodeURIComponent(v)+'&hl='+encodeURIComponent(terms.join(' '))+(parts[1]?'#'+parts[1]:'');
-      var tag=r.k==='lesson'?r.l:r.k==='cheat'?'Sheet':'Case';
+      var tag=r.k==='lesson'?r.l:r.k==='cheat'?'Sheet':r.k==='article'?'Page':'Case';
       return '<li role="option"><a href="'+escH(href)+'"><span class="ls-id"'+(dom?' style="--dc:'+dom.color+'"':'')+'>'+escH(tag)+'</span><span class="ls-m"><b>'+escH(r.k==='cheat'&&r.h?r.h:r.t)+'</b>'+
         (r.k==='cheat'?'':(r.h?'<i>'+escH(r.h)+'</i>':''))+'<small>'+snippet(r.x||'',terms)+'</small></span></a></li>';
     }

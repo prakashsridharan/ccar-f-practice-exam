@@ -490,7 +490,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  app.appendChild(E('div',{className:'hdr'},E('h1',null,EX.code+' Practice Exam'),E('div',{className:'sub'},EX.name)));
  const ct=E('div',{className:'container'});
  // A version note (EX.copy.versionNote) links exams that come in more than one version.
- const vn=EX.copy.versionNote;if(vn)ct.appendChild(E('div',{className:'vnote'},E('span',null,vn.text),' ',E('a',{href:vn.href},vn.label+' →')));
+ const vn=EX.copy.versionNote;if(vn)ct.appendChild(E('div',{className:'vnote'},E('span',null,vn.text),' ',E('a',{href:vn.href},vn.label+' →'),...(vn.more?[' · ',E('a',{href:vn.more.href},vn.more.label+' →')]:[])));
  ct.appendChild(renderStats());
  if(LESSONS.length&&learnProgress().n)ct.appendChild(learnStrip());
 
@@ -706,8 +706,32 @@ function renderReport(){const app=document.getElementById('app');app.innerHTML='
  rpt.appendChild(E('p',{style:{fontSize:'.78rem',color:'var(--text-m)',margin:'0 0 .75rem',lineHeight:'1.5'}},'The real exam uses scaled scoring where questions carry different weights. Target '+T.pass+'%+ overall and '+DT+'%+ in every domain for a confident pass.'));
  const weakD=[];Object.entries(sc.ds).forEach(([d,dd])=>{if(dd.a>0&&(dd.c/dd.a)<DT/100)weakD.push('D'+d+': '+DM[d].n+' ('+Math.round(dd.c/dd.a*100)+'%)');});
  if(weakD.length){const wd=E('div',{style:{textAlign:'left',padding:'.6rem .8rem',margin:'.5rem 0',borderRadius:'8px',background:'#FDF0EB',border:'1px solid #e8a88a',fontSize:'.78rem',color:'#C0522A',lineHeight:'1.5'}});wd.appendChild(E('strong',null,'Focus areas (below '+DT+'%): '));wd.appendChild(document.createTextNode(weakD.join(', ')));rpt.appendChild(wd);}
- rpt.appendChild(renderDomainScores(sc));ct.appendChild(rpt);
+ rpt.appendChild(renderDomainScores(sc));rpt.appendChild(renderShare(pct,tier==='pass'));ct.appendChild(rpt);
  ct.appendChild(E('div',{style:{display:'flex',justifyContent:'center',gap:'.75rem',margin:'1.5rem 0',flexWrap:'wrap'}},E('button',{className:'btn btn-p',onClick:()=>{go('review');}},E('span',{innerHTML:IC.book}),'Review Answers'),E('button',{className:'btn btn-p',onClick:()=>startPractice(st.ptest)},E('span',{innerHTML:IC.play}),st.ptest?'Retake '+testLabel(st.ptest):'New Random Mix'),(w=>w.length?E('button',{className:'btn btn-g',onClick:()=>startRetry(0,w)},E('span',{innerHTML:IC.reset}),'Retry the '+w.length+' you missed'):null)(st.pq.filter(q=>!isCorrect(q)).map(q=>q.id)),E('button',{className:'btn btn-g',onClick:()=>{go('home');}},E('span',{innerHTML:IC.home}),'Home')));app.appendChild(ct);}
+
+// Share box on the results screen. Nothing is sent anywhere: LinkedIn receives only the exam
+// page's address (it no longer accepts pre-filled post text), so the suggested line is shown to
+// copy. The link carries utm_source=share, so visits it brings appear as "share" in the admin
+// traffic sources (visitMeta strips the tags on arrival).
+function renderShare(pct,passed){
+ const loc=typeof location!=='undefined'?location:{origin:'',pathname:'/'},nav=typeof navigator!=='undefined'?navigator:{};
+ const url=loc.origin+loc.pathname+'?utm_source=share&utm_campaign='+encodeURIComponent(String(EX.code||'exam').toLowerCase());
+ const name=String(EX.name||'').replace(/\s*\([^)]*\)\s*$/,''),test=testLabel(st.ptest);
+ const text=(passed?'I scored '+pct+'% on the '+EX.code+' '+test+' ('+name+') on CertPrep.':'Preparing for the '+EX.code+' exam ('+name+'). I am practicing with the timed tests on CertPrep.')+
+  ' Free learning guides, cheat sheets and timed practice tests: '+url;
+ const box=E('div',{className:'share'});
+ box.appendChild(E('div',{className:'share-h'},'Share your progress'));
+ box.appendChild(E('p',{className:'share-p'},(passed?'Post your result':'Studying with colleagues? Tell them where you practice')+'. LinkedIn opens with a link to this exam; paste the line below as your post, or write your own.'));
+ const ta=E('textarea',{className:'share-t',readOnly:true,rows:4,'aria-label':'Suggested post text'});ta.value=text;box.appendChild(ta);
+ const note=E('span',{className:'share-n',role:'status'});
+ const copy=()=>{const done=()=>{note.textContent='Copied';setTimeout(()=>{note.textContent='';},2500);};
+  if(nav.clipboard&&nav.clipboard.writeText)nav.clipboard.writeText(text).then(done,()=>{ta.select();try{document.execCommand('copy');done();}catch(e){}});
+  else{ta.select();try{document.execCommand('copy');done();}catch(e){}}};
+ const acts=E('div',{className:'share-a'});
+ acts.appendChild(E('button',{className:'btn btn-p',onClick:()=>{copy();window.open('https://www.linkedin.com/sharing/share-offsite/?url='+encodeURIComponent(url),'_blank','noopener');}},'Copy text and open LinkedIn'));
+ acts.appendChild(E('button',{className:'btn btn-g',onClick:copy},'Copy text'));
+ if(nav.share)acts.appendChild(E('button',{className:'btn btn-g',onClick:()=>{nav.share({title:EX.code+' practice tests',text:text.replace(' '+url,''),url}).catch(()=>{});}},'More sharing options'));
+ acts.appendChild(note);box.appendChild(acts);return box;}
 
 function renderReview(){const app=document.getElementById('app');app.innerHTML='';app.appendChild(E('div',{className:'hdr',style:{padding:'1rem 1.5rem'}},E('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},E('button',{className:'btn-h',onClick:()=>{go('report');}},E('span',{innerHTML:IC.home}),'Back'),E('h1',{style:{fontSize:'1.1rem'}},'Review Answers'),E('span',null,''))));
  const F={all:['All',()=>true],wrong:['Incorrect',q=>!isCorrect(q)],flag:['Flagged',q=>!!st.pflag[q.id]],skip:['Unanswered',q=>!hasAnswer(q)]};

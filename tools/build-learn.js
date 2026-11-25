@@ -10,6 +10,7 @@
 //                        (taskLabel names the box that shows each lesson's task, "Exam task" by default; desc is shown under it)
 //   learn/<slug>.md      one per lesson; a lesson with no file is listed as "coming soon"
 //   learn/cases/*.md     fictional case studies used by the exercises (index.md = the cases page)
+//   learn/articles/*.md  optional stand-alone pages (front matter title, summary, tag), written to <learn>/<slug>/
 //   learn/cheat-sheet.md optional: title/summary front matter, then ## sections (one "## Domain <n>: ..."
 //                        per domain, others allowed); [[1.3]] links to lesson 1.3. Kept to 2-3 printed pages.
 //                        "If the question says | Pick | Not" tables and "**Remember:**" lines span both columns;
@@ -151,6 +152,21 @@ if(fs.existsSync(CSF)){
     const dn=new Set(cheat.sections.filter(s=>s.d).map(s=>s.d.n));
     for(const d of OUT.domains)if(!dn.has(d.n))fail('cheat-sheet.md: no "## Domain '+d.n+': ..." section');
   }
+}
+
+// ---- articles (learn/articles/<slug>.md, optional): stand-alone guide pages such as "What changed
+// in the exam". Front matter: title, summary, tag (the small label on the overview card, e.g.
+// "Exam update"). Body: the lesson Markdown (no check questions or exercises); [[1.3]] links to
+// lesson 1.3. Each one is written to <learn>/<slug>/, listed on the overview and in the sidebar,
+// searched, and put in the sitemap. ----
+const ARTS=[],ADIR=path.join(LSRC,'articles');
+if(fs.existsSync(ADIR))for(const f of fs.readdirSync(ADIR).filter(f=>f.endsWith('.md')).sort()){
+  const slug=f.slice(0,-3),file='articles/'+f;
+  if(lessons.some(l=>l.domain.slug===slug)||['cases','cheat-sheet'].includes(slug))fail(file+': slug clashes with a guide page');
+  const src=fs.readFileSync(path.join(ADIR,f),'utf8').replace(/\r\n/g,'\n').replace(/\[\[([\d.]+)\]\]/g,(_,id)=>{const l=lessons.find(x=>x.id===id&&x.html);
+    if(!l){fail(file+': [['+id+']] is not a written lesson');return id;}return '['+id+' '+l.title+']('+l.url+')';});
+  const doc=parseDoc(src,file),tag=((src.match(/^---\n[\s\S]*?^tag:\s*(.*)$/m)||[])[1]||'').trim();
+  ARTS.push(Object.assign(doc,{slug,file,tag:tag||'Guide',url:learnPath+slug+'/',md:src.replace(/^---\n[\s\S]*?\n---\n/,'')}));
 }
 
 // ---- markdown ----
@@ -361,7 +377,7 @@ function searchBox(){return '<div class="ls js-only" role="search"><input type="
 function sidebar(cur){
   const total=lessons.length;
   return '<nav class="side" aria-label="Lessons">'+searchBox()+'<details class="side-d" open><summary><span>All lessons</span> <span class="prog-txt" data-prog="all" data-total="'+total+'"></span></summary>'+
-    '<a class="side-home" href="'+learnPath+'">Overview</a>'+(cheat?'<a class="side-home" href="'+csPath+'">Cheat sheet</a>':'')+(casesIndex?'<a class="side-home" href="'+casesPath+'">Case studies</a>':'')+
+    '<a class="side-home" href="'+learnPath+'">Overview</a>'+(cheat?'<a class="side-home" href="'+csPath+'">Cheat sheet</a>':'')+(casesIndex?'<a class="side-home" href="'+casesPath+'">Case studies</a>':'')+ARTS.map(a=>'<a class="side-home" href="'+a.url+'">'+esc(a.title)+'</a>').join('')+
     OUT.domains.map(d=>'<div class="side-dom" style="--dc:'+d.color+'"><a class="side-dt" href="'+d.url+'"><b>'+d.n+'</b> '+esc(d.name)+'</a><ul>'+
       d.lessons.map(l=>'<li data-l="'+l.id+'"'+(l.id===cur?' class="cur"':'')+'>'+(l.html?'<a href="'+l.url+'"'+(l.id===cur?' aria-current="page"':'')+'>':'<span class="soon">')+
         '<span class="lid">'+l.id+'</span>'+esc(l.title)+(l.html?'</a>':' <em>soon</em></span>')+'</li>').join('')+'</ul></div>').join('')+
@@ -382,6 +398,7 @@ pages.push({url:learnPath,html:page({
 <p class="lead">${esc(OUT.intro)}</p>
 ${NAV.byline()}
 <div class="progress js-only"><div class="bar"><i data-bar="all"></i></div><span data-prog="all" data-total="${lessons.length}"></span> lessons complete</div>
+${ARTS.map(a=>`<a class="cs-card" href="${a.url}"><span class="cs-ck">${esc(a.tag)}</span><b>${esc(a.title)}</b><span>${esc(a.summary)}</span></a>`).join('')}
 ${cheat?`<a class="cs-card" href="${csPath}"><span class="cs-ck">Before the exam</span><b>Cheat sheet</b><span>${esc(cheat.summary)}</span></a>`:''}
 <div class="dgrid">${OUT.domains.map(d=>`<a class="dcard" href="${d.url}" style="--dc:${d.color};--dt:${d.tint}">
  <div class="dc-top"><span class="dc-n">Domain ${d.n}</span><span class="dc-w">${d.weight}% of the exam</span></div>
@@ -442,6 +459,24 @@ ${searchBox().replace('class="ls js-only"','class="ls ls-wide js-only"')}
 <ul>${OUT.domains.map(d=>`<li style="--dc:${d.color}"><b>D${d.n}</b> ${esc(d.name)} <i>${d.weight}%</i></li>`).join('')}</ul></div>
 ${cheat.sections.map(s=>`<section class="cs-s${s.d?'':' cs-x'}"${s.d?` style="--dc:${s.d.color};--dt:${s.d.tint}"`:''}><h2 id="${slugify(s.h)}">${s.d?`<span>Domain ${s.d.n} &middot; ${s.d.weight}%</span>`+esc(s.d.name):esc(s.h)}</h2>${s.html}</section>`).join('\n')}
 <p class="after">Unsure about a point? Open its lesson from the number beside it. Ready to check yourself? Take the <a href="${testsPath}">${esc(EXAM.code)} practice tests</a>.</p>`})});
+}
+
+// Article pages (learn/articles/*.md)
+for(const a of ARTS){
+  const toc=[...a.html.matchAll(/<h2 id="([^"]+)">([\s\S]*?)<\/h2>/g)].map(m=>({id:m[1],txt:m[2].replace(/<[^>]+>/g,'')}));
+  pages.push({url:a.url,html:page({
+    title:a.title+' - '+EXAM.code+' Learning Guide',desc:a.summary,url:a.url,
+    crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],[a.title]],
+    jsonld:orgJson('Article',a.title,a.url,a.summary,{headline:a.title,dateModified:new Date().toISOString().slice(0,10),
+      isPartOf:{'@type':'Course',name:EXAM.code+' Learning Guide',url:SITE+learnPath}}),
+    main:`<div class="tag">${esc(EXAM.code)} Learning Guide &middot; ${esc(a.tag)}</div>
+<h1>${esc(a.title)}</h1>
+<p class="lead">${esc(a.summary)}</p>
+${NAV.byline()}
+${toc.length>2?'<nav class="jump" aria-label="On this page"><span>On this page</span>'+toc.map(t=>'<a href="#'+t.id+'">'+esc(t.txt)+'</a>').join('')+'</nav>':''}
+<article class="body">
+${a.html}</article>
+<p class="after">Ready to test yourself? Take the <a href="${testsPath}">${esc(EXAM.code)} practice tests</a>.</p>`})});
 }
 
 // Case pages
@@ -519,6 +554,8 @@ for(const l of written){
 }
 if(cheat)for(const s of cheat.sections){const md=s.src.split('\n').filter(l=>!/^\|?\s*:?-{2,}/.test(l.trim())).join('\n');
   search.push({k:'cheat',u:csPath+'#'+slugify(s.h),l:'',t:'Cheat sheet',d:s.d?s.d.n:0,h:s.d?s.d.name:s.h,c:'',x:plain(md)});}
+for(const a of ARTS){search.push({k:'article',u:a.url,l:'',t:a.title,d:0,h:'',c:'',x:plain(a.summary)});
+  for(const x of sections(a.md,a.url))search.push(Object.assign({k:'article',l:'',t:a.title,d:0},x));}
 for(const c of Object.values(CASES)){
   const md=fs.readFileSync(c.file,'utf8').replace(/\r\n/g,'\n').replace(/^---\n[\s\S]*?\n---\n/,'');
   search.push({k:'case',u:c.url,l:'',t:c.title,d:0,h:'',c:'',x:plain(c.summary)});
