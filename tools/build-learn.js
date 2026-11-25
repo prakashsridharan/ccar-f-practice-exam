@@ -166,7 +166,8 @@ if(fs.existsSync(ADIR))for(const f of fs.readdirSync(ADIR).filter(f=>f.endsWith(
   const src=fs.readFileSync(path.join(ADIR,f),'utf8').replace(/\r\n/g,'\n').replace(/\[\[([\d.]+)\]\]/g,(_,id)=>{const l=lessons.find(x=>x.id===id&&x.html);
     if(!l){fail(file+': [['+id+']] is not a written lesson');return id;}return '['+id+' '+l.title+']('+l.url+')';});
   const doc=parseDoc(src,file),tag=((src.match(/^---\n[\s\S]*?^tag:\s*(.*)$/m)||[])[1]||'').trim();
-  ARTS.push(Object.assign(doc,{slug,file,tag:tag||'Guide',url:learnPath+slug+'/',md:src.replace(/^---\n[\s\S]*?\n---\n/,'')}));
+  const published=((src.match(/^published:\s*(\d{4}-\d{2}-\d{2})\s*$/m)||[])[1]||'');
+  ARTS.push(Object.assign(doc,{slug,file,published,tag:tag||'Guide',url:learnPath+slug+'/',md:src.replace(/^---\n[\s\S]*?\n---\n/,'')}));
 }
 
 // ---- markdown ----
@@ -327,7 +328,7 @@ function exercise(lines,i,file){
 // ---- page template ----
 const V=OUT.assetVersion||'1';
 const WORDS=['no','one','two','three','four','five','six','seven','eight','nine','ten'];
-function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',side=true,wrapCls=''}){
+function page({title,desc,url,crumbs,main,lesson,domainColor,jsonld,tab='learn',side=true,wrapCls='',published=''}){
   const canon=SITE+url;
   return `<!DOCTYPE html>
 <html lang="en">
@@ -345,7 +346,7 @@ ${NAV.previewHead(NAV.exam(examId))||'<meta name="robots" content="index, follow
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta name="twitter:card" content="summary_large_image">
-${NAV.headIcons(examId)}
+${NAV.headIcons(examId,{published})}
 <script type="application/ld+json">${JSON.stringify(jsonld)}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -465,9 +466,9 @@ ${cheat.sections.map(s=>`<section class="cs-s${s.d?'':' cs-x'}"${s.d?` style="--
 for(const a of ARTS){
   const toc=[...a.html.matchAll(/<h2 id="([^"]+)">([\s\S]*?)<\/h2>/g)].map(m=>({id:m[1],txt:m[2].replace(/<[^>]+>/g,'')}));
   pages.push({url:a.url,html:page({
-    title:a.title+' - '+EXAM.code+' Learning Guide',desc:a.summary,url:a.url,
+    title:a.title+' - '+EXAM.code+' Learning Guide',desc:a.summary,url:a.url,published:a.published,
     crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],[a.title]],
-    jsonld:orgJson('Article',a.title,a.url,a.summary,{headline:a.title,dateModified:new Date().toISOString().slice(0,10),
+    jsonld:orgJson('Article',a.title,a.url,a.summary,{headline:a.title,...(a.published?{datePublished:a.published}:{}),dateModified:new Date().toISOString().slice(0,10),
       isPartOf:{'@type':'Course',name:EXAM.code+' Learning Guide',url:SITE+learnPath}}),
     main:`<div class="tag">${esc(EXAM.code)} Learning Guide &middot; ${esc(a.tag)}</div>
 <h1>${esc(a.title)}</h1>

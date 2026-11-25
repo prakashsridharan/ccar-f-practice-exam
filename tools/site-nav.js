@@ -51,8 +51,11 @@ const ORIGIN='https://certprep.pratechlabs.com';
 // <head> tags shared by every page: icons, theme colour, manifest and the link-preview image.
 // With an exam id, pages of that exam (its practice tests and guide) use /og-<id>.png when it
 // exists, so a shared link previews that exam instead of the generic CertPrep card.
-function headIcons(id){
+// LinkedIn and others read article:published_time / modified_time: the exam's site.json
+// "published" date (or opts.published, e.g. an article's own date) and the build date.
+function headIcons(id,opts){
   const x=id&&exam(id),own=x&&fs.existsSync(path.join(__dirname,'..','og-'+id+'.png'));
+  const pub=(opts&&opts.published)||(x&&x.published)||'';
   const img=ORIGIN+(own?'/og-'+id+'.png':'/og-image.png');
   const alt=own?SITE.name+': '+x.code+(x.version?' '+x.version:'')+' '+x.name+' practice tests and learning guide':SITE.name+': '+SITE.tagline;
   return ['<link rel="icon" href="/favicon.svg" type="image/svg+xml">',
@@ -64,7 +67,8 @@ function headIcons(id){
     '<meta property="og:image:width" content="1200">',
     '<meta property="og:image:height" content="630">',
     '<meta property="og:image:alt" content="'+esc(alt)+'">',
-    '<meta name="twitter:image" content="'+img+'">'].join('\n');
+    '<meta name="twitter:image" content="'+img+'">'].concat(pub?['<meta property="article:published_time" content="'+pub+'">',
+      '<meta property="article:modified_time" content="'+new Date().toISOString().slice(0,10)+'">']:[]).join('\n');
 }
 
 // Header: brand, Certifications menu (a <details>, so it opens without JavaScript; /site.js
