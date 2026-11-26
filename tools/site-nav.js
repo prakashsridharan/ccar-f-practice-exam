@@ -137,13 +137,21 @@ function trackCards(v){
     return '<div class="cert-row tk-x" data-q="'+esc((x.code+' '+x.name+' '+v.name+' '+t.name).toLowerCase())+'">'+
       '<div class="tk-h"><b>'+title+'</b><span class="cr-c">'+esc(x.code)+'</span>'+(x.version?'<span class="cr-l">'+esc(x.version.replace('Version ','v'))+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
       '<div class="tk-f">'+[x.counts.lessons?x.counts.lessons+' lessons':'',x.counts.questions+' questions',x.counts.tests+' tests',x.note||''].filter(Boolean).join(' &middot; ')+'</div>'+
-      '<div class="tk-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'"'+forA(x)+'>Guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'"'+forA(x)+'>Cheat sheet</a>':'')+'</div></div>';
+      '<div class="tk-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'"'+forA(x)+'>Guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'"'+forA(x)+'>Cheat sheet</a>':'')+'</div>'+
+      older(t,x)+'</div>';
+  };
+  // An older version still listed (CCAR-P Version 1.0 until 7 Dec) is a small line under its newer version's row.
+  const older=(t,x)=>{
+    const o=t.exams.map(ex).find(y=>y&&y.supersededBy===x.id&&listed(y));
+    if(!o)return '';
+    return '<p class="tk-o">'+esc((o.version||'Older version').replace('Version ','v'))+(o.note?' '+esc(o.note.replace(/^Until/,'until')):'')+': '+
+      [o.learn?'<a href="'+o.learn+'"'+forA(o)+'>Guide</a>':'','<a href="'+o.path+'">Tests</a>'].filter(Boolean).join(' &middot; ')+'</p>';
   };
   return '<div class="tk-g">'+v.tracks.map(t=>'<div class="tk" id="track-'+esc(t.id)+'">'+
     '<div class="tk-t"><svg class="tk-i" viewBox="0 0 48 48" aria-hidden="true">'+(TRACK_ICONS[t.icon]||'')+'</svg>'+
     '<h3>'+esc(t.name)+'</h3></div><p class="tk-d">'+esc(t.desc)+'</p>'+
-    '<div class="tk-l">'+t.exams.map(ex).filter(Boolean).filter(x=>!x.supersededBy||x.list===true).map(x=>item(t,x)).join('')+'</div>'+
-    (t.note?'<p class="tk-n">'+esc(t.note)+'</p>':'')+'</div>').join('')+'</div>';
+    '<div class="tk-l">'+t.exams.map(ex).filter(Boolean).filter(x=>!x.supersededBy).map(x=>item(t,x)).join('')+'</div>'+
+    '<p class="tk-n">'+(t.note?esc(t.note):'')+'</p></div>').join('')+'</div>';
 }
 
 function siteFooter(){
