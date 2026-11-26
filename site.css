@@ -212,15 +212,14 @@ button.sh-a{background:none;border:0;font-family:inherit}
 .cr-new{font-size:.7rem;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#fff;background:#C0522A;padding:.15rem .5rem;border-radius:20px}
 /* Track cards (site.json vendor "tracks"): Associate / Developer / Architect */
 .tk-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.9rem;margin-top:1rem;align-items:stretch}
-.tk{display:grid;grid-template-rows:subgrid;grid-row:span 4;row-gap:0;align-content:start;background:#fff;border:1px solid #dce1e8;border-radius:14px;padding:1rem 1.1rem .7rem;box-shadow:0 1px 2px rgba(26,46,69,.05),0 8px 24px -16px rgba(26,46,69,.25)}
+.tk{display:grid;grid-template-rows:subgrid;grid-row:span var(--tk-rows,4);row-gap:0;align-content:start;background:#fff;border:1px solid #dce1e8;border-radius:14px;padding:1rem 1.1rem .7rem;box-shadow:0 1px 2px rgba(26,46,69,.05),0 8px 24px -16px rgba(26,46,69,.25)}
 .tk-t{display:flex;align-items:center;gap:.6rem;margin-bottom:.4rem}
 .tk-i{width:34px;height:34px;flex-shrink:0;fill:none;stroke:#1B4F8A;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 .tk-i .ti-f{fill:#E6F4F1}
 .tk h3{font-size:1.2rem;font-weight:800;color:#1A2E45;margin:0;letter-spacing:-.01em}
 .tk-d{font-size:.8rem;line-height:1.5;color:#4a5568;margin:0 0 .65rem}
-.tk-l{border-top:1px solid #e6eaf0}
-.tk-x{display:block;background:none;border:0;border-bottom:1px solid #e6eaf0;border-radius:0;box-shadow:none;padding:.6rem 0;margin:0}
-.tk-x:last-child{border-bottom:0}
+.tk-s{border-top:1px solid #e6eaf0}.tk-s:empty{border-top:0}
+.tk-x{display:block;background:none;border:0;border-radius:0;box-shadow:none;padding:.6rem 0;margin:0}
 .tk-x[hidden]{display:none}
 .tk-h{display:flex;align-items:center;flex-wrap:wrap;gap:.3rem .35rem}
 .tk-h b{font-size:.9rem;font-weight:700;color:#1A2E45;margin-right:.2rem}
@@ -229,9 +228,5 @@ button.sh-a{background:none;border:0;font-family:inherit}
 .tk-a{display:flex;flex-wrap:wrap;gap:.3rem}
 .tk-a .cr-b{flex:1 1 auto;font-size:.76rem;padding:.28rem .5rem;border-radius:6px}
 .tk-soon .tk-h b{color:#6b7280}
-.tk-n{font-size:.72rem;color:#6b7280;line-height:1.45;margin:.4rem 0 .2rem;padding-left:1.2rem;position:relative}
-.tk-n:empty{margin:0;padding:0}.tk-n:empty::before{display:none}
-.tk-l{align-self:start}
 .tk-o{font-size:.7rem;color:#4a5568;margin:.45rem 0 0;line-height:1.5;letter-spacing:-.005em}.tk-o a{color:#1B4F8A;font-weight:600;white-space:nowrap}
-.tk-n::before{content:"i";position:absolute;left:0;top:.1rem;width:.85rem;height:.85rem;border-radius:50%;background:#8b90a0;color:#fff;font:700 .58rem/.85rem Inter,system-ui,sans-serif;text-align:center}
 @media(max-width:900px){.tk-g{grid-template-columns:1fr}}

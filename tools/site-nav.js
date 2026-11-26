@@ -147,11 +147,14 @@ function trackCards(v){
     return '<p class="tk-o">'+esc((o.version||'Older version').replace('Version ','v'))+(o.note?' '+esc(o.note.replace(/^Until/,'until')):'')+': '+
       [o.learn?'<a href="'+o.learn+'"'+forA(o)+'>Guide</a>':'','<a href="'+o.path+'">Tests</a>'].filter(Boolean).join(' &middot; ')+'</p>';
   };
-  return '<div class="tk-g">'+v.tracks.map(t=>'<div class="tk" id="track-'+esc(t.id)+'">'+
+  // One slot per level (Foundations, Professional) in every card, so each level lines up across
+  // the cards (CSS subgrid); a track without that level gets an empty slot.
+  const levels=[...new Set(v.tracks.flatMap(t=>t.exams.map(ex).filter(Boolean).map(x=>x.level)))];
+  return '<div class="tk-g" style="--tk-rows:'+(2+levels.length)+'">'+v.tracks.map(t=>'<div class="tk" id="track-'+esc(t.id)+'">'+
     '<div class="tk-t"><svg class="tk-i" viewBox="0 0 48 48" aria-hidden="true">'+(TRACK_ICONS[t.icon]||'')+'</svg>'+
     '<h3>'+esc(t.name)+'</h3></div><p class="tk-d">'+esc(t.desc)+'</p>'+
-    '<div class="tk-l">'+t.exams.map(ex).filter(Boolean).filter(x=>!x.supersededBy).map(x=>item(t,x)).join('')+'</div>'+
-    '<p class="tk-n">'+(t.note?esc(t.note):'')+'</p></div>').join('')+'</div>';
+    levels.map(L=>'<div class="tk-s">'+t.exams.map(ex).filter(x=>x&&!x.supersededBy&&x.level===L).map(x=>item(t,x)).join('')+'</div>').join('')+
+    '</div>').join('')+'</div>';
 }
 
 function siteFooter(){
