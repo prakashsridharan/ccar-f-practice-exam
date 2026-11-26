@@ -132,7 +132,7 @@ const TRACK_ICONS={
 function trackCards(v){
   const ex=id=>v.exams.find(x=>x.id===id);
   const item=(t,x)=>{
-    const title=esc(t.name)+' - '+esc(x.level);
+    const title=esc(x.level);
     if(!live(x)||x.preview)return '<div class="tk-x tk-soon"><div class="tk-h"><b>'+title+'</b><span class="cr-s">Coming soon</span></div></div>';
     return '<div class="cert-row tk-x" data-q="'+esc((x.code+' '+x.name+' '+v.name+' '+t.name).toLowerCase())+'">'+
       '<div class="tk-h"><b>'+title+'</b><span class="cr-c">'+esc(x.code)+'</span>'+(x.version?'<span class="cr-l">'+esc(x.version.replace('Version ','v'))+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
@@ -140,8 +140,8 @@ function trackCards(v){
       '<div class="tk-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'"'+forA(x)+'>Guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'"'+forA(x)+'>Cheat sheet</a>':'')+'</div></div>';
   };
   return '<div class="tk-g">'+v.tracks.map(t=>'<div class="tk" id="track-'+esc(t.id)+'">'+
-    '<svg class="tk-i" viewBox="0 0 48 48" aria-hidden="true">'+(TRACK_ICONS[t.icon]||'')+'</svg>'+
-    '<h3>'+esc(t.name)+'</h3><p class="tk-d">'+esc(t.desc)+'</p>'+
+    '<div class="tk-t"><svg class="tk-i" viewBox="0 0 48 48" aria-hidden="true">'+(TRACK_ICONS[t.icon]||'')+'</svg>'+
+    '<h3>'+esc(t.name)+'</h3></div><p class="tk-d">'+esc(t.desc)+'</p>'+
     '<div class="tk-l">'+t.exams.map(ex).filter(Boolean).filter(x=>!x.supersededBy||x.list===true).map(x=>item(t,x)).join('')+'</div>'+
     (t.note?'<p class="tk-n">'+esc(t.note)+'</p>':'')+'</div>').join('')+'</div>';
 }
