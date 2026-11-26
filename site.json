@@ -80,7 +80,8 @@
      "blurb": "Follows the current exam guide 1.0, with single and multiple-choice items only. Available until 7 December 2026, when the exam moves to guide 1.1.",
      "version": "Version 1.0",
      "supersededBy": "ccar-p-v2",
-     "list": true
+     "list": true,
+     "note": "Until 7 December 2026"
     },
     {
      "id": "ccdv-p",
@@ -103,6 +104,46 @@
      "tag": "New",
      "status": "live",
      "blurb": "Follows Anthropic's exam guide 1.1 (effective 7 December 2026): using Claude as a business productivity tool, from prompting and checking output to choosing features, building repeatable workflows and handling data responsibly."
+    },
+    {
+     "id": "ccdv-f",
+     "code": "CCDV-F",
+     "name": "Claude Certified Developer - Foundations",
+     "level": "Foundations",
+     "status": "soon"
+    }
+   ],
+   "tracks": [
+    {
+     "id": "associate",
+     "name": "Associate",
+     "icon": "associate",
+     "desc": "For people who use Claude at work: consultants, sellers, analysts and team leads who pick the right use cases and features, check the output and handle data responsibly.",
+     "exams": [
+      "ccao-f"
+     ],
+     "note": "Does not count toward Claude Partner Network tier eligibility."
+    },
+    {
+     "id": "developer",
+     "name": "Developer",
+     "icon": "developer",
+     "desc": "For engineers who build with the Claude API, Claude Code and MCP, from a first integration to agents running in production.",
+     "exams": [
+      "ccdv-f",
+      "ccdv-p"
+     ]
+    },
+    {
+     "id": "architect",
+     "name": "Architect",
+     "icon": "architect",
+     "desc": "For architects who design Claude solutions end to end: agent architectures, tools and context, evaluation, cost, governance and safety.",
+     "exams": [
+      "ccar-f",
+      "ccar-p-v2",
+      "ccar-p"
+     ]
     }
    ]
   },

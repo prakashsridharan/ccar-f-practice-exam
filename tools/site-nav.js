@@ -111,15 +111,39 @@ function certList(vendorId){
   const filters=all.length>6?'<div class="cl-f js-only"><input type="search" class="cl-q" placeholder="Search certifications" aria-label="Search certifications"></div>':'';
   return filters+vs.map(v=>'<section class="cl-v" data-vendor="'+v.id+'">'+(vendorId?'':'<div class="cl-vh"><h2>'+esc(v.name)+'</h2>'+
       (v.url&&v.exams.filter(listed).length>1?'<a href="'+v.url+'">All '+esc(v.name.split(' (')[0])+' certifications &rarr;</a>':'')+'</div>')+
-    '<div class="cl-g">'+(v.exams.length?v.exams.filter(x=>!x.preview&&(!x.supersededBy||x.list===true)).map(x=>live(x)?
+    (v.tracks?trackCards(v):'<div class="cl-g">'+(v.exams.length?v.exams.filter(x=>!x.preview&&(!x.supersededBy||x.list===true)).map(x=>live(x)?
       '<div class="cert-row" data-q="'+esc((x.code+' '+x.name+' '+v.name).toLowerCase())+'">'+
        '<div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-l">'+esc(x.level)+'</span>'+(showVer(x)?'<span class="cr-l">'+esc(x.version)+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
        '<h3>'+esc(x.name)+'</h3><p>'+esc(x.blurb)+'</p>'+
        '<div class="cr-f">'+(x.counts.lessons?'<span>'+x.counts.lessons+' lessons</span>':'')+'<span>'+x.counts.questions+' questions</span><span>'+x.counts.tests+' practice tests</span><span>'+x.counts.domains+' domains</span>'+'</div>'+(olderOf(x)&&!listed(olderOf(x))?'<p class="cr-o">Older format: <a href="'+olderOf(x).path+'">'+esc(olderOf(x).version||'previous version')+'</a></p>':'')+'</div>'+
        '<div class="cr-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'"'+forA(x)+'>Learning guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Practice tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'"'+forA(x)+'>Cheat sheet</a>':'')+'</div></div>':
       '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-c">'+esc(x.code)+'</span><span class="cr-s">Coming soon</span></div><h3>'+esc(x.name)+'</h3></div></div>').join(''):
-      '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+'</div>'+
+      '<div class="cert-row cr-soon"><div class="cr-m"><div class="cr-t"><span class="cr-s">Coming soon</span></div><p>'+esc(v.note||'')+'</p></div></div>')+'</div>')+
     '</section>').join('');
+}
+
+// Track cards (site.json vendor "tracks"): one card per role (Associate, Developer, Architect),
+// each listing its exams by level, with links to the guide, tests and cheat sheet.
+const TRACK_ICONS={
+  associate:'<path d="M10 14h28a4 4 0 0 1 4 4v14a4 4 0 0 1-4 4H24l-8 6v-6h-6a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4z" class="ti-f"/><path d="M17 25l5 5 9-10"/>',
+  developer:'<rect x="5" y="9" width="38" height="30" rx="4" class="ti-f"/><path d="M5 16h38"/><path d="M19 23l-5 5 5 5M29 23l5 5-5 5M26 22l-4 12"/>',
+  architect:'<rect x="5" y="19" width="10" height="10" rx="2" class="ti-f"/><circle cx="37" cy="10" r="5"/><circle cx="37" cy="24" r="5" class="ti-f"/><rect x="32" y="33" width="10" height="10" rx="2"/><path d="M15 24h8M23 10v28M23 10h9M23 24h9M23 38h9"/>'
+};
+function trackCards(v){
+  const ex=id=>v.exams.find(x=>x.id===id);
+  const item=(t,x)=>{
+    const title=esc(t.name)+' - '+esc(x.level);
+    if(!live(x)||x.preview)return '<div class="tk-x tk-soon"><div class="tk-h"><b>'+title+'</b><span class="cr-s">Coming soon</span></div></div>';
+    return '<div class="cert-row tk-x" data-q="'+esc((x.code+' '+x.name+' '+v.name+' '+t.name).toLowerCase())+'">'+
+      '<div class="tk-h"><b>'+title+'</b><span class="cr-c">'+esc(x.code)+'</span>'+(x.version?'<span class="cr-l">'+esc(x.version.replace('Version ','v'))+'</span>':'')+(x.tag?'<span class="cr-new">'+esc(x.tag)+'</span>':'')+'</div>'+
+      '<div class="tk-f">'+[x.counts.lessons?x.counts.lessons+' lessons':'',x.counts.questions+' questions',x.counts.tests+' tests',x.note||''].filter(Boolean).join(' &middot; ')+'</div>'+
+      '<div class="tk-a">'+(x.learn?'<a class="cr-b cr-p" href="'+x.learn+'"'+forA(x)+'>Guide</a>':'')+'<a class="cr-b" href="'+x.path+'">Tests</a>'+(x.cheat?'<a class="cr-b" href="'+x.cheat+'"'+forA(x)+'>Cheat sheet</a>':'')+'</div></div>';
+  };
+  return '<div class="tk-g">'+v.tracks.map(t=>'<div class="tk" id="track-'+esc(t.id)+'">'+
+    '<svg class="tk-i" viewBox="0 0 48 48" aria-hidden="true">'+(TRACK_ICONS[t.icon]||'')+'</svg>'+
+    '<h3>'+esc(t.name)+'</h3><p class="tk-d">'+esc(t.desc)+'</p>'+
+    '<div class="tk-l">'+t.exams.map(ex).filter(Boolean).filter(x=>!x.supersededBy||x.list===true).map(x=>item(t,x)).join('')+'</div>'+
+    (t.note?'<p class="tk-n">'+esc(t.note)+'</p>':'')+'</div>').join('')+'</div>';
 }
 
 function siteFooter(){
