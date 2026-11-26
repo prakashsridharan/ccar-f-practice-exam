@@ -92,6 +92,18 @@
      "tag": "New",
      "status": "live",
      "blurb": "Follows Anthropic's exam guide 1.0 (November 2026): operating Claude systems in production, from agent orchestration, reliability and observability to evaluation, cost, security and coding-agent fleets."
+    },
+    {
+     "id": "ccao-f",
+     "published": "2026-11-26",
+     "code": "CCAO-F",
+     "name": "Claude Certified Associate - Foundations",
+     "level": "Foundations",
+     "version": "Version 1.1",
+     "tag": "New",
+     "status": "live",
+     "preview": true,
+     "blurb": "Follows Anthropic's exam guide 1.1 (effective 7 December 2026): using Claude as a business productivity tool, from prompting and checking output to choosing features, building repeatable workflows and handling data responsibly."
     }
    ]
   },
