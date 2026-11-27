@@ -8,7 +8,7 @@
     K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1emR5cG1sZnBlc2xzZmV6YXBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjYyNDcsImV4cCI6MjEwMzk0MjI0N30.UGbcFwFLeKnTITJLQm8QO4YPn1hDhWe8ptz1-QJ19ik',
     WAIT=60*1000,LAST='cp-fb-at';
   var CATS=[['content','A mistake in the content'],['guide','Learning guide or lesson'],['cheat','Cheat sheet'],['tests','Practice tests or questions'],['site','Something not working'],['idea','A suggestion'],['other','Something else']];
-  var EXAMS={'ccar-f':'CCAR-F','ccar-p':'CCAR-P Version 1.0','ccar-p-v2':'CCAR-P Version 1.1','ccdv-p':'CCDV-P','ccao-f':'CCAO-F'};
+  var EXAMS={'ccar-f':'CCAR-F','ccar-p':'CCAR-P Version 1.0','ccar-p-v2':'CCAR-P Version 1.1','ccdv-p':'CCDV-P','ccao-f':'CCAO-F','ccdv-f':'CCDV-F'};
 
   // Where the reader is: an area label for the admin list, and the category to preselect.
   function where(){

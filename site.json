@@ -62,10 +62,14 @@
     },
     {
      "id": "ccdv-f",
+     "published": "2026-11-27",
      "code": "CCDV-F",
      "name": "Claude Certified Developer - Foundations",
      "level": "Foundations",
-     "status": "soon"
+     "version": "Version 1.1",
+     "tag": "New",
+     "status": "live",
+     "blurb": "Follows Anthropic's exam guide 1.1 (effective 7 December 2026): building with Claude, from agents and the Messages API to Claude Code, prompts and context, tools and MCP, model choice, evaluation and security."
     },
     {
      "id": "ccdv-p",
