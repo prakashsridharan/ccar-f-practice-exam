@@ -379,3 +379,41 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION feedback_list(INT) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION feedback_set_status(BIGINT, TEXT) TO anon, authenticated;
+
+-- ============================================
+-- 7. UDEMY COURSE CLICKS (2026-11-27): clicks on links to udemy.com, from any page
+-- site.js inserts one row per click (left or middle click). Anyone can insert; nobody can
+-- read through the API. click_stats() returns totals for the admin panel only.
+-- ============================================
+CREATE TABLE IF NOT EXISTS outbound_clicks (
+  id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  clicked_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  target      TEXT NOT NULL DEFAULT '' CHECK (char_length(target) <= 60),
+  coupon      TEXT NOT NULL DEFAULT '' CHECK (char_length(coupon) <= 60),
+  url         TEXT NOT NULL DEFAULT '' CHECK (char_length(url) <= 300),
+  path        TEXT NOT NULL DEFAULT '' CHECK (char_length(path) <= 200),
+  vid         TEXT NOT NULL DEFAULT '' CHECK (char_length(vid) <= 40),
+  ua          TEXT NOT NULL DEFAULT '' CHECK (char_length(ua) <= 200)
+);
+ALTER TABLE outbound_clicks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can record a click" ON outbound_clicks;
+CREATE POLICY "Anyone can record a click" ON outbound_clicks FOR INSERT TO anon, authenticated WITH CHECK (true);
+REVOKE ALL ON outbound_clicks FROM anon, authenticated;
+GRANT INSERT ON outbound_clicks TO anon, authenticated;
+
+-- Admin panel: clicks and distinct people per course and coupon over the last p_days days,
+-- plus overall totals. Crawlers are left out. NULL for anyone who is not an admin.
+CREATE OR REPLACE FUNCTION click_stats(p_days INT DEFAULT 90)
+RETURNS JSON LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$
+  SELECT CASE WHEN is_admin() THEN json_build_object(
+    'clicks', (SELECT COUNT(*) FROM outbound_clicks WHERE NOT is_crawler(ua) AND clicked_at >= now() - make_interval(days => p_days)),
+    'people', (SELECT COUNT(DISTINCT COALESCE(NULLIF(vid,''), ua)) FROM outbound_clicks WHERE NOT is_crawler(ua) AND clicked_at >= now() - make_interval(days => p_days)),
+    'today',  (SELECT COUNT(*) FROM outbound_clicks WHERE NOT is_crawler(ua) AND clicked_at >= (date_trunc('day', now() AT TIME ZONE 'Asia/Kolkata') AT TIME ZONE 'Asia/Kolkata')),
+    'by_course', COALESCE((SELECT json_agg(t ORDER BY t.clicks DESC) FROM (
+      SELECT target, coupon, COUNT(*) AS clicks, COUNT(DISTINCT COALESCE(NULLIF(vid,''), ua)) AS people, MAX(clicked_at) AS last
+      FROM outbound_clicks
+      WHERE NOT is_crawler(ua) AND clicked_at >= now() - make_interval(days => p_days)
+      GROUP BY target, coupon) t), '[]'::json)
+  ) END;
+$$;
+GRANT EXECUTE ON FUNCTION click_stats(INT) TO anon, authenticated;

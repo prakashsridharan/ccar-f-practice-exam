@@ -55,6 +55,27 @@
     function cpVid(){try{var v=localStorage.getItem('cp-vid');if(!v||!/^[0-9a-f]{24}$/.test(v)){var a=new Uint8Array(12),i;if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(i=0;i<12;i++)a[i]=Math.random()*256|0;v='';for(i=0;i<12;i++)v+=(a[i]<16?'0':'')+a[i].toString(16);localStorage.setItem('cp-vid',v);}return v;}catch(e){return '';}}
   })();
 
+  // Udemy course clicks (schema.sql section 7, table outbound_clicks): one row per click on any
+  // link to udemy.com, on any page. Stores the course (the link's <b> label, else the course slug
+  // from the URL), the coupon code, the page it was clicked on and the same anonymous visitor ID
+  // as visits. Fire-and-forget with keepalive, so the link opens without waiting.
+  if(window.fetch)(function(){
+    var U='https://vuzdypmlfpeslsfezapd.supabase.co/rest/v1/outbound_clicks',
+      K='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1emR5cG1sZnBlc2xzZmV6YXBkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgzNjYyNDcsImV4cCI6MjEwMzk0MjI0N30.UGbcFwFLeKnTITJLQm8QO4YPn1hDhWe8ptz1-QJ19ik';
+    function vid(){try{var v=localStorage.getItem('cp-vid');return v&&/^[0-9a-f]{24}$/.test(v)?v:'';}catch(e){return '';}}
+    function hit(e){
+      if(e.type==='auxclick'&&e.button!==1)return;// middle-click opens a tab; right-click does not count
+      var a=e.target&&e.target.closest&&e.target.closest('a[href*="udemy.com"]');if(!a)return;
+      var u;try{u=new URL(a.href);}catch(x){return;}
+      var b=a.querySelector('b'),slug=(u.pathname.match(/\/course\/([^\/]+)/)||[])[1]||u.pathname;
+      var body={target:((a.getAttribute('data-course')||(b&&b.textContent)||slug)+'').trim().slice(0,60),
+        coupon:(u.searchParams.get('couponCode')||'').slice(0,60),url:(u.hostname+u.pathname).slice(0,300),
+        path:location.pathname.slice(0,200),vid:vid(),ua:navigator.userAgent.substring(0,200)};
+      try{fetch(U,{method:'POST',keepalive:true,headers:{apikey:K,Authorization:'Bearer '+K,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(body)}).catch(function(){});}catch(x){}
+    }
+    document.addEventListener('click',hit,true);document.addEventListener('auxclick',hit,true);
+  })();
+
   // Account (header "Sign in"): account.js and the sign-in library load only when they are
   // needed: a saved session, a return from Google or an email link (?code=, error=), or a click.
   // window.cpSync(key) is how app.js and learn.js report a saved change; it is a no-op until an

@@ -207,6 +207,9 @@
       <div class="adm-stats"><div class="adm-stat"><b id="adm-crawl_total">-</b><span>Crawler visits</span></div><div class="adm-stat"><b id="adm-crawl_today">-</b><span>Today (IST)</span></div><div class="adm-stat"><b id="adm-crawl_7d">-</b><span>Last 7 days</span></div></div>
       <h3>Accounts</h3>
       <div class="adm-stats"><div class="adm-stat"><b id="adm-accounts">-</b><span>Accounts</span></div><div class="adm-stat"><b id="adm-new_7d">-</b><span>New, 7 days</span></div><div class="adm-stat"><b id="adm-active_7d">-</b><span>Signed in, 7 days</span></div><div class="adm-stat"><b id="adm-synced">-</b><span>With saved progress</span></div></div>
+      <h3>Udemy course clicks (last 90 days)</h3>
+      <div class="adm-stats"><div class="adm-stat"><b id="adm-uc_clicks">-</b><span>Clicks</span></div><div class="adm-stat"><b id="adm-uc_people">-</b><span>People</span></div><div class="adm-stat"><b id="adm-uc_today">-</b><span>Clicks today</span></div></div>
+      <div class="adm-tw" id="adm-udemy">Loading...</div>
       <h3>Traffic sources (last 90 days)</h3>
       <div class="adm-tw" id="adm-src">Loading...</div>
       <h3>Top guide pages (last 90 days)</h3>
@@ -257,6 +260,12 @@ document.querySelectorAll('.promo').forEach(function(p){if(!p.querySelector('.pr
           'One person on two devices counts twice; clearing site data starts a new ID. Old measure (distinct browser versions, all time): '+(v.unique!=null?v.unique:'n/a')+'.';});
     rpc('account_stats').catch(function(){return null;})
       .then(function(v){['accounts','new_7d','active_7d','synced'].forEach(function(k){document.getElementById('adm-'+k).textContent=v&&v[k]!=null?v[k]:'n/a';});});
+    // Udemy course clicks (site.js; schema.sql section 7). "People" = distinct anonymous browser IDs.
+    rpc('click_stats',{p_days:90}).catch(function(){return null;})
+      .then(function(v){[['uc_clicks','clicks'],['uc_people','people'],['uc_today','today']].forEach(function(k){document.getElementById('adm-'+k[0]).textContent=v&&v[k[1]]!=null?v[k[1]]:'n/a';});
+        if(!v){document.getElementById('adm-udemy').textContent='Not available. Run section 7 of schema.sql in Supabase if this is new.';return;}
+        if(!v.by_course||!v.by_course.length){document.getElementById('adm-udemy').textContent='No clicks recorded yet.';return;}
+        table('adm-udemy',v.by_course,['Course','Coupon','Clicks','People','Last'],function(c){return [c.target,c.coupon||'-',c.clicks,c.people,String(c.last||'').slice(0,10)];});});
     rpc('visit_sources',{p_days:90}).catch(function(){return null;})
       .then(function(v){
         table('adm-src',v&&v.sources,['Source','Campaign','Visits','People','Last'],function(s){return [s.source,s.campaign||'-',s.visits,s.people,String(s.last||'').slice(0,10)];});
@@ -310,6 +319,6 @@ document.querySelectorAll('.promo').forEach(function(p){if(!p.querySelector('.pr
   window.addEventListener('hashchange',sync);document.addEventListener('DOMContentLoaded',sync);
 })();
 </script>
-<script src="/site.js?v=20261125b"></script>
+<script src="/site.js?v=20261127a"></script>
 </body>
 </html>
