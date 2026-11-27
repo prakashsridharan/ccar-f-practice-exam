@@ -237,8 +237,152 @@ if(A){
   fs.writeFileSync(path.join(ROOT,'about','index.html'),aboutHtml);
 }
 
+// ---- Compare (/claude/which-certification/): every current Claude exam side by side ----
+// Facts (items, time, pass mark, fee, format, domains and weights, our lesson/question counts) come
+// from site.json and the generated exams/<id>.js, so they cannot drift from the exam pages. Only
+// the "best for" and "you will be tested on" lines below are written here by hand.
+const CMP_PATH='/claude/which-certification/';
+const claudeV=SITE.vendors.find(v=>v.id==='claude');
+const CMP_FOR={
+  'ccao-f':['You use Claude at work and do not build on it: consultants, analysts, sellers, marketers, team leads and operations staff.','Prompting and checking output, choosing between chat, Projects, Artifacts, Research, connectors and Skills, designing everyday workflows, and handling data responsibly.'],
+  'ccdv-f':['You build with Claude: application developers and engineers using the Messages API, the Agent SDK, Claude Code, tools and MCP.','Agents and workflows, API integration, Claude Code, prompts and context, tools and MCP, model choice and cost, evaluation and debugging, and security.'],
+  'ccdv-p':['You run Claude systems in production: senior engineers, platform and reliability teams, and people who operate fleets of coding agents.','Agent orchestration, production reliability and grounding, observability, incident response, evaluation engineering, cost and latency at scale, runtime guardrails and agent fleets.'],
+  'ccar-f':['You design Claude solutions: solution architects and senior engineers who make the technical design calls on agentic systems.','Agentic architecture, tool design and MCP, Claude Code configuration, prompt engineering and structured output, and context management.'],
+  'ccar-p-v2':['You lead Claude projects end to end: architects who own the design, the trade-offs and the conversation with stakeholders.','Solution design, models and context engineering, integration, evaluation and optimization, governance and risk, stakeholder communication and developer enablement.']
+};
+function cmpBundle(id){return new Function(fs.readFileSync(path.join(ROOT,'exams',id+'.js'),'utf8')+';return EXAM;')();}
+const cmpEx=(claudeV&&claudeV.tracks||[]).flatMap(t=>t.exams.map(id=>({t,x:N.exam(id)}))).filter(o=>o.x&&N.listed(o.x)&&!o.x.supersededBy&&CMP_FOR[o.x.id]).map(o=>{
+  const E=cmpBundle(o.x.id),b=E.blueprint;
+  return {x:o.x,t:o.t,E,b,fee:String(b.fee||'').replace(/ USD$/,''),pass:b.passScaled?b.passScaled+' of '+(b.scaledMax||1000):'',
+    doms:Object.values(E.domains).map(d=>({name:d.n||d.name,w:d.weightPct,c:d.color||'#1B4F8A'}))};
+});
+const cmpOld=N.exams().filter(x=>x.vendor===claudeV&&x.supersededBy&&N.listed(x));
+if(cmpEx.length){
+  const faqAnswer=(id,q)=>{const f=(cmpBundle(id).copy.faq||[]).find(z=>z.q===q);return f?f.a:'';};
+  const nm=x=>x.name.replace(/^Claude Certified /,'');
+  const FAQ=[
+    ['Which Claude certification should I take first?','Start from what you do with Claude. If you use it at work without building on it, take Associate - Foundations (CCAO-F). If you build with the API, the Agent SDK or Claude Code, take Developer - Foundations (CCDV-F), then Developer - Professional (CCDV-P) once you run Claude systems in production. If you design solutions and make architecture decisions, take Architect - Foundations (CCAR-F), then Architect - Professional (CCAR-P).'],
+    ['What is the difference between the Developer and Architect certifications?','Developer exams test how you build and operate: writing the API calls, agents, tools and prompts, then running them reliably, cheaply and safely in production. Architect exams test design decisions: which architecture fits the problem, the trade-offs between options, and, at Professional level, evaluation, governance, risk and communication with stakeholders. Many topics overlap, so the two tracks share ground such as agents, tools, MCP and Claude Code.'],
+    ['Do I need a Foundations certification before a Professional exam?','No. None of the exams has a prerequisite. The CCAR-P exam guide treats the Architect Foundations scope as assumed knowledge, and the CCDV-P guide recommends Developer Foundations (CCDV-F) as preparation, so Foundations first is the usual order.'],
+    ['Who can take the exams?',faqAnswer('ccao-f','Who can take the exam?')],
+    ['What changes on 7 December 2026?','Anthropic\'s exam guide 1.1 takes effect for Associate Foundations, Developer Foundations and Architect Professional. This site already follows guide 1.1 for all three. CCAR-P Version 1.0 stays on the site until that date for people who sit the exam before it.'],
+    ['Are the guides and practice tests free?','Yes. Every learning guide, cheat sheet and the two practice tests for each exam are free, with no sign-in needed. Signing in only saves your progress across devices.']
+  ].filter(f=>f[1]);
+  const ld={'@context':'https://schema.org','@type':'FAQPage',mainEntity:FAQ.map(f=>({'@type':'Question',name:f[0],acceptedAnswer:{'@type':'Answer',text:f[1]}}))};
+  const ROLE=[['I use Claude at work','ccao-f'],['I build with Claude','ccdv-f'],['I design Claude solutions','ccar-f']];
+  const byId=id=>cmpEx.find(o=>o.x.id===id);
+  const row=(label,f)=>'<tr><th scope="row">'+label+'</th>'+cmpEx.map(o=>'<td>'+f(o)+'</td>').join('')+'</tr>';
+  const cmpHtml=`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Which Claude Certification Should I Take? ${cmpEx.map(o=>o.x.code).join(', ')} Compared - ${esc(SITE.name)}</title>
+<meta name="description" content="Compare every Claude certification side by side: who each exam is for, items, time, pass mark, fee, domains and weights, and where to start. ${cmpEx.map(o=>o.x.code).join(', ')}.">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<meta name="author" content="Prakash Sridharan">
+<link rel="canonical" href="${URL_}${CMP_PATH}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="${URL_}${CMP_PATH}">
+<meta property="og:site_name" content="${esc(SITE.name)}">
+<meta property="og:title" content="Which Claude certification should I take?">
+<meta property="og:description" content="Every Claude certification compared: audience, format, fee, domains and where to start.">
+<meta name="twitter:card" content="summary_large_image">
+<!--site-icons--><!--/site-icons-->
+<script type="application/ld+json">${JSON.stringify(ld).split('<').join('\\u003c')}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="/hub.css?v=${V}">
+<link rel="stylesheet" href="/site.css?v=${V}">
+<style>
+.cmp h2{font-size:1.25rem;margin:2rem 0 .6rem;color:var(--ac-h)}
+.cmp-lead{color:var(--text-2);max-width:760px;margin-top:1.4rem}
+.cmp-roles{display:grid;grid-template-columns:repeat(3,1fr);gap:.9rem;margin:1rem 0 .4rem}
+.cmp-role{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1rem 1.1rem;box-shadow:var(--sh);display:flex;flex-direction:column;gap:.35rem}
+.cmp-role h3{font-size:1rem;margin:0;color:var(--ac-h)}
+.cmp-role p{margin:0;font-size:.9rem;color:var(--text-2)}
+.cmp-path{font-family:'JetBrains Mono',monospace;font-size:.82rem;color:var(--ac);font-weight:500;margin-top:auto!important;padding-top:.3rem}
+.cmp-path a{color:inherit}
+.cmp-tw{overflow-x:auto;border:1px solid var(--border);border-radius:var(--rl);background:var(--surface);box-shadow:var(--sh)}
+.cmp-t{border-collapse:collapse;width:100%;min-width:820px;font-size:.88rem}
+.cmp-t th,.cmp-t td{padding:.6rem .7rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+.cmp-t thead th{background:#eef2f7;color:var(--ac-h);font-size:.85rem}
+.cmp-t thead th small{display:block;font-weight:500;color:var(--text-m)}
+.cmp-t tbody th{color:var(--text-2);font-weight:600;white-space:nowrap;width:120px}
+.cmp-t tr:last-child th,.cmp-t tr:last-child td{border-bottom:0}
+.cmp-t a{white-space:nowrap}
+.cmp-doms{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:.9rem}
+.cmp-d{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:.9rem 1rem;box-shadow:var(--sh)}
+.cmp-d h3{font-size:.95rem;margin:0 0 .5rem;color:var(--ac-h)}
+.cmp-d h3 span{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--text-m);font-weight:500;margin-left:.3rem}
+.cmp-b{display:grid;grid-template-columns:1fr 2.6rem;gap:.15rem .5rem;font-size:.8rem;color:var(--text-2);margin:.28rem 0}
+.cmp-b i{grid-column:1/-1;height:6px;border-radius:3px;background:#e8ecf2;overflow:hidden;display:block}
+.cmp-b i b{display:block;height:100%;border-radius:3px}
+.cmp-b em{font-style:normal;text-align:right;font-family:'JetBrains Mono',monospace}
+.cmp-note{font-size:.85rem;color:var(--text-m);margin:.5rem 0 0}
+@media (max-width:760px){.cmp-roles{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<!--site-header--><!--/site-header-->
+<div class="hdr">
+  <h1>Which Claude certification should I take?</h1>
+  <div class="sub">All ${cmpEx.length} current Claude certifications side by side: who each one is for, what it tests, and where to start.</div>
+</div>
+<div class="container cmp">
+  <p class="cmp-lead">Anthropic's certifications follow three tracks: Associate for people who use Claude at work, Developer for people who build with it, and Architect for people who design Claude solutions. Pick the track that matches your work, then start at Foundations.</p>
+  <div class="cmp-roles">
+${ROLE.map(([h,id])=>{const o=byId(id);if(!o)return '';const t=o.t,chain=t.exams.map(N.exam).filter(x=>x&&N.listed(x)&&!x.supersededBy);
+  return '    <div class="cmp-role"><h3>'+esc(h)+'</h3><p>'+esc(t.desc)+'</p><p class="cmp-path">'+chain.map(x=>'<a href="'+x.learn+'">'+esc(x.code)+'</a>').join(' &rarr; ')+'</p></div>';}).join('\n')}
+  </div>
+  <p class="cmp-note">None of the exams has a prerequisite; Foundations first is the usual order.</p>
+
+  <h2>Side by side</h2>
+  <div class="cmp-tw"><table class="cmp-t">
+    <thead><tr><th scope="col"></th>${cmpEx.map(o=>'<th scope="col">'+esc(o.x.code)+'<small>'+esc(nm(o.x))+'</small></th>').join('')}</tr></thead>
+    <tbody>
+    ${row('Best for',o=>esc(CMP_FOR[o.x.id][0]))}
+    ${row('Tests you on',o=>esc(CMP_FOR[o.x.id][1]))}
+    ${row('Exam guide',o=>esc((o.x.version||'').replace('Version ','')||'-'))}
+    ${row('Items',o=>o.b.questionCount+' items')}
+    ${row('Time',o=>Math.round(o.b.durationSec/60)+' minutes')}
+    ${row('Pass mark',o=>esc(o.pass))}
+    ${row('Fee',o=>esc(o.fee))}
+    ${row('Format',o=>esc(o.b.format||''))}
+    ${row('Domains',o=>o.doms.length+' domains')}
+    ${row('Free prep here',o=>(o.x.counts.lessons?o.x.counts.lessons+' lessons, ':'')+o.x.counts.questions+' questions, '+o.x.counts.tests+' tests')}
+    ${row('Start',o=>(o.x.learn?'<a href="'+o.x.learn+'">Guide</a> &middot; ':'')+'<a href="'+o.x.path+'">Tests</a>'+(o.x.cheat?' &middot; <a href="'+o.x.cheat+'">Cheat sheet</a>':''))}
+    </tbody>
+  </table></div>
+  <p class="cmp-note">Fees and formats are from Anthropic's public exam guides and certification pages; check them there before you book.${cmpOld.length?' '+cmpOld.map(x=>esc(x.code)+' '+esc(x.version)+' stays on this site '+esc((x.note||'').replace(/^Until/,'until'))+' (<a href="'+x.path+'">tests</a>'+(x.learn?', <a href="'+x.learn+'">guide</a>':'')+').').join(' '):''}</p>
+
+  <h2>Domains and weights</h2>
+  <p class="cmp-lead">The share of exam items each domain carries, from each exam guide. The heavier the domain, the more questions you will see on it.</p>
+  <div class="cmp-doms">
+${cmpEx.map(o=>'    <div class="cmp-d"><h3>'+esc(o.x.code)+'<span>'+esc(nm(o.x))+'</span></h3>'+o.doms.map(d=>'<div class="cmp-b"><span>'+esc(d.name)+'</span><em>'+d.w+'%</em><i><b style="width:'+Math.min(100,d.w*3)+'%;background:'+esc(d.c)+'"></b></i></div>').join('')+'</div>').join('\n')}
+  </div>
+
+  <section class="faq">
+    <h2>Questions</h2>
+${FAQ.map((f,i)=>'    <details'+(i?'':' open')+'><summary>'+esc(f[0])+'</summary><p>'+esc(f[1])+'</p></details>').join('\n')}
+  </section>
+  <div class="notice">
+    <strong>Important Note</strong>
+    <p>${esc(SITE.name)} is an independent study aid, not affiliated with or endorsed by Anthropic. The practice questions are original, written from Anthropic's public exam guides; they contain no real exam content and do not guarantee a pass.</p>
+  </div>
+</div>
+<!--site-footer--><!--/site-footer-->
+<script src="/site.js?v=${V}"></script>
+</body>
+</html>
+`;
+  fs.mkdirSync(path.join(ROOT,CMP_PATH),{recursive:true});
+  fs.writeFileSync(path.join(ROOT,CMP_PATH,'index.html'),cmpHtml);
+}
+
 // ---- fill the marked regions ----
-const pages=['index.html','resources/index.html','privacy/index.html',...(SITE.author?['about/index.html']:[]),
+const pages=['index.html','resources/index.html','privacy/index.html',...(SITE.author?['about/index.html']:[]),...(cmpEx.length?[CMP_PATH.slice(1)+'index.html']:[]),
   ...SITE.vendors.filter(v=>v.url).map(v=>v.url.replace(/^\//,'')+'index.html'),
   ...liveExams.map(x=>x.path.replace(/^\//,'')+'index.html')];
 // The exam FAQ comes from the generated exams/<id>.js, so the crawler copy can never drift
@@ -274,7 +418,7 @@ for(const p of pages){
 // ---- sitemap: /resources/ ----
 const smf=path.join(ROOT,'sitemap.xml');
 let sm=fs.readFileSync(smf,'utf8').replace(/\r\n/g,'\n');
-for(const [p,pr] of [['/resources/','0.6'],['/privacy/','0.2'],...(A?[['/about/','0.3']]:[])])
+for(const [p,pr] of [['/resources/','0.6'],['/privacy/','0.2'],...(A?[['/about/','0.3']]:[]),...(cmpEx.length?[[CMP_PATH,'0.8']]:[])])
   if(!sm.includes('<loc>'+URL_+p+'</loc>'))
     sm=sm.replace('</urlset>','  <url>\n    <loc>'+URL_+p+'</loc>\n    <lastmod>'+new Date().toISOString().slice(0,10)+'</lastmod>\n    <changefreq>'+(pr==='0.2'?'yearly':'monthly')+'</changefreq>\n    <priority>'+pr+'</priority>\n  </url>\n</urlset>');
 fs.writeFileSync(smf,sm);
