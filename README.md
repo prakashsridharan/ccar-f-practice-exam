@@ -9,7 +9,6 @@ https://certprep.pratechlabs.com. Currently:
 | Claude Certified Architect - Professional (CCAR-P), Version 1.1 (exam guide 1.1) | `/claude/ccar-p-v2/learn/`: 39 lessons, 4 case studies, cheat sheet | `/claude/ccar-p-v2/`: 140 questions, 2 fixed tests of 70 (120 min) |
 | Claude Certified Architect - Professional (CCAR-P), Version 1.0 (exam guide 1.0, until 7 Dec 2026) | `/claude/ccar-p/learn/`: 38 lessons, 4 case studies, cheat sheet | `/claude/ccar-p/`: 126 questions, 2 fixed tests of 63 (120 min) |
 | Claude Certified Associate - Foundations (CCAO-F) | `/claude/ccao-f/learn/`: 21 lessons, 4 case studies, cheat sheet | `/claude/ccao-f/`: 140 questions, 2 fixed tests of 70 (120 min) |
-| Claude Certified Developer - Foundations (CCDV-F) | `/claude/ccdv-f/learn/`: 24 lessons, 4 case studies, cheat sheet | `/claude/ccdv-f/`: 140 questions, 2 fixed tests of 70 (120 min) |
 | Claude Certified Developer - Professional (CCDV-P) | `/claude/ccdv-p/learn/`: 25 lessons, 4 case studies, cheat sheet | `/claude/ccdv-p/`: 140 questions, 2 fixed tests of 70 (120 min) |
 
 AWS certifications are in preparation.
