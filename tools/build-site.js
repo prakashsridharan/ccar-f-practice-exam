@@ -185,7 +185,7 @@ if(A){
   // badge PNG) the image is shown; otherwise a drawn badge in the issuer's colour. `url` links a verification page.
   const BCOL={'Anthropic':'#C0522A','Amazon Web Services':'#D97706','Google Cloud':'#2E86C1'};
   const badge=(c)=>{c=typeof c==='string'?{name:c}:c;const col=BCOL[c.issuer]||'#1B4F8A';
-    const art=c.badge?'<img src="'+esc(c.badge)+'" alt="'+esc(c.name)+' badge" width="96" height="96" loading="lazy">'
+    const art=c.badge?'<img src="'+esc(c.badge)+'" alt="'+esc(c.name)+' badge" width="112" height="112" loading="lazy">'
       :'<svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true"><path d="M48 4 86 26v44L48 92 10 70V26z" fill="'+col+'"/><path d="M48 13 78 30.5v35L48 83 18 65.5v-35z" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><path d="m34 49 10 10 19-21" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const body=art+'<span class="ab-bi">'+esc(c.issuer||'')+'</span><span class="ab-bn">'+esc(c.name)+'</span>'+(c.url?'<span class="ab-bv">Verify</span>':'');
     return c.url?'<a class="ab-b" href="'+esc(c.url)+'" target="_blank" rel="noopener">'+body+'</a>':'<div class="ab-b">'+body+'</div>';};
