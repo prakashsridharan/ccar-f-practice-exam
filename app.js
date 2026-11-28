@@ -416,7 +416,8 @@ function renderDomainScores(sc){const sm=E('div',{className:'score-s'},E('h3',nu
 // A returning reader of the learning guide gets one compact line above the tests: lesson
 // progress (kept by the guide's learn.js in '<prefix>-learn') and a link to the next unread
 // lesson. Shown only once a lesson is complete: the exam tab bar already links the guide itself.
-function learnProgress(){let done={};try{const p=JSON.parse(localStorage.getItem(EX.storagePrefix+'-learn')||'null');if(p&&p.done)done=p.done;}catch(e){}
+function learnDone(){try{const p=JSON.parse(localStorage.getItem(EX.storagePrefix+'-learn')||'null');if(p&&p.done)return p.done;}catch(e){}return{};}
+function learnProgress(){const done=learnDone();
  return{n:LESSONS.filter(l=>done[l.id]).length,next:LESSONS.find(l=>!done[l.id])};}
 function learnStrip(){const {n,next}=learnProgress();
  const go=next?{href:next.u,t:'Continue with '+next.id+' '+next.n}:{href:LEARN.u,t:'Review the guide'};
@@ -551,6 +552,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  main.appendChild(modes);
  layout.appendChild(side);layout.appendChild(main);ct.appendChild(layout);
  if(Object.keys(PROG.ql||{}).length)ct.appendChild(renderReadiness());
+ ct.appendChild(renderPlan());
 
  // Progress is per browser. One short line; the backup/restore/reset tools sit
  // in a panel it opens (direct DOM toggle, remembered in homeOpen like the
@@ -564,7 +566,7 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  const acts=E('div',{className:'dp-acts'});
  acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:exportProgress},E('span',{innerHTML:IC.download}),'Download backup'));
  acts.appendChild(E('button',{className:'btn btn-g',type:'button',onClick:importProgress},E('span',{innerHTML:IC.upload}),'Restore from backup'));
- if(hasData)acts.appendChild(E('button',{className:'btn btn-g dp-reset',type:'button',onClick:()=>{if(confirm('Delete all saved scores, study progress and any unfinished exam for '+EX.code+' in this browser?')){PROG=freshProgress();PROG.rs=PROG.curU=new Date().toISOString();saveProgress();render();}}},E('span',{innerHTML:IC.reset}),'Reset'));
+ if(hasData)acts.appendChild(E('button',{className:'btn btn-g dp-reset',type:'button',onClick:()=>{if(confirm('Delete all saved scores, study progress and any unfinished exam for '+EX.code+' in this browser?')){const pl=PROG.plan;PROG=freshProgress();if(pl)PROG.plan=pl;PROG.rs=PROG.curU=new Date().toISOString();saveProgress();render();}}},E('span',{innerHTML:IC.reset}),'Reset'));
  dp.appendChild(acts);
  const setDp=open=>{if(open)homeOpen.add('data');else homeOpen.delete('data');dp.style.display=open?'block':'none';dataBtn.setAttribute('aria-expanded',String(open));};
  setDp(homeOpen.has('data'));dataBtn.addEventListener('click',()=>setDp(!homeOpen.has('data')));
@@ -622,6 +624,73 @@ function renderHome(){const app=document.getElementById('app');app.innerHTML='';
  if(onTab&&side.scrollWidth>side.clientWidth)side.scrollLeft=Math.max(0,onTab.offsetLeft-side.clientWidth/2+onTab.offsetWidth/2);
  syncFade();side.addEventListener('scroll',syncFade,{passive:true});
  if(st.modal)renderModals();}
+
+// Study plan: the reader enters their exam date and gets the guide's lessons spread over the
+// first 70% of the time, the published tests in exam mode from the middle on, then Retry
+// mistakes and the cheat sheet in the last days. Stored in PROG.plan = {date, start, u, ck}
+// so it syncs with an account (account.js keeps the newer u). Lessons and tests tick
+// themselves from guide progress and attempts; Retry and the cheat sheet are ticked by hand
+// (ck). Remove leaves {u} with no date, so the removal also syncs. Reset keeps the plan.
+const DAYMS=864e5;
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function dayNum(s){const [y,m,d]=String(s).split('-').map(Number);return Math.round(Date.UTC(y,m-1,d)/DAYMS);}
+function fmtDay(n,wd){const d=new Date(n*DAYMS);return d.toLocaleDateString('en-US',{timeZone:'UTC',...(wd===false?{}:{weekday:'short'}),month:'short',day:'numeric'});}
+function todayNum(){return dayNum(ymd(new Date()));}
+function activePlan(){const p=PROG.plan;return p&&/^\d{4}-\d{2}-\d{2}$/.test(p.date||'')&&/^\d{4}-\d{2}-\d{2}$/.test(p.start||'')?p:null;}
+function planItems(p){const s=dayNum(p.start),span=Math.max(1,dayNum(p.date)-s),ck=p.ck||{};
+ const at=f=>s+Math.min(span-1,Math.max(0,Math.ceil(f*span)-1)),done=learnDone(),N=LESSONS.length,T=FIXED.length,items=[];
+ LESSONS.forEach((l,i)=>items.push({k:'lesson',t:l.id+' '+l.n,href:l.u,due:at((i+1)/N*(T?0.7:0.85)),done:!!done[l.id]}));
+ FIXED.forEach((t,i)=>items.push({k:'test',n:t.n,t:t.title+', exam mode',due:at(T===1?0.8:0.45+0.43*i/(T-1)),done:attemptsFor(t.n).length>0}));
+ if(T)items.push({k:'retry',t:'Retry your mistakes',due:at(0.93),done:!!ck.retry});
+ if(N)items.push({k:'cheat',t:'Read the cheat sheet',href:LEARN.u+'cheat-sheet/',due:at(1),done:!!ck.cheat});
+ return items.map((it,i)=>Object.assign(it,{i})).sort((a,b)=>a.due-b.due||a.i-b.i);}
+// Weeks for a plan of two weeks or more, otherwise days.
+function planBuckets(p,items){const s=dayNum(p.start),e=dayNum(p.date),wk=e-s>=14,m=new Map();
+ items.forEach(it=>{const k=wk?Math.floor((it.due-s)/7):it.due-s;if(!m.has(k)){const a=wk?s+7*k:it.due,b=wk?Math.min(a+6,e-1):a;
+  m.set(k,{k,a,b,label:wk?'Week '+(k+1)+' · '+fmtDay(a,false)+(b>a?' to '+fmtDay(b,false):''):fmtDay(a),items:[]});}m.get(k).items.push(it);});
+ return{wk,list:[...m.values()]};}
+function setPlan(date){const t=todayNum();if(!/^\d{4}-\d{2}-\d{2}$/.test(date||'')){alert('Choose your exam date first.');return;}
+ const n=dayNum(date);if(n<=t){alert('Choose a date after today.');return;}if(n>t+366){alert('Choose a date within the next year.');return;}
+ const old=activePlan();PROG.plan={date,start:ymd(new Date()),u:new Date().toISOString(),ck:old&&old.ck||{}};saveProgress();render();}
+function renderPlan(){const p=activePlan(),box=E('section',{className:'panel plan'}),t=todayNum();
+ const dateIn=v=>E('input',{type:'date',className:'pl-in','aria-label':'Exam date',min:ymd(new Date(Date.now()+DAYMS)),max:ymd(new Date(Date.now()+366*DAYMS)),...(v?{value:v}:{})});
+ if(!p){const inp=dateIn();
+  box.appendChild(E('div',{className:'pl-head'},E('h2',null,'Study plan')));
+  box.appendChild(E('p',{className:'pl-p'},'Booked your exam, or aiming for a date? Enter it to get '+(LESSONS.length?'the '+LESSONS.length+' lessons, then ':'')+(FIXED.length===1?'the practice test':'the '+FIXED.length+' practice tests')+' in exam mode and a final review, spread over the time you have. It ticks itself off as you go.'));
+  box.appendChild(E('div',{className:'pl-form'},inp,E('button',{type:'button',className:'btn btn-p',onClick:()=>setPlan(inp.value)},'Create plan')));
+  return box;}
+ const items=planItems(p),e=dayNum(p.date),left=e-t,done=items.filter(x=>x.done).length,late=items.filter(x=>!x.done&&x.due<t);
+ const head=E('div',{className:'pl-head'},E('h2',null,'Study plan'));
+ const acts=E('div',{className:'pl-acts'}),edit=E('div',{className:'pl-form pl-edit',style:{display:'none'}});
+ const inp=dateIn(p.date);edit.appendChild(inp);edit.appendChild(E('button',{type:'button',className:'btn btn-p',onClick:()=>setPlan(inp.value)},'Save'));
+ acts.appendChild(E('button',{type:'button',onClick:()=>{edit.style.display=edit.style.display==='none'?'flex':'none';}},'Change date'));
+ acts.appendChild(E('span',{className:'pl-sep','aria-hidden':'true'},'·'));
+ acts.appendChild(E('button',{type:'button',onClick:()=>{if(confirm('Remove your study plan? Your lessons and scores are kept.')){PROG.plan={u:new Date().toISOString()};saveProgress();render();}}},'Remove'));
+ head.appendChild(acts);box.appendChild(head);box.appendChild(edit);
+ box.appendChild(E('p',{className:'pl-when'},E('strong',null,left>0?left+(left===1?' day left':' days left'):left===0?'Exam day':'Exam date passed'),
+  E('span',null,left>=0?' · exam on '+fmtDay(e)+(left===0?'. Good luck!':''):' ('+fmtDay(e)+'). Hope it went well. Set a new date if you are retaking it.')));
+ const pct=Math.round(done/items.length*100);
+ box.appendChild(E('div',{className:'pl-prog'},E('div',{className:'pl-bar'},E('div',{style:{width:pct+'%'}})),E('span',null,done+' of '+items.length+' done'),
+  left>0?E('span',{className:'pl-st'+(late.length?' late':'')},late.length?late.length+' behind':'On track'):null));
+ const row=it=>{const r=E('li',{className:'pi'+(it.done?' done':'')+(!it.done&&it.due<t?' late':'')});
+  r.appendChild(E('span',{className:'pi-b','aria-hidden':'true'},it.done?'✓':''));
+  r.appendChild(it.k==='test'?E('button',{type:'button',className:'pi-a',onClick:()=>PROG.cur&&PROG.cur.t===it.n?resumePractice():startPractice(it.n)},it.t)
+   :it.k==='retry'?E('button',{type:'button',className:'pi-a',onClick:()=>startRetry(0)},it.t):E('a',{className:'pi-a',href:it.href},it.t));
+  if(!it.done&&it.due<t)r.appendChild(E('span',{className:'pi-d'},'was due '+fmtDay(it.due)));
+  if(it.k==='retry'||it.k==='cheat')r.appendChild(E('button',{type:'button',className:'pi-ck',onClick:()=>{p.ck=Object.assign({},p.ck,{[it.k]:!it.done});p.u=new Date().toISOString();saveProgress();render();}},it.done?'Undo':'Mark done'));
+  return r;};
+ const B=planBuckets(p,items),cur=B.list.find(b=>t<=b.b)||B.list[B.list.length-1];
+ if(left>0&&cur){const now=cur.items.concat(late.filter(x=>!cur.items.includes(x)));
+  box.appendChild(E('h3',{className:'pl-h'},t>=cur.a?(B.wk?'This week':'Today'):'Next up: '+cur.label.replace(/^Week \d+ · /,'')));
+  const ul=E('ul',{className:'pl-list'});now.sort((a,b)=>a.due-b.due||a.i-b.i).forEach(it=>ul.appendChild(row(it)));box.appendChild(ul);}
+ const tog=E('button',{type:'button',className:'pl-tog','aria-expanded':'false'}),all=E('div',{className:'pl-all'});
+ B.list.forEach(b=>{all.appendChild(E('h3',{className:'pl-h'+(b===cur?' cur':'')},b.label));const ul=E('ul',{className:'pl-list'});b.items.forEach(it=>ul.appendChild(row(it)));all.appendChild(ul);});
+ const setOpen=o=>{if(o)homeOpen.add('plan');else homeOpen.delete('plan');all.style.display=o?'block':'none';tog.setAttribute('aria-expanded',String(o));tog.textContent=o?'Hide full plan':'Show full plan';};
+ setOpen(homeOpen.has('plan')||left<=0);tog.addEventListener('click',()=>setOpen(!homeOpen.has('plan')));
+ box.appendChild(tog);box.appendChild(all);
+ const N=LESSONS.length;if(N&&left>0&&!done){const days=Math.max(1,Math.ceil((e-dayNum(p.start))*(FIXED.length?0.7:0.85))),per=N/days;
+  box.appendChild(E('p',{className:'pl-p pl-pace'},per>=1?'Pace: about '+Math.round(per)+' lesson'+(Math.round(per)===1?'':'s')+' a day.':'Pace: about '+Math.max(1,Math.round(per*7))+' lessons a week.'));}
+ return box;}
 
 // Readiness by domain, from the latest answer to each question (PROG.ql), with
 // the way into Retry mistakes: all of them, or one domain's. Home shows one

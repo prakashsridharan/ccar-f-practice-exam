@@ -240,6 +240,23 @@ ok('readiness: hidden without data, verdict needs enough answers, weighted overa
  const id=pool[0],f={app:'certprep',exam:run('EX.id'),progress:{attempts:[],ql:{[id]:[0,'2999-01-01T00:00:00.000Z'],[p2[0]]:[1,'2000-01-01T00:00:00.000Z']}}};
  run('mergeProgress('+JSON.stringify(f)+')');if(run("PROG.ql['"+id+"'][0]")!==0||run("PROG.ql['"+p2[0]+"'][0]")!==0)throw new Error('import merge did not keep the newer answer');
  run('PROG=freshProgress();saveProgress()');});
+ok('study plan: create, every lesson and test once, ordered, ticks, reset keeps it, remove',()=>{
+ const has=t=>!!find(byId.app,n=>(n.textContent||'')===t),L=run("typeof LEARN!=='undefined'?LEARN.lessons.length:0"),T=run('FIXED.length');
+ run('PROG=freshProgress();renderHome()');if(!has('Create plan'))throw new Error('no create form');
+ const d=n=>run('ymd(new Date(Date.now()+'+n+'*DAYMS))');
+ for(const days of [3,10,45,120]){run("PROG.plan={date:'"+d(days)+"',start:ymd(new Date()),u:'x',ck:{}}");
+  const it=run('planItems(PROG.plan)');
+  if(it.filter(x=>x.k==='lesson').length!==L||it.filter(x=>x.k==='test').length!==T)throw new Error(days+' days: items '+it.length);
+  const s=run('dayNum(PROG.plan.start)'),e=run('dayNum(PROG.plan.date)');
+  if(it.some(x=>x.due<s||x.due>=e))throw new Error(days+' days: an item is due outside the plan');
+  for(let i=1;i<it.length;i++)if(it[i].due<it[i-1].due)throw new Error('not ordered');
+  run('renderHome()');if(!has(days+' days left'))throw new Error(days+' days: no countdown');}
+ run("recordResult({id:'zz'},1);PROG.attempts.push({t:1,d:'2026-01-01',c:1,n:1,ds:{},wrong:[],flag:[]})");
+ if(T&&!run("planItems(PROG.plan).find(x=>x.k==='test'&&x.n===1).done"))throw new Error('test 1 not ticked after an attempt');
+ run('const pl=PROG.plan;PROG=freshProgress();if(pl)PROG.plan=pl;');if(!run('activePlan()'))throw new Error('reset lost the plan');
+ run("PROG.plan={date:'"+d(-2)+"',start:'"+d(-30)+"',u:'x'};renderHome()");if(!has('Exam date passed'))throw new Error('past date not handled');
+ run("PROG.plan={u:'y'};renderHome()");if(!has('Create plan'))throw new Error('removed plan still shown');
+ run('PROG=freshProgress()');});
 ok('router: go(), Back-style routing, guarded routes, #admin',()=>{
  const H=()=>ctx.location.hash,V=()=>run('view');
  run("st.pq=[];st.pdone=false;go('study')");if(H()!=='#/study'||V()!=='study')throw new Error('go(study) -> '+H()+' '+V());

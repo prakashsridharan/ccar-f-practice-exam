@@ -133,7 +133,7 @@
     var run=function(s){var r=idx.search(s);return r.length?r:idx.search(s,{combineWith:'OR'});};
     var all={};[q].concat(q2!==q.toLowerCase()?[q2]:[]).forEach(function(s){run(s).forEach(function(r){if(!all[r.id]||all[r.id].score<r.score)all[r.id]=r;});});
     var list=Object.keys(all).map(function(k){return all[k];}).sort(function(a,b){return b.score-a.score;});
-    function pick(rs,max){var per={},out=[];rs.forEach(function(r){var p=r.k==='cheat'?r.u:r.u.split('#')[0];per[p]=(per[p]||0)+1;if(per[p]<=2&&out.length<max)out.push(r);});return out;}
+    function pick(rs,max){var per={},out=[];rs.forEach(function(r){var p=r.k==='cheat'||r.k==='glossary'?r.u:r.u.split('#')[0];per[p]=(per[p]||0)+1;if(per[p]<=2&&out.length<max)out.push(r);});return out;}
     if(!onSheet)return [{items:pick(list,8)}];
     return [{label:'On this cheat sheet',items:pick(list.filter(function(r){return r.k==='cheat';}),6)},
       {label:'In the lessons',items:pick(list.filter(function(r){return r.k!=='cheat';}),5)}].filter(function(g){return g.items.length;});
@@ -194,9 +194,9 @@
     function row(r,v){
       var parts=r.u.split('#'),dom=meta.domains[r.d],terms=r.terms.length?r.terms:v.toLowerCase().split(/\s+/);
       var href=parts[0]+'?q='+encodeURIComponent(v)+'&hl='+encodeURIComponent(terms.join(' '))+(parts[1]?'#'+parts[1]:'');
-      var tag=r.k==='lesson'?r.l:r.k==='cheat'?'Sheet':r.k==='article'?'Page':'Case';
-      return '<li role="option"><a href="'+escH(href)+'"><span class="ls-id"'+(dom?' style="--dc:'+dom.color+'"':'')+'>'+escH(tag)+'</span><span class="ls-m"><b>'+escH(r.k==='cheat'&&r.h?r.h:r.t)+'</b>'+
-        (r.k==='cheat'?'':(r.h?'<i>'+escH(r.h)+'</i>':''))+'<small>'+snippet(r.x||'',terms)+'</small></span></a></li>';
+      var tag=r.k==='lesson'?r.l:r.k==='cheat'?'Sheet':r.k==='article'?'Page':r.k==='glossary'?'Term':'Case';
+      return '<li role="option"><a href="'+escH(href)+'"><span class="ls-id"'+(dom?' style="--dc:'+dom.color+'"':'')+'>'+escH(tag)+'</span><span class="ls-m"><b>'+escH((r.k==='cheat'||r.k==='glossary')&&r.h?r.h:r.t)+'</b>'+
+        (r.k==='cheat'||r.k==='glossary'?'':(r.h?'<i>'+escH(r.h)+'</i>':''))+'<small>'+snippet(r.x||'',terms)+'</small></span></a></li>';
     }
     function go(done){
       var v=q.value.trim();if(v.length<2){show('');return;}

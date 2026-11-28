@@ -412,6 +412,8 @@ ${FAQ.map((f,i)=>'    <details'+(i?'':' open')+'><summary>'+esc(f[0])+'</summary
       if(x.learn)L.push('- [Learning guide]('+abs(x.learn)+'): '+c.lessons+' lessons, one per exam '+(E.guide||b.guide?'skill':'task')+', across '+c.domains+' domains');
       L.push('- [Practice tests]('+abs(x.path)+'): '+c.questions+' questions in '+c.tests+' fixed tests of '+b.questionCount+', timed exam mode and self-paced study mode');
       if(x.cheat)L.push('- [Cheat sheet]('+abs(x.cheat)+'): a printable summary of every domain');
+      if(x.learn&&fs.existsSync(path.join(ROOT,x.learn,'glossary','index.html'))){const gn=(fs.readFileSync(path.join(ROOT,x.learn,'glossary','index.html'),'utf8').match(/class="gl-e"/g)||[]).length;
+        L.push('- [Glossary]('+abs(x.learn+'glossary/')+'): '+gn+' key terms defined in plain English, each linked to its lessons');}
       L.push('- [Resources]('+abs(x.resources)+'): official documentation for each domain');
       L.push('');
     }

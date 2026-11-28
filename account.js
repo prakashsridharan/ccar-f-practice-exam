@@ -228,6 +228,8 @@
     // curU set). Rows from before curU existed fall back to keeping any run.
     if(l.curU||r.curU){if(String(r.curU||'')>String(l.curU||'')){o.cur=r.cur||null;o.curU=r.curU;}}
     else if(!o.cur&&r.cur)o.cur=r.cur;
+    // Study plan (app.js PROG.plan): the side that changed it last wins, a removal included.
+    if(r.plan&&typeof r.plan==='object'&&String(r.plan.u||'')>String(o.plan&&o.plan.u||''))o.plan=r.plan;
     if(r.study&&typeof r.study==='object'){o.study=o.study||{};Object.keys(r.study).forEach(function(k){if(!o.study[k])o.study[k]=r.study[k];});}
     if(r.ql&&typeof r.ql==='object'){o.ql=o.ql||{};Object.keys(r.ql).forEach(function(id){var v=r.ql[id];
       if(Array.isArray(v)&&(!o.ql[id]||String(v[1]||'')>String(o.ql[id][1]||'')))o.ql[id]=v;});}

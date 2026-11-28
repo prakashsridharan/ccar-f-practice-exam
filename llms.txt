@@ -19,6 +19,7 @@ Follows Anthropic's exam guide 1.1 (effective 7 December 2026): using Claude as 
 - [Learning guide](https://certprep.pratechlabs.com/claude/ccao-f/learn/): 21 lessons, one per exam skill, across 6 domains
 - [Practice tests](https://certprep.pratechlabs.com/claude/ccao-f/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
 - [Cheat sheet](https://certprep.pratechlabs.com/claude/ccao-f/learn/cheat-sheet/): a printable summary of every domain
+- [Glossary](https://certprep.pratechlabs.com/claude/ccao-f/learn/glossary/): 36 key terms defined in plain English, each linked to its lessons
 - [Resources](https://certprep.pratechlabs.com/claude/ccao-f/resources/): official documentation for each domain
 
 ### CCDV-F: Claude Certified Developer - Foundations (Version 1.1)
@@ -28,6 +29,7 @@ Follows Anthropic's exam guide 1.1 (effective 7 December 2026): building with Cl
 - [Learning guide](https://certprep.pratechlabs.com/claude/ccdv-f/learn/): 24 lessons, one per exam skill, across 8 domains
 - [Practice tests](https://certprep.pratechlabs.com/claude/ccdv-f/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
 - [Cheat sheet](https://certprep.pratechlabs.com/claude/ccdv-f/learn/cheat-sheet/): a printable summary of every domain
+- [Glossary](https://certprep.pratechlabs.com/claude/ccdv-f/learn/glossary/): 77 key terms defined in plain English, each linked to its lessons
 - [Resources](https://certprep.pratechlabs.com/claude/ccdv-f/resources/): official documentation for each domain
 
 ### CCDV-P: Claude Certified Developer - Professional (Version 1.0)
@@ -37,6 +39,7 @@ Follows Anthropic's exam guide 1.0 (November 2026): operating Claude systems in 
 - [Learning guide](https://certprep.pratechlabs.com/claude/ccdv-p/learn/): 25 lessons, one per exam skill, across 8 domains
 - [Practice tests](https://certprep.pratechlabs.com/claude/ccdv-p/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
 - [Cheat sheet](https://certprep.pratechlabs.com/claude/ccdv-p/learn/cheat-sheet/): a printable summary of every domain
+- [Glossary](https://certprep.pratechlabs.com/claude/ccdv-p/learn/glossary/): 83 key terms defined in plain English, each linked to its lessons
 - [Resources](https://certprep.pratechlabs.com/claude/ccdv-p/resources/): official documentation for each domain
 
 ### CCAR-F: Claude Certified Architect - Foundations (Version 1.0)
@@ -46,6 +49,7 @@ Follows Anthropic's exam guide 1.0. Agents, tools and MCP, Claude Code, prompts 
 - [Learning guide](https://certprep.pratechlabs.com/claude/ccar-f/learn/): 30 lessons, one per exam task, across 5 domains
 - [Practice tests](https://certprep.pratechlabs.com/claude/ccar-f/): 120 questions in 2 fixed tests of 60, timed exam mode and self-paced study mode
 - [Cheat sheet](https://certprep.pratechlabs.com/claude/ccar-f/learn/cheat-sheet/): a printable summary of every domain
+- [Glossary](https://certprep.pratechlabs.com/claude/ccar-f/learn/glossary/): 55 key terms defined in plain English, each linked to its lessons
 - [Resources](https://certprep.pratechlabs.com/claude/ccar-f/resources/): official documentation for each domain
 
 ### CCAR-P: Claude Certified Architect - Professional (Version 1.1)
@@ -55,6 +59,7 @@ Updated for Anthropic's exam guide 1.1, which applies from 7 December 2026: 70 i
 - [Learning guide](https://certprep.pratechlabs.com/claude/ccar-p-v2/learn/): 39 lessons, one per exam skill, across 7 domains
 - [Practice tests](https://certprep.pratechlabs.com/claude/ccar-p-v2/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
 - [Cheat sheet](https://certprep.pratechlabs.com/claude/ccar-p-v2/learn/cheat-sheet/): a printable summary of every domain
+- [Glossary](https://certprep.pratechlabs.com/claude/ccar-p-v2/learn/glossary/): 84 key terms defined in plain English, each linked to its lessons
 - [Resources](https://certprep.pratechlabs.com/claude/ccar-p-v2/resources/): official documentation for each domain
 
 ### CCAR-P: Claude Certified Architect - Professional (Version 1.0)
@@ -64,6 +69,7 @@ Follows the current exam guide 1.0, with single and multiple-choice items only. 
 - [Learning guide](https://certprep.pratechlabs.com/claude/ccar-p/learn/): 38 lessons, one per exam task, across 7 domains
 - [Practice tests](https://certprep.pratechlabs.com/claude/ccar-p/): 126 questions in 2 fixed tests of 63, timed exam mode and self-paced study mode
 - [Cheat sheet](https://certprep.pratechlabs.com/claude/ccar-p/learn/cheat-sheet/): a printable summary of every domain
+- [Glossary](https://certprep.pratechlabs.com/claude/ccar-p/learn/glossary/): 73 key terms defined in plain English, each linked to its lessons
 - [Resources](https://certprep.pratechlabs.com/claude/ccar-p/resources/): official documentation for each domain
 
 ## Optional

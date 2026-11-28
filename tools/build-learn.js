@@ -162,13 +162,46 @@ if(fs.existsSync(CSF)){
 const ARTS=[],ADIR=path.join(LSRC,'articles');
 if(fs.existsSync(ADIR))for(const f of fs.readdirSync(ADIR).filter(f=>f.endsWith('.md')).sort()){
   const slug=f.slice(0,-3),file='articles/'+f;
-  if(lessons.some(l=>l.domain.slug===slug)||['cases','cheat-sheet'].includes(slug))fail(file+': slug clashes with a guide page');
+  if(lessons.some(l=>l.domain.slug===slug)||['cases','cheat-sheet','glossary'].includes(slug))fail(file+': slug clashes with a guide page');
   const src=fs.readFileSync(path.join(ADIR,f),'utf8').replace(/\r\n/g,'\n').replace(/\[\[([\d.]+)\]\]/g,(_,id)=>{const l=lessons.find(x=>x.id===id&&x.html);
     if(!l){fail(file+': [['+id+']] is not a written lesson');return id;}return '['+id+' '+l.title+']('+l.url+')';});
   const doc=parseDoc(src,file),tag=((src.match(/^---\n[\s\S]*?^tag:\s*(.*)$/m)||[])[1]||'').trim();
   const published=((src.match(/^published:\s*(\d{4}-\d{2}-\d{2})\s*$/m)||[])[1]||'');
   ARTS.push(Object.assign(doc,{slug,file,published,tag:tag||'Guide',url:learnPath+slug+'/',md:src.replace(/^---\n[\s\S]*?\n---\n/,'')}));
 }
+
+// ---- glossary (<vendor>/glossary.md, shared by every guide of the vendor) ----
+// "## Term" entries with optional aka/match/case/only lines and a one-paragraph definition. A term
+// joins this guide's glossary page when it occurs in at least one of its lessons (code blocks
+// excluded); it links to the (up to three) lessons using it most, a lesson whose title has it first.
+// Its top lesson lists it under "Key terms". Written to <learn>/glossary/, searched, in the sitemap.
+const glossPath=learnPath+'glossary/',GLOSS=[],GF=path.join(contentDir,vendor,'glossary.md');
+if(fs.existsSync(GF)){
+  const src=fs.readFileSync(GF,'utf8').replace(/\r\n/g,'\n');
+  if(src.includes(EM)||src.includes(EN))fail('glossary.md: contains an em or en dash');
+  const texts=written.map(l=>({l,md:fs.readFileSync(path.join(LSRC,l.slug+'.md'),'utf8').replace(/\r\n/g,'\n').replace(/^---\n[\s\S]*?\n---\n/,'').replace(/```[\s\S]*?```/g,'')}));
+  const seen=new Set();
+  for(const b of src.split(/^## /m).slice(1)){
+    const ls=b.split('\n'),g={term:ls[0].trim(),aka:[],match:null,cs:false,only:null},body=[];
+    for(const l of ls.slice(1)){const m=l.match(/^(aka|match|case|only):\s*(.*)$/);
+      if(!m){if(l.trim())body.push(l.trim());continue;}
+      const v=m[2].split(',').map(x=>x.trim()).filter(Boolean);
+      if(m[1]==='aka')g.aka=v;else if(m[1]==='match')g.match=v;else if(m[1]==='case')g.cs=/^y/i.test(m[2]);else g.only=v;}
+    g.def=body.join(' ');g.id=slugify(g.term);
+    if(!g.def)fail('glossary.md: no definition for '+g.term);
+    if(seen.has(g.id))fail('glossary.md: duplicate term '+g.term);seen.add(g.id);
+    if(g.only&&!g.only.includes(examId))continue;
+    const ph=g.match||[g.term.replace(/\s*\([^)]*\)$/,''),(g.term.match(/\(([^)]+)\)$/)||[])[1],...g.aka].filter(Boolean);
+    const pat='(?<![\\w-])(?:'+ph.map(p=>p.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')(?:s|es|ed|ing)?(?![\\w-])',fl=g.cs?'':'i';
+    const hits=texts.map(t=>({l:t.l,n:(t.md.match(new RegExp(pat,'g'+fl))||[]).length,h:new RegExp(pat,fl).test(t.l.title)?1:0})).filter(x=>x.n);
+    if(!hits.length)continue;
+    hits.sort((a,b)=>(b.h-a.h)||(b.n-a.n)||written.indexOf(a.l)-written.indexOf(b.l));
+    g.top=hits[0].l;g.lessons=hits.slice(0,3).map(x=>x.l).sort((a,b)=>written.indexOf(a)-written.indexOf(b));
+    GLOSS.push(g);
+  }
+  GLOSS.sort((a,b)=>a.term.localeCompare(b.term,'en',{sensitivity:'base'}));
+}
+const keyTerms=l=>GLOSS.filter(g=>g.top===l).slice(0,8);
 
 // ---- markdown ----
 function parseLesson(src,file){
@@ -378,7 +411,7 @@ function searchBox(){return '<div class="ls js-only" role="search"><input type="
 function sidebar(cur){
   const total=lessons.length;
   return '<nav class="side" aria-label="Lessons">'+searchBox()+'<details class="side-d" open><summary><span>All lessons</span> <span class="prog-txt" data-prog="all" data-total="'+total+'"></span></summary>'+
-    '<a class="side-home" href="'+learnPath+'">Overview</a>'+(cheat?'<a class="side-home" href="'+csPath+'">Cheat sheet</a>':'')+(casesIndex?'<a class="side-home" href="'+casesPath+'">Case studies</a>':'')+ARTS.map(a=>'<a class="side-home" href="'+a.url+'">'+esc(a.title)+'</a>').join('')+
+    '<a class="side-home" href="'+learnPath+'">Overview</a>'+(cheat?'<a class="side-home" href="'+csPath+'">Cheat sheet</a>':'')+(GLOSS.length?'<a class="side-home" href="'+glossPath+'">Glossary</a>':'')+(casesIndex?'<a class="side-home" href="'+casesPath+'">Case studies</a>':'')+ARTS.map(a=>'<a class="side-home" href="'+a.url+'">'+esc(a.title)+'</a>').join('')+
     OUT.domains.map(d=>'<div class="side-dom" style="--dc:'+d.color+'"><a class="side-dt" href="'+d.url+'"><b>'+d.n+'</b> '+esc(d.name)+'</a><ul>'+
       d.lessons.map(l=>'<li data-l="'+l.id+'"'+(l.id===cur?' class="cur"':'')+'>'+(l.html?'<a href="'+l.url+'"'+(l.id===cur?' aria-current="page"':'')+'>':'<span class="soon">')+
         '<span class="lid">'+l.id+'</span>'+esc(l.title)+(l.html?'</a>':' <em>soon</em></span>')+'</li>').join('')+'</ul></div>').join('')+
@@ -401,6 +434,7 @@ ${NAV.byline()}
 <div class="progress js-only"><div class="bar"><i data-bar="all"></i></div><span data-prog="all" data-total="${lessons.length}"></span> lessons complete</div>
 ${ARTS.map(a=>`<a class="cs-card" href="${a.url}"><span class="cs-ck">${esc(a.tag)}</span><b>${esc(a.title)}</b><span>${esc(a.summary)}</span></a>`).join('')}
 ${cheat?`<a class="cs-card" href="${csPath}"><span class="cs-ck">Before the exam</span><b>Cheat sheet</b><span>${esc(cheat.summary)}</span></a>`:''}
+${GLOSS.length?`<a class="cs-card" href="${glossPath}"><span class="cs-ck">Look it up</span><b>Glossary</b><span>${GLOSS.length} key terms in plain English, each linked to the lessons that teach it.</span></a>`:''}
 <div class="dgrid">${OUT.domains.map(d=>`<a class="dcard" href="${d.url}" style="--dc:${d.color};--dt:${d.tint}">
  <div class="dc-top"><span class="dc-n">Domain ${d.n}</span><span class="dc-w">${d.weight}% of the exam</span></div>
  <h2>${esc(d.name)}</h2><p>${esc(d.blurb)}</p>
@@ -437,6 +471,7 @@ ${NAV.byline()}
 <nav class="jump" aria-label="On this page"><span>On this page</span>${l.toc.map(t=>'<a href="#'+t.id+'">'+t.txt.replace(/<[^>]+>/g,'').split(':')[0]+'</a>').join('')}<a href="#sources">Sources</a></nav>
 <article class="body">
 ${l.html}</article>
+${keyTerms(l).length?'<p class="kt"><span>Key terms</span>'+keyTerms(l).map(g=>'<a href="'+glossPath+'#'+g.id+'">'+esc(g.term)+'</a>').join('')+'</p>':''}
 <section class="sources"><h2 id="sources">Sources</h2><ul>${l.sources.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')}</ul>${l.handson.length?'<h3 class="ho">Go hands-on <span>optional, needs a Claude API key</span></h3><p class="ho-p">Runnable notebooks from Anthropic\'s Claude Cookbook that build the patterns in this lesson.</p><ul>'+l.handson.map(s=>'<li><a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.label)+'</a></li>').join('')+'</ul>':''}</section>
 <div class="done-row js-only"><button type="button" class="btn done-btn" data-done="${l.id}">Mark complete</button></div>
 <nav class="pn">${prev?'<a class="prev" href="'+prev.url+'"><small>Previous lesson</small>'+prev.id+' '+esc(prev.title)+'</a>':'<span></span>'}${next?'<a class="next" href="'+next.url+'"><small>Next lesson</small>'+next.id+' '+esc(next.title)+'</a>':'<a class="next" href="'+testsPath+'"><small>Finished</small>Take a practice test</a>'}</nav>`})});
@@ -460,6 +495,26 @@ ${searchBox().replace('class="ls js-only"','class="ls ls-wide js-only"')}
 <ul>${OUT.domains.map(d=>`<li style="--dc:${d.color}"><b>D${d.n}</b> ${esc(d.name)} <i>${d.weight}%</i></li>`).join('')}</ul></div>
 ${cheat.sections.map(s=>`<section class="cs-s${s.d?'':' cs-x'}"${s.d?` style="--dc:${s.d.color};--dt:${s.d.tint}"`:''}><h2 id="${slugify(s.h)}">${s.d?`<span>Domain ${s.d.n} &middot; ${s.d.weight}%</span>`+esc(s.d.name):esc(s.h)}</h2>${s.html}</section>`).join('\n')}
 <p class="after">Unsure about a point? Open its lesson from the number beside it. Ready to check yourself? Take the <a href="${testsPath}">${esc(EXAM.code)} practice tests</a>.</p>`})});
+}
+
+// Glossary page
+if(GLOSS.length){
+  const desc='Plain-English definitions of the '+GLOSS.length+' key terms in the '+EXAM.code+' learning guide, each linked to the lessons that teach it.';
+  const letters=[...new Set(GLOSS.map(g=>g.term[0].toUpperCase().replace(/[^A-Z]/,'#')))];
+  const byL=L=>GLOSS.filter(g=>g.term[0].toUpperCase().replace(/[^A-Z]/,'#')===L);
+  pages.push({url:glossPath,html:page({
+    title:EXAM.code+' Glossary - '+EXAM.name,desc,url:glossPath,
+    crumbs:[[EXAM.code,testsPath],['Learning guide',learnPath],['Glossary']],
+    jsonld:orgJson('DefinedTermSet',EXAM.code+' Glossary',glossPath,desc,{hasDefinedTerm:GLOSS.map(g=>({'@type':'DefinedTerm',name:g.term,description:g.def,url:SITE+glossPath+'#'+g.id}))}),
+    main:`<div class="tag">${esc(EXAM.code)} Learning Guide &middot; Glossary</div>
+<h1>Glossary</h1>
+<p class="lead">${esc(desc)}</p>
+${NAV.byline()}
+<nav class="gl-az" aria-label="Jump to letter">${letters.map(L=>'<a href="#letter-'+(L==='#'?'0':L.toLowerCase())+'">'+L+'</a>').join('')}</nav>
+${letters.map(L=>'<section class="gl-s"><h2 id="letter-'+(L==='#'?'0':L.toLowerCase())+'">'+L+'</h2><dl class="gl">'+byL(L).map(g=>'<div class="gl-e" id="'+g.id+'"><dt>'+esc(g.term)+'</dt><dd><p>'+esc(g.def)+'</p>'+
+  (g.aka.length&&!g.match?'<p class="gl-a">Also: '+g.aka.map(esc).join(', ')+'</p>':'')+
+  '<p class="gl-l">'+(g.lessons.length>1?'Lessons ':'Lesson ')+g.lessons.map(l=>'<a href="'+l.url+'">'+l.id+' '+esc(l.title)+'</a>').join('')+'</p></dd></div>').join('')+'</dl></section>').join('\n')}
+<p class="after">Want the whole picture? Start with the <a href="${learnPath}">${esc(EXAM.code)} learning guide</a>${cheat?', or revise with the <a href="'+csPath+'">cheat sheet</a>':''}. Ready to test yourself? Take the <a href="${testsPath}">practice tests</a>.</p>`})});
 }
 
 // Article pages (learn/articles/*.md)
@@ -562,6 +617,7 @@ for(const c of Object.values(CASES)){
   search.push({k:'case',u:c.url,l:'',t:c.title,d:0,h:'',c:'',x:plain(c.summary)});
   for(const s of sections(md,c.url))search.push(Object.assign({k:'case',l:'',t:c.title,d:0},s));
 }
+for(const g of GLOSS)search.push({k:'glossary',u:glossPath+'#'+g.id,l:'',t:'Glossary',d:0,h:g.term,c:'',x:g.def+(g.aka.length&&!g.match?' Also: '+g.aka.join(', '):'')});
 search.forEach((e,i)=>{e.id=i;if(!e.x&&!e.c)e.x=e.h;});
 const searchJson={v:1,synonyms:OUT.synonyms||{},domains:Object.fromEntries(OUT.domains.map(d=>[d.n,{name:d.name,color:d.color}])),docs:search};
 
