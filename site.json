@@ -16,11 +16,11 @@
    "He builds and leads high-performing cross-functional teams and mentors future technology leaders. In recent years he has focused on applying AI and analytics to real business problems and delivering measurable value."
   ],
   "credentials": [
-   {"name": "Claude Certified Architect - Foundations", "issuer": "Anthropic", "badge": "/badges/ccar-f.png", "url": "https://www.credly.com/badges/6f5feb57-5b52-4a8c-b582-08bb83ee0fad"},
-   {"name": "Claude Certified Architect - Professional", "issuer": "Anthropic", "badge": "/badges/ccar-p.png", "url": "https://www.credly.com/badges/162f9930-c14e-4947-a867-adaf464e3b1e"},
-   {"name": "AWS Certified Solutions Architect - Associate", "issuer": "Amazon Web Services", "badge": "/badges/aws-solutions-architect-associate.png", "url": "https://www.credly.com/badges/029247b3-5904-445e-8740-0bcf959cf0c5"},
-   {"name": "AWS Certified AI Practitioner", "issuer": "Amazon Web Services", "badge": "/badges/aws-ai-practitioner.png", "url": "https://www.credly.com/badges/0979a33b-f802-488c-a777-91b0760fbccc"},
-   {"name": "Google Cloud Generative AI Leader", "issuer": "Google Cloud", "badge": "/badges/gcp-gen-ai-leader.png", "url": "https://www.credly.com/badges/6220b862-ca61-47f0-a3e4-bb188c415c28"}
+   {"name": "Claude Certified Architect - Foundations", "issuer": "Anthropic", "badge": "/badges/ccar-f.png", "url": "https://www.credly.com/badges/6f5feb57-5b52-4a8c-b582-08bb83ee0fad/public_url"},
+   {"name": "Claude Certified Architect - Professional", "issuer": "Anthropic", "badge": "/badges/ccar-p.png", "url": "https://www.credly.com/badges/162f9930-c14e-4947-a867-adaf464e3b1e/public_url"},
+   {"name": "AWS Certified Solutions Architect - Associate", "issuer": "Amazon Web Services", "badge": "/badges/aws-solutions-architect-associate.png", "url": "https://www.credly.com/badges/029247b3-5904-445e-8740-0bcf959cf0c5/public_url"},
+   {"name": "AWS Certified AI Practitioner", "issuer": "Amazon Web Services", "badge": "/badges/aws-ai-practitioner.png", "url": "https://www.credly.com/badges/0979a33b-f802-488c-a777-91b0760fbccc/public_url"},
+   {"name": "Google Cloud Generative AI Leader", "issuer": "Google Cloud", "badge": "/badges/gcp-gen-ai-leader.png", "url": "https://www.credly.com/badges/6220b862-ca61-47f0-a3e4-bb188c415c28/public_url"}
   ],
   "education": [
    "M.S. in Software Systems, BITS Pilani, India",
