@@ -16,10 +16,10 @@
    "He builds and leads high-performing cross-functional teams and mentors future technology leaders. In recent years he has focused on applying AI and analytics to real business problems and delivering measurable value."
   ],
   "credentials": [
-   "Claude Certified Architect",
-   "AWS Certified Solutions Architect - Associate",
-   "AWS Certified AI Practitioner",
-   "Google Cloud Generative AI Leader"
+   {"name": "Claude Certified Architect", "issuer": "Anthropic"},
+   {"name": "AWS Certified Solutions Architect - Associate", "issuer": "Amazon Web Services"},
+   {"name": "AWS Certified AI Practitioner", "issuer": "Amazon Web Services"},
+   {"name": "Google Cloud Generative AI Leader", "issuer": "Google Cloud"}
   ],
   "education": [
    "M.S. in Software Systems, BITS Pilani, India",

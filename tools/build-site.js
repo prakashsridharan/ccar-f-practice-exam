@@ -181,6 +181,14 @@ if(A){
     mainEntity:Object.assign(N.authorLd(),SUM.length?{description:SUM.join(' ')}:{},EDU.length?{alumniOf:EDU.map(e=>({'@type':'EducationalOrganization',name:e.slice(e.indexOf(', ')+2)}))}:{},A.photo?{image:URL_+A.photo}:{},
       A.credentials.length?{hasCredential:A.credentials.map(c=>({'@type':'EducationalOccupationalCredential',name:c.name||c}))}:{})};
   const li=(c)=>typeof c==='string'?esc(c):(c.url?'<a href="'+esc(c.url)+'" target="_blank" rel="noopener">'+esc(c.name)+'</a>':esc(c.name))+(c.note?' <span class="ab-n">'+esc(c.note)+'</span>':'');
+  // Credential badges: site.json {name, issuer, badge?, url?}. With `badge` (an image path, e.g. the issued
+  // badge PNG) the image is shown; otherwise a drawn badge in the issuer's colour. `url` links a verification page.
+  const BCOL={'Anthropic':'#C0522A','Amazon Web Services':'#D97706','Google Cloud':'#2E86C1'};
+  const badge=(c)=>{c=typeof c==='string'?{name:c}:c;const col=BCOL[c.issuer]||'#1B4F8A';
+    const art=c.badge?'<img src="'+esc(c.badge)+'" alt="'+esc(c.name)+' badge" width="96" height="96" loading="lazy">'
+      :'<svg viewBox="0 0 96 96" width="96" height="96" aria-hidden="true"><path d="M48 4 86 26v44L48 92 10 70V26z" fill="'+col+'"/><path d="M48 13 78 30.5v35L48 83 18 65.5v-35z" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="2"/><path d="m34 49 10 10 19-21" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const body=art+'<span class="ab-bi">'+esc(c.issuer||'')+'</span><span class="ab-bn">'+esc(c.name)+'</span>'+(c.url?'<span class="ab-bv">Verify</span>':'');
+    return c.url?'<a class="ab-b" href="'+esc(c.url)+'" target="_blank" rel="noopener">'+body+'</a>':'<div class="ab-b">'+body+'</div>';};
   const aboutHtml=`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -216,7 +224,7 @@ if(A){
     </div>
   </section>
   ${EDU.length?'<h2>Education</h2>\n  <ul>'+EDU.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
-  ${A.credentials.length?'<h2>Credentials</h2>\n  <ul>'+A.credentials.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
+  ${A.credentials.length?'<h2>Credentials</h2>\n  <div class="ab-bd">'+A.credentials.map(badge).join('')+'</div>':''}
   ${A.patents.length?'<h2>Patents</h2>\n  <p>Two U.S. patents granted and one application pending.</p>\n  <ul>'+A.patents.map(c=>'<li>'+li(c)+'</li>').join('')+'</ul>':''}
   <h2>Why ${esc(SITE.name)}</h2>
   <p>Good preparation for a new certification is hard to find, and much of it is paid. ${esc(SITE.name)} offers free learning guides, printable cheat sheets and timed practice tests, so you can learn each exam topic, test yourself under exam conditions and see which domains you are ready for.</p>
