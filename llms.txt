@@ -1,0 +1,73 @@
+# CertPrep
+
+> Free learning guides, printable cheat sheets and timed practice tests for certification exams, starting with Anthropic's Claude certifications (Associate, Developer and Architect). Written and maintained by Prakash Sridharan. An independent study aid, not affiliated with or endorsed by Anthropic.
+
+Each exam has a learning guide (one lesson per exam skill or task, with check questions and case-study exercises), a printable cheat sheet, a Resources page of official documentation, and practice tests that follow the official exam blueprint (domain weights, item count, time limit), with a rationale and a documentation link for every answer. Everything is free and works without signing in. The practice questions are original and contain no real exam content.
+
+## Start here
+
+- [Which Claude certification should I take?](https://certprep.pratechlabs.com/claude/which-certification/): all current Claude certifications compared side by side: who each is for, items, time, pass mark, fee, format, domains and weights
+- [All certifications](https://certprep.pratechlabs.com/): the home page, with every exam grouped by track
+- [Claude (Anthropic) certifications](https://certprep.pratechlabs.com/claude/): overview of the Claude exams and where to start
+
+## Claude (Anthropic) exams
+
+### CCAO-F: Claude Certified Associate - Foundations (Version 1.1)
+
+Follows Anthropic's exam guide 1.1 (effective 7 December 2026): using Claude as a business productivity tool, from prompting and checking output to choosing features, building repeatable workflows and handling data responsibly. Exam: 70 items, 120 minutes, pass mark 720 of 1000, fee $99 USD.
+
+- [Learning guide](https://certprep.pratechlabs.com/claude/ccao-f/learn/): 21 lessons, one per exam skill, across 6 domains
+- [Practice tests](https://certprep.pratechlabs.com/claude/ccao-f/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
+- [Cheat sheet](https://certprep.pratechlabs.com/claude/ccao-f/learn/cheat-sheet/): a printable summary of every domain
+- [Resources](https://certprep.pratechlabs.com/claude/ccao-f/resources/): official documentation for each domain
+
+### CCDV-F: Claude Certified Developer - Foundations (Version 1.1)
+
+Follows Anthropic's exam guide 1.1 (effective 7 December 2026): building with Claude, from agents and the Messages API to Claude Code, prompts and context, tools and MCP, model choice, evaluation and security. Exam: 70 items, 120 minutes, pass mark 720 of 1000, fee $125 USD.
+
+- [Learning guide](https://certprep.pratechlabs.com/claude/ccdv-f/learn/): 24 lessons, one per exam skill, across 8 domains
+- [Practice tests](https://certprep.pratechlabs.com/claude/ccdv-f/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
+- [Cheat sheet](https://certprep.pratechlabs.com/claude/ccdv-f/learn/cheat-sheet/): a printable summary of every domain
+- [Resources](https://certprep.pratechlabs.com/claude/ccdv-f/resources/): official documentation for each domain
+
+### CCDV-P: Claude Certified Developer - Professional (Version 1.0)
+
+Follows Anthropic's exam guide 1.0 (November 2026): operating Claude systems in production, from agent orchestration, reliability and observability to evaluation, cost, security and coding-agent fleets. Exam: 70 items, 120 minutes, pass mark 720 of 1000, fee $175 USD.
+
+- [Learning guide](https://certprep.pratechlabs.com/claude/ccdv-p/learn/): 25 lessons, one per exam skill, across 8 domains
+- [Practice tests](https://certprep.pratechlabs.com/claude/ccdv-p/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
+- [Cheat sheet](https://certprep.pratechlabs.com/claude/ccdv-p/learn/cheat-sheet/): a printable summary of every domain
+- [Resources](https://certprep.pratechlabs.com/claude/ccdv-p/resources/): official documentation for each domain
+
+### CCAR-F: Claude Certified Architect - Foundations (Version 1.0)
+
+Follows Anthropic's exam guide 1.0. Agents, tools and MCP, Claude Code, prompts and structured output, context and reliability. Exam: 60 items, 120 minutes, pass mark 720 of 1000, fee $125 USD.
+
+- [Learning guide](https://certprep.pratechlabs.com/claude/ccar-f/learn/): 30 lessons, one per exam task, across 5 domains
+- [Practice tests](https://certprep.pratechlabs.com/claude/ccar-f/): 120 questions in 2 fixed tests of 60, timed exam mode and self-paced study mode
+- [Cheat sheet](https://certprep.pratechlabs.com/claude/ccar-f/learn/cheat-sheet/): a printable summary of every domain
+- [Resources](https://certprep.pratechlabs.com/claude/ccar-f/resources/): official documentation for each domain
+
+### CCAR-P: Claude Certified Architect - Professional (Version 1.1)
+
+Updated for Anthropic's exam guide 1.1, which applies from 7 December 2026: 70 items, new domain weights and skills, deployment surfaces, Managed Agents, prompt injection and model migration. Exam: 70 items, 120 minutes, pass mark 720 of 1000, fee $175 USD.
+
+- [Learning guide](https://certprep.pratechlabs.com/claude/ccar-p-v2/learn/): 39 lessons, one per exam skill, across 7 domains
+- [Practice tests](https://certprep.pratechlabs.com/claude/ccar-p-v2/): 140 questions in 2 fixed tests of 70, timed exam mode and self-paced study mode
+- [Cheat sheet](https://certprep.pratechlabs.com/claude/ccar-p-v2/learn/cheat-sheet/): a printable summary of every domain
+- [Resources](https://certprep.pratechlabs.com/claude/ccar-p-v2/resources/): official documentation for each domain
+
+### CCAR-P: Claude Certified Architect - Professional (Version 1.0)
+
+Follows the current exam guide 1.0, with single and multiple-choice items only. Available until 7 December 2026, when the exam moves to guide 1.1. Exam: 63 items, 120 minutes, pass mark 720 of 1000, fee $175 USD. Superseded by CCAR-P Version 1.1; listed until 7 Dec.
+
+- [Learning guide](https://certprep.pratechlabs.com/claude/ccar-p/learn/): 38 lessons, one per exam task, across 7 domains
+- [Practice tests](https://certprep.pratechlabs.com/claude/ccar-p/): 126 questions in 2 fixed tests of 63, timed exam mode and self-paced study mode
+- [Cheat sheet](https://certprep.pratechlabs.com/claude/ccar-p/learn/cheat-sheet/): a printable summary of every domain
+- [Resources](https://certprep.pratechlabs.com/claude/ccar-p/resources/): official documentation for each domain
+
+## Optional
+
+- [Study resources](https://certprep.pratechlabs.com/resources/): official certification pages and general study links
+- [About](https://certprep.pratechlabs.com/about/): who writes the guides and tests
+- [Privacy](https://certprep.pratechlabs.com/privacy/): what the site records and why

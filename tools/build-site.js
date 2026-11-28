@@ -381,6 +381,42 @@ ${FAQ.map((f,i)=>'    <details'+(i?'':' open')+'><summary>'+esc(f[0])+'</summary
   fs.writeFileSync(path.join(ROOT,CMP_PATH,'index.html'),cmpHtml);
 }
 
+// ---- /llms.txt (llmstxt.org format): a plain-text map of the site for AI tools ----
+// Lists every listed exam with its guide, tests, cheat sheet and Resources, from site.json and the
+// exam bundles, so it stays current. Written on every run; not in the sitemap (it is not a page).
+{
+  const L=[],abs=p=>URL_+p;
+  L.push('# '+SITE.name,'');
+  L.push('> Free learning guides, printable cheat sheets and timed practice tests for certification exams, starting with Anthropic\'s Claude certifications (Associate, Developer and Architect). Written and maintained by '+(A?A.name:SITE.name)+'. An independent study aid, not affiliated with or endorsed by Anthropic.','');
+  L.push('Each exam has a learning guide (one lesson per exam skill or task, with check questions and case-study exercises), a printable cheat sheet, a Resources page of official documentation, and practice tests that follow the official exam blueprint (domain weights, item count, time limit), with a rationale and a documentation link for every answer. Everything is free and works without signing in. The practice questions are original and contain no real exam content.','');
+  L.push('## Start here','');
+  if(cmpEx.length)L.push('- ['+'Which Claude certification should I take?]('+abs(CMP_PATH)+'): all current Claude certifications compared side by side: who each is for, items, time, pass mark, fee, format, domains and weights');
+  L.push('- [All certifications]('+abs('/')+'): the home page, with every exam grouped by track');
+  for(const v of SITE.vendors.filter(v=>v.url&&v.exams.some(N.listed)))L.push('- ['+v.name+' certifications]('+abs(v.url)+'): overview of the '+v.name.split(' (')[0]+' exams and where to start');
+  L.push('');
+  for(const v of SITE.vendors){
+    const xs=v.exams.filter(N.listed);if(!xs.length)continue;
+    L.push('## '+v.name+' exams','');
+    for(const x of xs){
+      const E=cmpBundle(x.id),b=E.blueprint,c=x.counts;
+      L.push('### '+x.code+': '+x.name+(x.version?' ('+x.version+')':''),'');
+      L.push(x.blurb+' Exam: '+b.questionCount+' items, '+Math.round(b.durationSec/60)+' minutes'+(b.passScaled?', pass mark '+b.passScaled+' of '+(b.scaledMax||1000):'')+(b.fee?', fee '+b.fee:'')+'.'+(x.supersededBy?' Superseded by '+N.exam(x.supersededBy).code+' '+(N.exam(x.supersededBy).version||'')+(x.note?'; listed '+x.note.replace(/^Until/,'until'):'')+'.':''),'');
+      if(x.learn)L.push('- [Learning guide]('+abs(x.learn)+'): '+c.lessons+' lessons, one per exam '+(E.guide||b.guide?'skill':'task')+', across '+c.domains+' domains');
+      L.push('- [Practice tests]('+abs(x.path)+'): '+c.questions+' questions in '+c.tests+' fixed tests of '+b.questionCount+', timed exam mode and self-paced study mode');
+      if(x.cheat)L.push('- [Cheat sheet]('+abs(x.cheat)+'): a printable summary of every domain');
+      L.push('- [Resources]('+abs(x.resources)+'): official documentation for each domain');
+      L.push('');
+    }
+  }
+  L.push('## Optional','');
+  L.push('- [Study resources]('+abs('/resources/')+'): official certification pages and general study links');
+  if(A)L.push('- [About]('+abs('/about/')+'): who writes the guides and tests');
+  L.push('- [Privacy]('+abs('/privacy/')+'): what the site records and why');
+  const txt=L.join('\n').replace(/\n{3,}/g,'\n\n')+'\n';
+  if(txt.includes(EM)||txt.includes(EN))errors.push('llms.txt: contains an em or en dash');
+  fs.writeFileSync(path.join(ROOT,'llms.txt'),txt);
+}
+
 // ---- fill the marked regions ----
 const pages=['index.html','resources/index.html','privacy/index.html',...(SITE.author?['about/index.html']:[]),...(cmpEx.length?[CMP_PATH.slice(1)+'index.html']:[]),
   ...SITE.vendors.filter(v=>v.url).map(v=>v.url.replace(/^\//,'')+'index.html'),
