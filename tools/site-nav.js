@@ -73,6 +73,24 @@ function headIcons(id,opts){
 
 // Header: brand, Certifications menu (a <details>, so it opens without JavaScript; /site.js
 // closes it on Escape or an outside click), Resources.
+// Search-engine limits (Bing Webmaster flags a title over 70 characters and a meta description
+// outside 25-160). fitTitle shortens the trailing ' - <site/guide>' part first, then the head at a
+// word; fitDesc keeps whole sentences up to 160, or cuts one long sentence at a word.
+const TITLE_MAX=70,DESC_MAX=160;
+function fitTitle(t){t=String(t);if(t.length<=TITLE_MAX)return t;
+  const i=t.lastIndexOf(' - ');let head=i>0?t.slice(0,i):t,tail=i>0?t.slice(i+3):'';
+  const tails=tail?[tail,tail.replace(/ \((Version|v)[^)]*\)/,''),tail.replace(/ Learning Guide$/,' Guide'),tail.split(' ')[0]]:[];
+  for(const x of tails){const c=head+' - '+x;if(c.length<=TITLE_MAX)return c;}
+  const keep=tail?' - '+tails[tails.length-1]:'',room=TITLE_MAX-keep.length;
+  if(head.length>room){head=head.slice(0,room+1);head=head.slice(0,head.lastIndexOf(' ')).replace(/[,:;(-]+$/,'').trim();}
+  return head+keep;}
+function fitDesc(d){d=String(d).replace(/\s+/g,' ').trim();if(d.length<=DESC_MAX)return d;
+  // A sentence ends at . ! or ? followed by a space, so "1.1" and "e.g." mid-sentence do not split.
+  const parts=d.split(/(?<=[.!?])\s+/);let out='';
+  for(const p of parts){const n=out?out+' '+p:p;if(n.length>DESC_MAX)break;out=n;}
+  out=out.trim();if(out.length>=60)return out;
+  let c=d.slice(0,DESC_MAX-2);c=c.slice(0,c.lastIndexOf(' ')).replace(/[,:;(]+$/,'');return c+'...';}
+
 function siteHeader(){
   const groups=SITE.vendors.map(v=>'<div class="sh-g"><div class="sh-gt">'+esc(v.name)+'</div>'+
     (v.exams.length?v.exams.filter(x=>!x.preview&&(!x.supersededBy||x.list===true)).map(x=>live(x)?
@@ -171,4 +189,4 @@ function siteFooter(){
 function byline(){const a=SITE.author;if(!a)return '';
   return '<p class="byline">'+(a.photo?'<img src="'+esc(a.photo)+'" alt="" width="28" height="28">':'')+'<span>Written and maintained by <a href="/about/">'+esc(a.name)+'</a>'+(a.title?', '+esc(a.title):'')+'</span></p>';}
 function authorLd(){const a=SITE.author;return a?{'@type':'Person',name:a.name,url:'https://certprep.pratechlabs.com/about/',...(a.title?{jobTitle:a.title}:{}),...(a.linkedin?{sameAs:[a.linkedin]}:{})}:undefined;}
-module.exports={previewHead,SITE,byline,authorLd,ROOT,esc,exams,exam,live,listed,siteHeader,examTabs,certList,siteFooter,headIcons};
+module.exports={fitTitle,fitDesc,previewHead,SITE,byline,authorLd,ROOT,esc,exams,exam,live,listed,siteHeader,examTabs,certList,siteFooter,headIcons};

@@ -187,7 +187,7 @@ if(A){
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>About - ${esc(SITE.name)}</title>
-<meta name="description" content="${esc(SITE.name)} is written and maintained by ${esc(A.name)}${A.title?', '+esc(A.title):''}. Free learning guides, cheat sheets and practice tests for certification exams.">
+<meta name="description" content="${esc(N.fitDesc(`${esc(SITE.name)} is written and maintained by ${esc(A.name)}${A.title?', '+esc(A.title):''}. Free learning guides, cheat sheets and practice tests for certification exams.`))}">
 <meta name="robots" content="index, follow">
 <meta name="author" content="Prakash Sridharan">
 <link rel="canonical" href="${URL_}/about/">
@@ -277,8 +277,8 @@ if(cmpEx.length){
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Which Claude Certification Should I Take? ${cmpEx.map(o=>o.x.code).join(', ')} Compared - ${esc(SITE.name)}</title>
-<meta name="description" content="Compare every Claude certification side by side: who each exam is for, items, time, pass mark, fee, domains and weights, and where to start. ${cmpEx.map(o=>o.x.code).join(', ')}.">
+<title>Which Claude Certification Should I Take? - ${esc(SITE.name)}</title>
+<meta name="description" content="Compare all ${cmpEx.length} Claude certifications (${cmpEx.map(o=>o.x.code).join(', ')}): who each is for, items, time, pass mark, fee, domains and where to start.">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <meta name="author" content="Prakash Sridharan">
 <link rel="canonical" href="${URL_}${CMP_PATH}">
